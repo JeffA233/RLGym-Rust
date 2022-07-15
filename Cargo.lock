@@ -274,7 +274,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rlgym"
+name = "rlgym_rust"
 version = "0.1.0"
 dependencies = [
  "ndarray",
