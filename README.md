@@ -5,7 +5,7 @@ Behold a weird table thing:
 RLGym
 │  ├──gym
 │  ├──make
-│  ├──version
+│  └──version
 │
 ├──communication
 │  ├──communication_exception_handler
