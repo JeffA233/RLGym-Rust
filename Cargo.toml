@@ -10,3 +10,4 @@ pyo3 = { version = "0.16.5", features = ["extension-module"] }
 numpy = { version = "0.16.2"}
 ndarray = { version = "0.15.4"}
 rand = { version = "0.8.5"}
+gym = { version = "2.2.1"}
