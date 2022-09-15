@@ -14,8 +14,8 @@ mod state_setters;
 
 fn main() {
     println!("Hello, world!");
-    let gamest = gamestates::physics_object::PhysicsObject::default();
-    let pos = gamest.position;
-    let pos_str = pos.iter().map(|x| "{x}").collect::<String>();
-    println!("{pos_str}")
+    // let gamest = gamestates::physics_object::PhysicsObject::default();
+    // let pos = gamest.position;
+    // let pos_str = pos.iter().map(|x| "{x}").collect::<String>();
+    // println!("{pos_str}")
 }

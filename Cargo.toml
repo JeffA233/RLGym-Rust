@@ -11,3 +11,10 @@ numpy = { version = "0.16.2"}
 ndarray = { version = "0.15.4"}
 rand = { version = "0.8.5"}
 gym = { version = "2.2.1"}
+subprocess = { version = "0.2.9"}
+registry = { version = "1.2.2"}
+winreg = { version = "0.10.1"}
+json = { version = "0.12.4"}
+glob = { version = "0.3.0"}
+serde = { version = "1.0.144"}
+serde_json = { version = "1.0.85"}
