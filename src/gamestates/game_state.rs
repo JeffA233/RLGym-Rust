@@ -1,19 +1,19 @@
-use core::num;
+// use core::num;
 
 use crate::gamestates::player_data::PlayerData;
 use crate::gamestates::physics_object::PhysicsObject;
 
 #[derive(Default)]
 pub struct GameState {
-    game_type: i64,
-    blue_score: i64,
-    orange_score: i64,
-    last_touch: i32,
-    players: Vec<PlayerData>,
-    ball: PhysicsObject,
-    inverted_ball: PhysicsObject,
-    boost_pads: Vec<i64>,
-    inverted_boost_pads: Vec<i64>
+    pub game_type: i64,
+    pub blue_score: i64,
+    pub orange_score: i64,
+    pub last_touch: i32,
+    pub players: Vec<PlayerData>,
+    pub ball: PhysicsObject,
+    pub inverted_ball: PhysicsObject,
+    pub boost_pads: Vec<i64>,
+    pub inverted_boost_pads: Vec<i64>
 }
 
 const BOOST_PAD_LENGTH: usize = 34;

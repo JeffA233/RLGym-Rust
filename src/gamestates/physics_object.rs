@@ -4,13 +4,13 @@ use crate::math::*;
 #[derive(Default)]
 pub struct PhysicsObject {
     pub position: Vec<f64>,
-    quaternion: Vec<f64>,
-    linear_velocity: Vec<f64>,
-    angular_velocity: Vec<f64>,
-    euler_angles: Vec<f64>,
-    rotation_mtx: Array2<f64>,
-    has_computed_rot_mtx: bool,
-    has_computed_euler_angles: bool
+    pub quaternion: Vec<f64>,
+    pub linear_velocity: Vec<f64>,
+    pub angular_velocity: Vec<f64>,
+    pub euler_angles: Vec<f64>,
+    pub rotation_mtx: Array2<f64>,
+    pub has_computed_rot_mtx: bool,
+    pub has_computed_euler_angles: bool
 }
 
 impl PhysicsObject {
