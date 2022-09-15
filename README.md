@@ -30,9 +30,9 @@ RLGym
    │  └──discrete_act    
    │    
    ├──gamestates    
-   │  ├──game_state    
-   │  ├──physics_object    
-   │  └──player_data    
+   │  ├──game_state ✓   
+   │  ├──physics_object ✓   
+   │  └──player_data ✓   
    │    
    ├──obs_builder    
    │  ├──advanced_obs    
