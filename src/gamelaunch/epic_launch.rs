@@ -13,6 +13,7 @@ use std::ffi::OsStr;
 // use json::*;
 use glob::{glob, glob_with};
 use serde_json::*;
+use psutil::*;
 
 
 
@@ -142,4 +143,8 @@ pub fn locate_epic_RL_binary() -> String {
         return install_path
     }
     return install_path
+}
+
+fn get_running_processes(process_name: String, required_args: Vec<String>) {
+    let matching_processes: Vec<String> = Vec::<String>::new();
 }

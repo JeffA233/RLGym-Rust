@@ -18,3 +18,4 @@ json = { version = "0.12.4"}
 glob = { version = "0.3.0"}
 serde = { version = "1.0.144"}
 serde_json = { version = "1.0.85"}
+psutil = { version = "3.2.2"}
