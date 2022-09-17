@@ -18,4 +18,6 @@ json = { version = "0.12.4"}
 glob = { version = "0.3.0"}
 serde = { version = "1.0.144"}
 serde_json = { version = "1.0.85"}
-psutil = { version = "3.2.2"}
+sysinfo = { version = "0.26.2"}
+regex = { version = "1.6.0"}
+webbrowser = { version = "0.8.0"}

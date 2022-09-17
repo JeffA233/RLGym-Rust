@@ -2,28 +2,83 @@ use subprocess::*;
 // use registry::*;
 // use std::{collections::HashMap, hash::Hash};
 use winreg::*;
-use winreg::enums::*;
+use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
 // use std::os::*;
 use std::env;
-use std::io::*;
+use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
 use std::ffi::OsStr;
+use std::iter::zip;
+use std::{thread, time};
 // use json::*;
 use glob::{glob, glob_with};
-use serde_json::*;
-use psutil::*;
+use serde_json::{Map, Value, from_reader};
+// use psutil::*;
+use sysinfo::*;
+use regex::*;
+use webbrowser::*;
 
 
-
-pub fn launch_with_epic_simple(ideal_args: Vec<String>) {
+pub fn launch_with_epic_simple(mut ideal_args: Vec<String>) -> Result<Popen> {
     let epic_rl_exe_path = locate_epic_RL_binary();
+    // let argv = [epic_rl_exe_path, ideal_args, "-EpicPortal".to_string()];
+    let mut argv = [epic_rl_exe_path.clone()].to_vec();
+    argv.append(&mut ideal_args);
+    argv.push("-EpicPortal".to_string());
+    let argv = argv.as_slice();
+    let res;
     if epic_rl_exe_path.len() != 0 {
-        // Popen{
-
-        // }
+        res = Popen::create(argv, PopenConfig::default())
+    } else {
+        panic!("Epic simple launch method failed")
     }
+    // let final_res = match res {
+    //     Ok(res) => res,
+    //     Err(error) => panic!("Unable to launch via Epic due to: {error}")
+    // };
+    return res
+}
+
+// pub enum PopenEnum {
+//     Popen,
+//     IsPopen
+// }
+
+// pub fn launch_with_epic_login_trick(ideal_args: Vec<String>) -> Popen_enum {
+//     let pid: Pid;
+//     let proc_name: String;
+//     let cmd_line: Vec<String>;
+//     (pid, proc_name, cmd_line) = get_running_processes("RocketLeague.exe".to_string(), vec!["-pipe".to_string()]);
+//     if proc_name != "".to_string() {
+//         let cmd_line = get_epic_login_trick_args(ideal_args);
+//         if cmd_line == "".to_string() {
+//             return PopenEnum
+//         }
+//     }
+// }
+
+fn get_epic_login_trick_args(ideal_args: Vec<String>) -> Vec<String> {
+    open("com.epicgames.launcher://apps/Sugar?action=launch&silent=true").unwrap();
+    let mut pid: Pid = Pid::from(0);
+    let mut proc_name: String = "".to_string();
+    let mut cmd_line: Vec<String> = Vec::<String>::new();
+    for _i in 0..10 {
+        let time = time::Duration::new(1, 0);
+        thread::sleep(time);
+        (pid, proc_name, cmd_line) = get_running_processes("RocketLeague.exe".to_string(), vec!["-EpicPortal".to_string()]);
+        if proc_name != "".to_string() {
+            break
+        }
+    }
+    if proc_name == "".to_string() {
+        return cmd_line
+    }
+    let sys = System::new_all();
+    let proc = sys.process(pid).unwrap();
+    proc.kill();
+    return cmd_line
 }
 
 pub fn locate_epic_RL_binary() -> String {
@@ -145,6 +200,26 @@ pub fn locate_epic_RL_binary() -> String {
     return install_path
 }
 
-fn get_running_processes(process_name: String, required_args: Vec<String>) {
-    let matching_processes: Vec<String> = Vec::<String>::new();
+fn get_running_processes(process_name: String, required_args: Vec<String>) -> (Pid, String, Vec<String>) {
+    let sys = System::new_all();
+    let res = sys.processes_by_name(&process_name);
+    let pid: Pid = Pid::from(0);
+    for process in res {
+        let pid = process.pid();
+        let proc_name = process.name();
+        let cmd = process.cmd();
+        let cmd = &cmd[1..];
+        let mut matching_args: bool = true;
+        for (arg_req, arg) in zip(&required_args, cmd) {
+            let reg = Regex::new(&arg_req.to_lowercase()).unwrap();
+            matching_args = reg.is_match(&arg.to_lowercase());
+            if !matching_args {
+                break
+            }
+        }
+        if matching_args {
+            return (pid, proc_name.to_owned(), cmd.to_owned())
+        }
+    }
+    return (pid, "".to_owned(), Vec::<String>::new())
 }
