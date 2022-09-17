@@ -9,8 +9,8 @@ pub mod math;
 pub mod obs_builders;
 pub mod reward_functions;
 pub mod state_setters;
-use std::env::*;
-use std::path::Path;
+// use std::env::*;
+// use std::path::Path;
 use std::{thread, time};
 
 use gamelaunch::launch;
@@ -25,8 +25,12 @@ fn main() {
     // let cur_dur_display = full_path.display();
     // println!("{cur_dur_display}");
     let pipe_id = communication::communication_handler::format_pipe_id(0);
-    let launch_type = gamelaunch::launch::LaunchPreference::new();
-    gamelaunch::launch::launch_rocket_league(pipe_id, launch_type.EPIC);
+    let launch_type = launch::LaunchPreference::new();
+    let res = launch::launch_rocket_league(pipe_id, launch_type.EPIC);
+    let _res = match res {
+        Ok(popen) => popen,
+        Err(error) => panic!("error from launch function: {error}")
+    };
     let dur = time::Duration::new(3, 0);
     thread::sleep(dur);
     gamelaunch::launch::run_injector();
