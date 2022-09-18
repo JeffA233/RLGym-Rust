@@ -48,12 +48,12 @@ pub fn run_injector() {
     Popen::create(&[injector_path], PopenConfig::default()).unwrap();
 }
 
-pub fn launch_rocket_league(pipe_id: String, launch_preference: String) -> Result<Popen> {
+pub fn launch_rocket_league(pipe_id: String, launch_preference: &String) -> Popen {
     let ideal_args = ROCKET_LEAGUE_PROCESS_INFO::get_ideal_args(pipe_id);
     let default_launch_pref = LaunchPreference::new();
-    if !launch_preference.starts_with(&default_launch_pref.EPIC) || !launch_preference.starts_with(&default_launch_pref.STEAM) {
+    if !(launch_preference == &default_launch_pref.EPIC) || !(launch_preference == &default_launch_pref.STEAM) {
         if Path::new(&launch_preference).exists() {
-            return Popen::create(&[launch_preference], PopenConfig::default())
+            return Popen::create(&[launch_preference], PopenConfig::default()).unwrap()
         } else {
             println!("path_to_rl doesn't point to RocketLeague.exe")
         }
@@ -64,6 +64,10 @@ pub fn launch_rocket_league(pipe_id: String, launch_preference: String) -> Resul
             
         // }
     let game_process = launch_with_epic_simple(ideal_args.to_vec());
+    let game_process = match game_process {
+        Ok(proc) => proc,
+        Err(error) => panic!("Could not start Rocket League with epic simple: {error}")
+    };
     println!("Launched Epic version");
     return game_process
 }

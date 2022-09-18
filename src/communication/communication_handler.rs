@@ -76,7 +76,7 @@ impl CommunicationHandler {
         return received_message
     }
 
-    pub fn send_message(self, message: Option<Message>, header: Option<Vec<f32>>, body: Option<Vec<f32>>) {
+    pub fn send_message(&self, message: Option<Message>, header: Option<Vec<f32>>, body: Option<Vec<f32>>) {
         let mut message = match message {
             Some(message) => message,
             None => Message::new()
@@ -100,10 +100,10 @@ impl CommunicationHandler {
         }
     }
 
-    pub fn open_pipe(&mut self, pipe_name: Option<String>, num_allowed_instances: Option<usize>) {
+    pub fn open_pipe(&mut self, pipe_name: Option<&String>, num_allowed_instances: Option<usize>) {
         let pipe_name = match pipe_name {
             Some(pipe_name) => pipe_name,
-            None => RLGYM_GLOBAL_PIPE_NAME.to_owned()
+            None => RLGYM_GLOBAL_PIPE_NAME
         };
         let num_allowed_instances = match num_allowed_instances {
             Some(num) => num,

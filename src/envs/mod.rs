@@ -1,2 +1,2 @@
-mod environment;
-mod game_match;
+pub mod environment;
+pub mod game_match;
