@@ -14,7 +14,7 @@ use crate::math;
 use crate::obs_builders;
 use crate::reward_functions;
 use crate::state_setters;
-use crate::envs::game_match::game_match;
+use crate::envs::game_match::GameMatch;
 use ndarray::*;
 use subprocess::Popen;
 use subprocess::Result;
@@ -24,7 +24,7 @@ use std::thread;
 use std::time::Duration;
 
 pub struct Gym {
-    pub _game_match: game_match,
+    pub _game_match: GameMatch,
     pub observation_space: Vec<usize>,
     pub action_space: Vec<usize>,
     pub _launch_preference: String,
@@ -42,7 +42,7 @@ pub struct Gym {
 }
 
 impl Gym {
-    pub fn new(game_match: game_match, pipe_id: Option<usize>, launch_preference: Option<String>, use_injector: Option<bool>, force_paging: Option<bool>, raise_on_crash: Option<bool>, auto_minimize: Option<bool>) -> Self {
+    pub fn new(game_match: GameMatch, pipe_id: Option<usize>, launch_preference: Option<String>, use_injector: Option<bool>, force_paging: Option<bool>, raise_on_crash: Option<bool>, auto_minimize: Option<bool>) -> Self {
         let pipe_id = match pipe_id {
             Some(pipe_id) => pipe_id,
             None => 0

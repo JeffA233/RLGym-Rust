@@ -1,11 +1,11 @@
 use std::{thread::spawn, any::Any};
-use crate::obs_builders::aspo4_array::AdvancedObsPadderStacker;
+use crate::{obs_builders::aspo4_array::AdvancedObsPadderStacker, action_parsers::necto_parser_2::NectoAction};
 
 use ndarray::*;
 
 use crate::gamestates::{game_state::GameState, player_data::PlayerData};
 
-pub struct game_match {
+pub struct GameMatch {
     pub _game_speed: usize,
     pub _gravity: f32,
     pub _boost_consumption: f32,
@@ -15,7 +15,7 @@ pub struct game_match {
     pub _reward_fn: fn() -> f32,
     pub _terminal_condition: fn() -> bool,
     pub _obs_builder: AdvancedObsPadderStacker,
-    pub _action_parser: fn() -> Vec<f32>,
+    pub _action_parser: NectoAction,
     pub _state_setter: fn() -> Vec<f32>,
     pub agents: usize,
     pub observation_space: Vec<usize>,
@@ -26,21 +26,21 @@ pub struct game_match {
     pub _initial_score: i64
 }
 
-pub trait ObsMethods {
-    fn new() -> Self;
-    fn reset();
-    fn build_obs() -> dyn Any;
-}
+// pub trait ObsMethods {
+//     fn new() -> Self;
+//     fn reset();
+//     fn build_obs() -> dyn Any;
+// }
 
-pub trait RewardFuncMethods {
-    fn new() -> Self;
-    fn reset(initial_state: GameState);
-    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Array1<f32>) -> f32;
+// pub trait RewardFuncMethods {
+//     fn new() -> Self;
+//     fn reset(initial_state: GameState);
+//     fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Array1<f32>) -> f32;
 
-}
+// }
 
-impl game_match {
-    pub fn new(reward_function: fn() -> f32, terminal_condition: fn() -> bool, obs_builder: AdvancedObsPadderStacker, action_parser: fn() -> Vec<f32>, state_setter: fn() -> Vec<f32>, team_size: Option<usize>, tick_skip: Option<usize>, game_speed: Option<usize>, gravity: Option<f32>, boost_consumption: Option<f32>, spawn_opponents: Option<bool>) -> Self {
+impl GameMatch {
+    pub fn new(reward_function: fn() -> f32, terminal_condition: fn() -> bool, obs_builder: AdvancedObsPadderStacker, action_parser: NectoAction, state_setter: fn() -> Vec<f32>, team_size: Option<usize>, tick_skip: Option<usize>, game_speed: Option<usize>, gravity: Option<f32>, boost_consumption: Option<f32>, spawn_opponents: Option<bool>) -> Self {
         let team_size = match team_size {
             Some(team_size) => team_size,
             None => 1
@@ -67,7 +67,7 @@ impl game_match {
         };
         let num_agents = if spawn_opponents {team_size * 2} else {team_size};
         
-        game_match {
+        GameMatch {
             _game_speed: game_speed,
             _gravity: gravity,
             _boost_consumption: boost_consumption,

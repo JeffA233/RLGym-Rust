@@ -12,22 +12,23 @@ pub struct AdvancedObsPadderStacker {
     team_size: usize,
     pos_std: f32,
     ang_std: f32,
-    expanding: bool,
+    // expanding: bool,
     default_ball: Vec<Vec<f32>>,
     stack_size: usize,
     ball_stack: Vec<VecDeque<Vec<Vec<f32>>>>
 }
 
 impl AdvancedObsPadderStacker {
-    pub fn new(team_size: Option<usize>, expanding: Option<bool>, stack_size: Option<usize>) -> Self {
+    // pub fn new(team_size: Option<usize>, expanding: Option<bool>, stack_size: Option<usize>) -> Self {
+    pub fn new(team_size: Option<usize>, stack_size: Option<usize>) -> Self {
         let team_size = match team_size {
             Some(team_size) => team_size,
             None => 3
         };
-        let expanding = match expanding {
-            Some(expanding) => expanding,
-            None => false
-        };
+        // let expanding = match expanding {
+        //     Some(expanding) => expanding,
+        //     None => false
+        // };
         let stack_size = match stack_size {
             Some(stack_size) => stack_size,
             None => 15
@@ -37,7 +38,7 @@ impl AdvancedObsPadderStacker {
             team_size: team_size,
             pos_std: 2300.,
             ang_std: PI,
-            expanding: expanding,
+            // expanding: expanding,
             default_ball: vec![vec![0.; 3]; 3],
             stack_size: stack_size,
             ball_stack: Vec::<VecDeque<Vec<Vec<f32>>>>::new()
@@ -49,7 +50,7 @@ impl AdvancedObsPadderStacker {
     }
 
     fn blank_stack(&mut self, index: usize) {
-        for i in 0..self.stack_size {
+        for _ in 0..self.stack_size {
             self.ball_stack[index].push_front(self.default_ball.clone())
         }
     }

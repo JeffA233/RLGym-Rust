@@ -60,7 +60,7 @@ impl GameState {
         self.inverted_ball.decode_ball_data(state_vals[start..start+BALL_STATE_LENGTH].to_vec());
         start = start + (BALL_STATE_LENGTH / 2);
 
-        for num in 0..num_player_packets {
+        for _ in 0..num_player_packets {
             let player = self.decode_player(state_vals[start..start+PLAYER_INFO_LENGTH].to_vec());
             if player.ball_touched {
                 self.last_touch = player.car_id as i32;
