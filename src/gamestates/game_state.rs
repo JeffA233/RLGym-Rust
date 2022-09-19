@@ -3,7 +3,7 @@
 use crate::gamestates::player_data::PlayerData;
 use crate::gamestates::physics_object::PhysicsObject;
 
-#[derive(Default)]
+// #[derive(Default)]
 pub struct GameState {
     pub game_type: i64,
     pub blue_score: i64,
@@ -12,8 +12,8 @@ pub struct GameState {
     pub players: Vec<PlayerData>,
     pub ball: PhysicsObject,
     pub inverted_ball: PhysicsObject,
-    pub boost_pads: Vec<i64>,
-    pub inverted_boost_pads: Vec<i64>
+    pub boost_pads: Vec<f32>,
+    pub inverted_boost_pads: Vec<f32>
 }
 
 const BOOST_PAD_LENGTH: usize = 34;
@@ -24,10 +24,21 @@ const PLAYER_INFO_LENGTH: usize = 2 + 2 * PLAYER_CAR_STATE_LENGTH + PLAYER_TERTI
 
 impl GameState {
     pub fn new() -> Self {
-        Default::default()
+        // Default::default()
+        GameState {
+            game_type: 0,
+            blue_score: -1,
+            orange_score: -1,
+            last_touch: -1,
+            players: Vec::<PlayerData>::new(),
+            ball: PhysicsObject::new(),
+            inverted_ball: PhysicsObject::new(),
+            boost_pads: Vec::<f32>::new(),
+            inverted_boost_pads: Vec::<f32>::new()
+        }
     }
 
-    pub fn decode(mut self, state_vals: Vec<f64>) {
+    pub fn decode(mut self, state_vals: Vec<f32>) {
         let mut start = 3;
         let num_ball_packets = 1;
         let state_val_len = state_vals.len();
@@ -37,7 +48,7 @@ impl GameState {
         self.blue_score = state_vals[1] as i64;
         self.orange_score = state_vals[2] as i64;
 
-        self.boost_pads = state_vals[start..start+BOOST_PAD_LENGTH].iter().map(|&x| x as i64).collect();
+        self.boost_pads = state_vals[start..start+BOOST_PAD_LENGTH].to_vec();
         self.inverted_boost_pads = self.boost_pads.clone();
         self.inverted_boost_pads.reverse();
         start = start + BOOST_PAD_LENGTH;
@@ -60,8 +71,8 @@ impl GameState {
 
     }
 
-    fn decode_player(&mut self, full_player_data: Vec<f64>) -> PlayerData {
-        let mut player_data = PlayerData::default();
+    fn decode_player(&mut self, full_player_data: Vec<f32>) -> PlayerData {
+        let mut player_data = PlayerData::new();
 
         let mut start: usize = 2;
 

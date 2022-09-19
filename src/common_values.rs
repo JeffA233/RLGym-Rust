@@ -1,28 +1,28 @@
-const SIDE_WALL_X: usize = 4096;
-const BACK_WALL_Y: usize = 5120;
-const CEILING_Z: usize = 2044;
-const BACK_NET_Y: usize = 6000;
-const GOAL_HEIGHT: f64 = 642.775;
+pub const SIDE_WALL_X: f32 = 4096.;
+pub const BACK_WALL_Y: f32 = 5120.;
+pub const CEILING_Z: f32 = 2044.;
+pub const BACK_NET_Y: f32 = 6000.;
+pub const GOAL_HEIGHT: f32 = 642.775;
 
-const ORANGE_GOAL_CENTER: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
-const BLUE_GOAL_CENTER: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
+pub const ORANGE_GOAL_CENTER: [f32; 3] = [0., BACK_NET_Y as f32, GOAL_HEIGHT as f32 / 2.];
+pub const BLUE_GOAL_CENTER: [f32; 3] = [0., -(BACK_NET_Y as f32), GOAL_HEIGHT as f32 / 2.];
 
-const ORANGE_GOAL_BACK: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
-const BLUE_GOAL_BACK: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
+pub const ORANGE_GOAL_BACK: [f32; 3] = [0., BACK_NET_Y as f32, GOAL_HEIGHT as f32 / 2.];
+pub const BLUE_GOAL_BACK: [f32; 3] = [0., -(BACK_NET_Y as f32), GOAL_HEIGHT as f32 / 2.];
 
-const BALL_RADIUS: f64 = 92.75;
-const BALL_MAX_SPEED: f64 = 6000.0;
+pub const BALL_RADIUS: f32 = 92.75;
+pub const BALL_MAX_SPEED: f32 = 6000.0;
 
-const CAR_MAX_SPEED: f64 = 2300.0;
-const SUPERSONIC_THRESHOLD: f64 = 2200.0;
-const CAR_MAX_ANG_VEL: f64 = 5.5;
+pub const CAR_MAX_SPEED: f32 = 2300.0;
+pub const SUPERSONIC_THRESHOLD: f32 = 2200.0;
+pub const CAR_MAX_ANG_VEL: f32 = 5.5;
 
-const BLUE_TEAM: usize = 0;
-const ORANGE_TEAM: usize = 1;
+pub const BLUE_TEAM: i32 = 0;
+pub const ORANGE_TEAM: i32 = 1;
 
-const NUM_ACTIONS: usize = 8;
+pub const NUM_ACTIONS: usize = 8;
 
-const BOOST_LOCATIONS: [[f64; 3]; 34] = [
+pub const BOOST_LOCATIONS: [[f32; 3]; 34] = [
     [0.0, -4240.0, 70.0],
     [-1792.0, -4184.0, 70.0],
     [1792.0, -4184.0, 70.0],

@@ -1,3 +1,4 @@
+use core::time;
 // use std::sync::Mutex;
 // use core::slice;
 use std::thread;
@@ -128,10 +129,11 @@ impl CommunicationHandler {
                     win_handle = FindWindowA(None, s!("DIEmWin"));
                     is_visible = IsWindowVisible(win_handle);
                     if is_visible.as_bool() {
-                        DestroyWindow(win_handle);
+                        let res = DestroyWindow(win_handle);
+                        println!("DIEmWin detector successfully closed window");
                     }
                 }
-                println!("DIEmWin detector successfully closed window");
+                thread::sleep(time::Duration::new(1, 0));
             }
         });
         let pipe_name_u16: Vec<u16> = pipe_name.encode_utf16().collect();
