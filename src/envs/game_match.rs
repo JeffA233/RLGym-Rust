@@ -1,4 +1,5 @@
 use std::{thread::spawn, any::Any};
+use crate::obs_builders::aspo4_array::AdvancedObsPadderStacker;
 
 use ndarray::*;
 
@@ -11,11 +12,11 @@ pub struct game_match {
     pub _team_size: usize,
     pub _spawn_opponents: bool,
     pub _tick_skip: usize,
-    pub _reward_fn: todo!(),
-    pub _terminal_condition: todo!(),
-    pub _obs_builder: todo!(),
-    pub _action_parser: todo!(),
-    pub _state_setter: todo!(),
+    pub _reward_fn: fn() -> f32,
+    pub _terminal_condition: fn() -> bool,
+    pub _obs_builder: AdvancedObsPadderStacker,
+    pub _action_parser: fn() -> Vec<f32>,
+    pub _state_setter: fn() -> Vec<f32>,
     pub agents: usize,
     pub observation_space: Vec<usize>,
     pub action_space: Vec<usize>,
@@ -39,7 +40,7 @@ pub trait RewardFuncMethods {
 }
 
 impl game_match {
-    pub fn new(reward_function: fn() -> f32, terminal_condition: fn() -> bool, obs_builder: fn() -> Vec<f32>, action_parser: fn() -> Vec<f32>, state_setter: fn() -> Vec<f32>, team_size: Option<usize>, tick_skip: Option<usize>, game_speed: Option<usize>, gravity: Option<f32>, boost_consumption: Option<f32>, spawn_opponents: Option<bool>) -> Self {
+    pub fn new(reward_function: fn() -> f32, terminal_condition: fn() -> bool, obs_builder: AdvancedObsPadderStacker, action_parser: fn() -> Vec<f32>, state_setter: fn() -> Vec<f32>, team_size: Option<usize>, tick_skip: Option<usize>, game_speed: Option<usize>, gravity: Option<f32>, boost_consumption: Option<f32>, spawn_opponents: Option<bool>) -> Self {
         let team_size = match team_size {
             Some(team_size) => team_size,
             None => 1

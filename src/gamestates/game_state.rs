@@ -4,6 +4,7 @@ use crate::gamestates::player_data::PlayerData;
 use crate::gamestates::physics_object::PhysicsObject;
 
 // #[derive(Default)]
+#[derive(Clone)]
 pub struct GameState {
     pub game_type: i64,
     pub blue_score: i64,

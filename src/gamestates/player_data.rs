@@ -1,5 +1,6 @@
 use crate::gamestates::physics_object::PhysicsObject;
 // #[derive(Default)]
+#[derive(Clone)]
 pub struct PlayerData {
     pub car_id: i32,
     pub team_num: i32,

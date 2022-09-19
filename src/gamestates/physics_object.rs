@@ -2,6 +2,7 @@
 use ndarray::*;
 use crate::math::*;
 #[derive(Default)]
+#[derive(Clone)]
 pub struct PhysicsObject {
     pub position: Vec<f32>,
     pub quaternion: Vec<f32>,
@@ -28,6 +29,19 @@ impl PhysicsObject {
         // Default::default()
     }
 
+    // pub fn clone(&self) -> Self {
+    //     PhysicsObject {
+    //         position: self.position.clone(),
+    //         quaternion: self.quaternion.clone(),
+    //         linear_velocity: self.linear_velocity.clone(),
+    //         angular_velocity: self.angular_velocity.clone(),
+    //         euler_angles: self.euler_angles.clone(),
+    //         rotation_mtx: self.rotation_mtx.clone(),
+    //         has_computed_euler_angles: self.has_computed_euler_angles.clone(),
+    //         has_computed_rot_mtx: self.has_computed_rot_mtx.clone()
+    //     }
+    // }
+
     pub fn decode_car_data(&mut self, car_data: Vec<f32>) {
         self.position = car_data[..3].to_vec();
         self.quaternion = car_data[3..7].to_vec();
@@ -42,48 +56,48 @@ impl PhysicsObject {
         self.angular_velocity = ball_data[6..9].to_vec();
     }
 
-    pub fn forward(self) -> Array1<f32> {
-        let arr = self.rotation_mtx();
+    pub fn forward(&mut self) -> Vec<f32> {
+        let arr = &self.rotation_mtx();
         let partial_arr = arr.column(0);
         // [:, 0]
         // let ret_arr = partial_arr.to_owned();
-        return partial_arr.to_owned()
+        return partial_arr.to_owned().to_vec()
     }
 
-    pub fn right(self) -> Array1<f32> {
+    pub fn right(&mut self) -> Vec<f32> {
         let arr = self.rotation_mtx();
         let partial_arr = arr.column(1);
-        return partial_arr.to_owned()
+        return partial_arr.to_owned().to_vec()
     }
 
-    pub fn left(self) -> Array1<f32> {
+    pub fn left(&mut self) -> Vec<f32> {
         let arr = self.rotation_mtx();
         let partial_arr = arr.column(1);
         let res_arr = partial_arr.to_owned() * -1.;
-        return res_arr
+        return res_arr.to_vec()
     }
 
-    pub fn up(self) -> Array1<f32> {
+    pub fn up(&mut self) -> Vec<f32> {
         let arr = self.rotation_mtx();
         let partial_arr = arr.column(2);
-        return partial_arr.to_owned()
+        return partial_arr.to_owned().to_vec()
     }
 
-    pub fn pitch(self) -> f32 {
+    pub fn pitch(&self) -> f32 {
         self.euler_angles[0]
     }
 
-    pub fn euler_angles(mut self) -> Vec<f32> {
+    pub fn euler_angles(&mut self) -> Vec<f32> {
         if !self.has_computed_euler_angles {
-            self.euler_angles = quat_to_euler(self.quaternion.to_vec());
+            self.euler_angles = quat_to_euler(&self.quaternion.to_vec());
             self.has_computed_euler_angles = true;
         }
         return self.euler_angles.clone()
     }
     
-    pub fn rotation_mtx(mut self) -> Array2<f32> {
+    pub fn rotation_mtx(&mut self) -> Array2<f32> {
         if !self.has_computed_rot_mtx {
-            self.rotation_mtx = quat_to_rot_mtx(self.quaternion.to_vec());
+            self.rotation_mtx = quat_to_rot_mtx(&self.quaternion.to_vec());
             self.has_computed_rot_mtx = true;
         }
         // let rotation_mtx = self.rotation_mtx.clone();

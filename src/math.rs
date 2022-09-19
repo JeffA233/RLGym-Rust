@@ -20,8 +20,13 @@ pub fn trace(arr: Array2<f32>) -> f32 {
     diag.into_iter().sum()
 }
 
+pub fn vec_div_variable(a: &Vec<f32>, b: &f32) -> Vec<f32> {
+    let ret = a.iter().map(|x| x / b).collect();
+    return ret
+}
+
 /// multiply elementwise vec a * vec b
-pub fn element_mult_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
+pub fn element_mult_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
     assert!(a.len() == b.len(), "length of a did not match length of b");
     let mut z: Vec<f32> = Vec::new();
 
@@ -35,8 +40,8 @@ pub fn element_mult_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
     return z;
 }
 
-    /// multiply elementwise vec a * vec b
-    pub fn element_div_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
+    /// divide elementwise vec a / vec b
+    pub fn element_div_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
         assert!(a.len() == b.len(), "length of a did not match length of b");
         let mut z: Vec<f32> = Vec::new();
 
@@ -50,8 +55,8 @@ pub fn element_mult_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
         return z;
     }
 
-/// subtract elementwise vec a - vec b
-pub fn element_sub_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
+/// subtract elementwise vec b from vec a
+pub fn element_sub_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
     assert!(a.len() == b.len(), "length of a did not match length of b");
     let mut z: Vec<f32> = Vec::new();
 
@@ -66,7 +71,7 @@ pub fn element_sub_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
 }
 
 /// add elementwise vec a + vec b
-pub fn element_add_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
+pub fn element_add_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
     assert!(a.len() == b.len(), "length of a did not match length of b");
     let mut z: Vec<f32> = Vec::new();
 
@@ -81,7 +86,7 @@ pub fn element_add_vec(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
 }
 
 /// subtract elements of two vecs to get dist
-pub fn get_dist(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
+pub fn get_dist(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
     element_sub_vec(a, b)
 }
 
@@ -105,7 +110,7 @@ pub fn vector_projection(vec: Vec<f32>, dest_vec: Vec<f32>, mag_squared: Option<
         _mag_squared = norm * norm;
     }
 
-    let dot: Vec<f32> = element_mult_vec(vec.clone(), dest_vec.clone());
+    let dot: Vec<f32> = element_mult_vec(&vec, &dest_vec);
     let dot_prod: f32 = dot.iter().sum::<f32>();
 
     let part: f32 = dot_prod/_mag_squared;
@@ -134,7 +139,7 @@ pub fn scalar_projection(vec: Vec<f32>, dest_vec: Vec<f32>) -> f32 {
     if norm == 0. {
         return 0.;
     }
-    return (element_mult_vec(vec.clone(), dest_vec.clone()).iter()
+    return (element_mult_vec(&vec, &dest_vec).iter()
                                                                         .sum::<f32>())/norm;
 }
 
@@ -178,7 +183,7 @@ pub fn cosine_simularity(a: Vec<f32>, b: Vec<f32>) -> f32 {
     return res.iter().sum();
 }
 
-pub fn quat_to_euler(quat: Vec<f32>) -> Vec<f32> {
+pub fn quat_to_euler(quat: &Vec<f32>) -> Vec<f32> {
     assert!(quat.len() == 4, "nums is not the correct shape");
 
     let w: f32 = quat[0];
@@ -207,7 +212,7 @@ pub fn quat_to_euler(quat: Vec<f32>) -> Vec<f32> {
 }
 
 /// quat Vec to rotation matrix Array2
-pub fn quat_to_rot_mtx(nums: Vec<f32>) -> Array2<f32> {
+pub fn quat_to_rot_mtx(nums: &Vec<f32>) -> Array2<f32> {
     let mut theta = Array2::<f32>::zeros((3, 3));
     
     assert!(nums.len() == 4, "nums is not the correct shape");
