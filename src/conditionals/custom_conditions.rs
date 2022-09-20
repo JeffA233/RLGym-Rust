@@ -4,7 +4,7 @@ use super::common_conditions::{TimeoutCondition, GoalScoredCondition, NoTouchTim
 
 
 
-struct CombinedTerminalConditions {
+pub struct CombinedTerminalConditions {
     timeout_condition: TimeoutCondition,
     no_touch_timeout_condition: NoTouchTimeoutCondition,
     goal_scored_condition: GoalScoredCondition,
@@ -12,7 +12,7 @@ struct CombinedTerminalConditions {
 }
 
 impl CombinedTerminalConditions {
-    fn new(tick_skip: usize) -> Self {
+    pub fn new(tick_skip: usize) -> Self {
         CombinedTerminalConditions {
             timeout_condition: TimeoutCondition::new(400*120/tick_skip as i64),
             no_touch_timeout_condition: NoTouchTimeoutCondition::new(100*120/tick_skip as i64),
@@ -21,14 +21,14 @@ impl CombinedTerminalConditions {
         }
     }
 
-    fn reset(&mut self, _initial_state: &GameState) {
+    pub fn reset(&mut self, _initial_state: &GameState) {
         self.timeout_condition.reset(_initial_state);
         self.no_touch_timeout_condition.reset(_initial_state);
         self.goal_scored_condition.reset(_initial_state);
         self.no_touch_kickoff_condition.reset(_initial_state);
     }
 
-    fn is_terminal(&mut self, current_state: &GameState) -> bool {
+    pub fn is_terminal(&mut self, current_state: &GameState) -> bool {
         return [self.timeout_condition.is_terminal(current_state), 
         self.no_touch_timeout_condition.is_terminal(current_state), 
         self.goal_scored_condition.is_terminal(current_state), 

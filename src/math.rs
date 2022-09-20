@@ -103,7 +103,7 @@ pub fn vector_projection(vec: Vec<f32>, dest_vec: Vec<f32>, mag_squared: Option<
         }
     }
     else {
-        let norm = norm_func(vec.clone());
+        let norm = norm_func(&vec);
         if norm == 0. {
             return dest_vec;
         }
@@ -123,7 +123,7 @@ pub fn vector_projection(vec: Vec<f32>, dest_vec: Vec<f32>, mag_squared: Option<
 }
 
 /// get norm of vec
-pub fn norm_func(nums: Vec<f32>) -> f32 {
+pub fn norm_func(nums: &Vec<f32>) -> f32 {
     let norm_val: f32 = nums.clone()
                             .into_iter()
                             .map(|x: f32| x.powf(2.))
@@ -134,8 +134,8 @@ pub fn norm_func(nums: Vec<f32>) -> f32 {
     norm_val
 }
 
-pub fn scalar_projection(vec: Vec<f32>, dest_vec: Vec<f32>) -> f32 {
-    let norm = norm_func(dest_vec.clone());
+pub fn scalar_projection(vec: &Vec<f32>, dest_vec: &Vec<f32>) -> f32 {
+    let norm = norm_func(&dest_vec.clone());
     if norm == 0. {
         return 0.;
     }
@@ -143,16 +143,16 @@ pub fn scalar_projection(vec: Vec<f32>, dest_vec: Vec<f32>) -> f32 {
                                                                         .sum::<f32>())/norm;
 }
 
-pub fn squared_vecmag(vec: Vec<f32>) -> f32 {
-    norm_func(vec).powi(2)
+pub fn squared_vecmag(vec: &Vec<f32>) -> f32 {
+    norm_func(&vec).powi(2)
 }
 
-pub fn vecmag(vec: Vec<f32>) -> f32 {
-    norm_func(vec)
+pub fn vecmag(vec: &Vec<f32>) -> f32 {
+    norm_func(&vec)
 }
 
-pub fn unitvec(vec: Vec<f32>) -> Vec<f32> {
-    let vecm: f32 = norm_func(vec.clone());
+pub fn unitvec(vec: &Vec<f32>) -> Vec<f32> {
+    let vecm: f32 = norm_func(&vec);
     let mut res: Vec<f32> = Vec::new();
     for i in vec {
         res.push(i/vecm);
@@ -161,8 +161,8 @@ pub fn unitvec(vec: Vec<f32>) -> Vec<f32> {
 }
 
 pub fn cosine_simularity(a: Vec<f32>, b: Vec<f32>) -> f32 {
-    let a_norm = norm_func(a.clone()).sqrt();
-    let b_norm = norm_func(b.clone()).sqrt();
+    let a_norm = norm_func(&a).sqrt();
+    let b_norm = norm_func(&b).sqrt();
     
     let mut a_vec: Vec<f32> = Vec::new();
     for i in a {
@@ -339,7 +339,7 @@ pub fn rand_uvec3() -> Vec<f32> {
     for _ in 0..3 {
         vec.push(rand_num - 0.5);
     }
-    let norm_vec = norm_func(vec.clone());
+    let norm_vec = norm_func(&vec);
     for i in vec.iter_mut() {
         *i = *i/norm_vec;
     }
