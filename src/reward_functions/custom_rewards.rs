@@ -1,10 +1,11 @@
 use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::BLUE_TEAM};
 
-use super::common_rewards::player_ball_rewards::VelocityPlayerToBallReward;
+use super::{common_rewards::player_ball_rewards::VelocityPlayerToBallReward, default_reward::RewardFn, combined_reward::CombinedReward};
 
 use numpy::*;
 use ndarray::*;
 use std::io::prelude::*;
+use std::io::{BufWriter, Write};
 use std::fs::File;
 
 
@@ -15,11 +16,17 @@ impl JumpReward {
     pub fn new() -> Self {
         JumpReward {}
     }
+}
 
-    pub fn reset(&mut self, _initial_state: GameState) {}
+impl RewardFn for JumpReward {
+    fn reset(&mut self, _initial_state: GameState) {}
 
-    pub fn get_reward(&mut self, player: PlayerData, _state: GameState, _previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: PlayerData, _state: GameState, _previous_action: Vec<f32>) -> f32 {
         return player.has_jump as i32 as f32
+    }
+
+    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        self.get_reward(player, state, previous_action)
     }
 }
 
@@ -37,12 +44,14 @@ impl LeftKickoffReward {
             kickoff_id_blue: -1
         }
     }
+}
 
-    pub fn reset(&mut self, _initial_state: GameState) {
+impl RewardFn for LeftKickoffReward {
+    fn reset(&mut self, _initial_state: GameState) {
         self.vel_dir_reward.reset(_initial_state);
     }
 
-    pub fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
         if state.ball.position[0] == 0. && state.ball.position[1] == 0. {
             if self.kickoff_id_blue == -1 || self.kickoff_id_orange == -1 {
                 let mut blue_car: PlayerData = state.players[0].clone();
@@ -96,6 +105,10 @@ impl LeftKickoffReward {
             return 0.
         }
     }
+
+    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        self.get_reward(player, state, previous_action)
+    }
 }
 
 pub struct JumpTouchReward {
@@ -119,15 +132,51 @@ impl JumpTouchReward {
             exp: exp
         }
     }
+}
 
-    pub fn reset(&mut self, _initial_state: GameState) {}
+impl RewardFn for JumpTouchReward {
+    fn reset(&mut self, _initial_state: GameState) {}
 
-    pub fn get_reward(&mut self, player: PlayerData, state: GameState, _previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: PlayerData, state: GameState, _previous_action: Vec<f32>) -> f32 {
         if player.ball_touched && !player.on_ground && state.ball.position[2] >= self.min_height {
             return (state.ball.position[2] - 92.).powf(self.exp)-1.
         } else {
             return 0.
         }
+    }
+
+    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        self.get_reward(player, state, previous_action)
+    }
+}
+
+pub struct GatherBoostReward {
+    last_boost: f32
+}
+
+impl GatherBoostReward{
+    pub fn new() -> Self {
+        GatherBoostReward { last_boost: 34. }
+    }
+}
+
+impl RewardFn for GatherBoostReward {
+    fn reset(&mut self,  _initial_state: GameState) {}
+
+    fn get_reward(&mut self, player: PlayerData, _state: GameState, _previous_action: Vec<f32>) -> f32 {
+        let boost_differential: f32;
+        if player.boost_amount > self.last_boost {
+            boost_differential = player.boost_amount - self.last_boost;
+            self.last_boost = player.boost_amount;
+        } else {
+            boost_differential = 0.;
+            self.last_boost = player.boost_amount;
+        }
+        return boost_differential/100.
+    }
+
+    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        self.get_reward(player, state, previous_action)
     }
 }
 
@@ -135,11 +184,33 @@ struct SB3CombinedLogReward {
     file_location: String,
     lockfile: String,
     final_mult: f32,
-    returns: Array1<f32>
+    returns: Array1<f32>,
+    combined_reward_struct: CombinedReward
 }
 
 impl SB3CombinedLogReward {
-    fn new(reward_fns: Vec<fn() -> f32>) {
-        
+    fn new(reward_structs: Vec<Box<dyn RewardFn>>, reward_weights: Vec<f32>, file_location: Option<String>, final_mult: Option<f32>) -> Self {
+        let file_location = match file_location {
+            Some(file_location) => file_location,
+            None => "combinedlogfiles".to_owned()
+        };
+        let final_mult = match final_mult {
+            Some(final_mult) => final_mult,
+            None => 1.
+        };
+        // File::options()
+        // File::create(path)
+
+        SB3CombinedLogReward {
+            file_location: format!("{}/rewards.txt", file_location),
+            lockfile: format!("{}/reward_lock", file_location),
+            final_mult: final_mult,
+            returns: Array1::<f32>::zeros(reward_structs.len()),
+            combined_reward_struct: CombinedReward::new(reward_structs, reward_weights)
+        }
     }
 }
+
+// impl RewardFn for SB3CombinedLogReward {
+
+// }

@@ -1,4 +1,4 @@
-use ndarray::*;
+// use ndarray::*;
 use std::collections::VecDeque;
 use std::f32::consts::PI;
 
@@ -7,6 +7,8 @@ use crate::gamestates::game_state::GameState;
 use crate::gamestates::physics_object::PhysicsObject;
 use crate::gamestates::player_data::PlayerData;
 use crate::math::*;
+
+use super::obs_builder::ObsBuilder;
 
 pub struct AdvancedObsPadderStacker {
     team_size: usize,
@@ -60,11 +62,50 @@ impl AdvancedObsPadderStacker {
         self.ball_stack[index].truncate(self.stack_size);
     }
 
-    pub fn reset() {
+    fn _add_dummy(obs: &mut Vec<f32>) {
+        obs.append(&mut vec![0.; 31]);
+    }
+
+    fn _add_player_to_obs(&self, obs: &mut Vec<f32>, car: &PlayerData, ball: &PhysicsObject, inverted: bool, player: Option<PhysicsObject>) -> PhysicsObject {
+        let mut player_car: PhysicsObject;
+        if inverted {
+            player_car = car.inverted_car_data.clone();
+        } else {
+            player_car = car.car_data.clone();
+        }
+
+        let mut rel_pos = element_sub_vec(&ball.position, &player_car.position);
+        rel_pos = vec_div_variable(&rel_pos, &self.pos_std);
+        let mut rel_vel = element_sub_vec(&ball.linear_velocity, &player_car.linear_velocity);
+        rel_vel = vec_div_variable(&rel_vel, &self.pos_std);
+
+        obs.append(&mut rel_pos);
+        obs.append(&mut rel_vel);
+        obs.append(&mut vec_div_variable(&player_car.position, &self.pos_std));
+        obs.append(&mut player_car.forward());
+        obs.append(&mut player_car.up());
+        obs.append(&mut vec_div_variable(&player_car.linear_velocity, &self.pos_std));
+        obs.append(&mut vec_div_variable(&player_car.angular_velocity, &self.ang_std));
+        obs.append(&mut vec![car.boost_amount, car.on_ground as i32 as f32, car.has_flip as i32 as f32, car.is_demoed as i32 as f32]);
+
+        match player {
+            Some(player) => {
+                obs.append(&mut vec_div_variable(&element_div_vec(&player_car.position, &player.position), &self.pos_std));
+                obs.append(&mut vec_div_variable(&element_div_vec(&player_car.linear_velocity, &player.linear_velocity), &self.pos_std));
+            }
+            None => ()
+        };
+
+        return player_car
+    }
+}
+
+impl ObsBuilder for AdvancedObsPadderStacker {
+    fn reset(&mut self, _initial_state: GameState) {
         
     }
 
-    pub fn build_obs(&mut self, player: PlayerData, state: GameState, previous_action: Array1<f32>) -> Vec<f32> {
+    fn build_obs(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> Vec<f32> {
         let inverted: bool;
         let ball: &PhysicsObject;
         let mut pads: Vec<f32>;
@@ -87,7 +128,7 @@ impl AdvancedObsPadderStacker {
         obs.append(&mut ball.position.clone());
         obs.append(&mut ball.linear_velocity.clone());
         obs.append(&mut ball.angular_velocity.clone());
-        obs.append(&mut previous_action.to_vec().clone());
+        obs.append(&mut previous_action.clone());
         obs.append(&mut pads);
 
         let ball_stack = self.ball_stack[player.car_id as usize].clone();
@@ -137,42 +178,5 @@ impl AdvancedObsPadderStacker {
         }
 
         return obs
-    }
-
-    fn _add_dummy(obs: &mut Vec<f32>) {
-        obs.append(&mut vec![0.; 31]);
-    }
-
-    fn _add_player_to_obs(&self, obs: &mut Vec<f32>, car: &PlayerData, ball: &PhysicsObject, inverted: bool, player: Option<PhysicsObject>) -> PhysicsObject {
-        let mut player_car: PhysicsObject;
-        if inverted {
-            player_car = car.inverted_car_data.clone();
-        } else {
-            player_car = car.car_data.clone();
-        }
-
-        let mut rel_pos = element_sub_vec(&ball.position, &player_car.position);
-        rel_pos = vec_div_variable(&rel_pos, &self.pos_std);
-        let mut rel_vel = element_sub_vec(&ball.linear_velocity, &player_car.linear_velocity);
-        rel_vel = vec_div_variable(&rel_vel, &self.pos_std);
-
-        obs.append(&mut rel_pos);
-        obs.append(&mut rel_vel);
-        obs.append(&mut vec_div_variable(&player_car.position, &self.pos_std));
-        obs.append(&mut player_car.forward());
-        obs.append(&mut player_car.up());
-        obs.append(&mut vec_div_variable(&player_car.linear_velocity, &self.pos_std));
-        obs.append(&mut vec_div_variable(&player_car.angular_velocity, &self.ang_std));
-        obs.append(&mut vec![car.boost_amount, car.on_ground as i32 as f32, car.has_flip as i32 as f32, car.is_demoed as i32 as f32]);
-
-        match player {
-            Some(player) => {
-                obs.append(&mut vec_div_variable(&element_div_vec(&player_car.position, &player.position), &self.pos_std));
-                obs.append(&mut vec_div_variable(&element_div_vec(&player_car.linear_velocity, &player.linear_velocity), &self.pos_std));
-            }
-            None => ()
-        };
-
-        return player_car
     }
 }

@@ -1,5 +1,5 @@
 use std::{thread::spawn, any::Any};
-use crate::{obs_builders::aspo4_array::AdvancedObsPadderStacker, action_parsers::necto_parser_2::NectoAction, conditionals::custom_conditions::CombinedTerminalConditions};
+use crate::{obs_builders::{aspo4_array::AdvancedObsPadderStacker, obs_builder::ObsBuilder}, action_parsers::necto_parser_2::NectoAction, conditionals::custom_conditions::CombinedTerminalConditions, reward_functions::default_reward::RewardFn};
 
 use ndarray::*;
 
@@ -12,9 +12,9 @@ pub struct GameMatch {
     pub _team_size: usize,
     pub _spawn_opponents: bool,
     pub _tick_skip: usize,
-    pub _reward_fn: fn() -> f32,
+    pub _reward_fn: Box<dyn RewardFn>,
     pub _terminal_condition: CombinedTerminalConditions,
-    pub _obs_builder: AdvancedObsPadderStacker,
+    pub _obs_builder: Box<dyn ObsBuilder>,
     pub _action_parser: NectoAction,
     pub _state_setter: fn() -> Vec<f32>,
     pub agents: usize,
@@ -40,7 +40,7 @@ pub struct GameMatch {
 // }
 
 impl GameMatch {
-    pub fn new(reward_function: fn() -> f32, terminal_condition: CombinedTerminalConditions, obs_builder: AdvancedObsPadderStacker, action_parser: NectoAction, state_setter: fn() -> Vec<f32>, team_size: Option<usize>, tick_skip: Option<usize>, game_speed: Option<usize>, gravity: Option<f32>, boost_consumption: Option<f32>, spawn_opponents: Option<bool>) -> Self {
+    pub fn new(reward_function: Box<dyn RewardFn>, terminal_condition: CombinedTerminalConditions, obs_builder: Box<dyn ObsBuilder>, action_parser: NectoAction, state_setter: fn() -> Vec<f32>, team_size: Option<usize>, tick_skip: Option<usize>, game_speed: Option<usize>, gravity: Option<f32>, boost_consumption: Option<f32>, spawn_opponents: Option<bool>) -> Self {
         let team_size = match team_size {
             Some(team_size) => team_size,
             None => 1
