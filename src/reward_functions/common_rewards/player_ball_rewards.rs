@@ -1,4 +1,4 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::{element_sub_vec, scalar_projection, norm_func, vec_div_variable, element_mult_vec}, common_values::CAR_MAX_SPEED};
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::{element_sub_vec, scalar_projection, norm_func, vec_div_variable, element_mult_vec}, common_values::CAR_MAX_SPEED, reward_functions::default_reward::RewardFn};
 
 
 
@@ -16,10 +16,13 @@ impl VelocityPlayerToBallReward {
             use_scalar_projection: use_scalar_projection
         }
     }
+}
 
-    pub fn reset(&mut self, _initial_state: GameState) {}
-
-    pub fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+impl RewardFn for VelocityPlayerToBallReward {
+    fn reset(&mut self, initial_state: GameState) {
+        
+    }
+    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
         let vel = player.car_data.linear_velocity;
 
         let pos_diff = element_sub_vec(&state.ball.position, &player.car_data.position);
@@ -32,5 +35,8 @@ impl VelocityPlayerToBallReward {
             let norm_vel = vec_div_variable(&norm_pos_diff, &CAR_MAX_SPEED);
             return element_mult_vec(&norm_pos_diff, &norm_vel).iter().sum()
         }
+    }
+    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        self.get_reward(player, state, previous_action)
     }
 }

@@ -1,4 +1,4 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::{BLUE_TEAM, ORANGE_TEAM, ORANGE_GOAL_BACK, BLUE_GOAL_BACK, BALL_MAX_SPEED}, math::element_sub_vec};
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::{BLUE_TEAM, ORANGE_TEAM, ORANGE_GOAL_BACK, BLUE_GOAL_BACK, BALL_MAX_SPEED}, math::element_sub_vec, reward_functions::default_reward::RewardFn};
 use crate::math::*;
 
 
@@ -22,12 +22,14 @@ impl VelocityBallToGoalReward {
             use_scalar_projection: use_scalar_projection
         }
     }
+}
 
-    pub fn reset(&mut self, _initial_state: GameState) {
-
+impl RewardFn for VelocityBallToGoalReward {
+    fn reset(&mut self, initial_state: GameState) {
+        
     }
 
-    pub fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
         let objective: Vec<f32>;
         if (player.team_num == BLUE_TEAM && !self.own_goal) || (player.team_num == ORANGE_TEAM && self.own_goal) {
             objective = ORANGE_GOAL_BACK.to_vec();
@@ -45,5 +47,9 @@ impl VelocityBallToGoalReward {
             let norm_vel = vec_div_variable(&state.ball.linear_velocity, &BALL_MAX_SPEED);
             return element_mult_vec(&norm_pos_diff, &norm_vel).iter().sum()
         }
+    }
+
+    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        self.get_reward(player, state, previous_action)
     }
 }

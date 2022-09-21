@@ -1,6 +1,6 @@
 use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::BLUE_TEAM, math::{element_add_vec, element_mult_vec}};
 
-use super::{common_rewards::player_ball_rewards::VelocityPlayerToBallReward, default_reward::RewardFn, combined_reward::CombinedReward};
+use super::{common_rewards::{player_ball_rewards::VelocityPlayerToBallReward, ball_goal_rewards::VelocityBallToGoalReward, misc_rewards::{SaveBoostReward, VelocityReward, EventReward}}, default_reward::RewardFn};
 
 // use numpy::*;
 // use ndarray::*;
@@ -11,6 +11,34 @@ use std::fs::File;
 use fs2::FileExt;
 use std::thread;
 
+
+pub fn get_custom_reward_func() -> Box<dyn RewardFn> {
+    let mut reward_fn_vec = Vec::<Box<dyn RewardFn>>::new();
+
+    reward_fn_vec.push(Box::new(VelocityPlayerToBallReward::new(None)));
+    reward_fn_vec.push(Box::new(VelocityBallToGoalReward::new(None, None)));
+    reward_fn_vec.push(Box::new(GatherBoostReward::new()));
+    reward_fn_vec.push(Box::new(SaveBoostReward::new()));
+    reward_fn_vec.push(Box::new(LeftKickoffReward::new()));
+    reward_fn_vec.push(Box::new(JumpTouchReward::new(Some(100.), None)));
+    reward_fn_vec.push(Box::new(VelocityReward::new(None)));
+    reward_fn_vec.push(Box::new(EventReward::new(None, None, None, None, Some(5.), Some(45.), Some(25.), None)));
+    reward_fn_vec.push(Box::new(EventReward::new(None, Some(100.), None, None, None, None, None, None)));
+    reward_fn_vec.push(Box::new(EventReward::new(None, None, Some(-100.), None, None, None, None, None)));
+
+    // SB3CombinedLogReward {
+    //     reward_file: "combinedlogfiles-v2".to_string(),
+    //     final_mult: 0.1,
+    //     returns: Vec::<f32>::new()
+    // }
+
+    Box::new(SB3CombinedLogReward::new(
+        reward_fn_vec, 
+        vec![0.05, 0.2, 5.0, 0.01, 1.0, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006],
+        Some("combinedlogfiles-v2".to_string()),
+        Some(0.1)
+    ))
+}
 
 pub struct JumpReward {}
 
@@ -31,6 +59,7 @@ impl RewardFn for JumpReward {
         self.get_reward(player, state, previous_action)
     }
 }
+
 
 pub struct LeftKickoffReward {
     vel_dir_reward: VelocityPlayerToBallReward,
@@ -113,6 +142,7 @@ impl RewardFn for LeftKickoffReward {
     }
 }
 
+
 pub struct JumpTouchReward {
     min_height: f32,
     exp: f32
@@ -152,6 +182,7 @@ impl RewardFn for JumpTouchReward {
     }
 }
 
+
 pub struct GatherBoostReward {
     last_boost: f32
 }
@@ -182,7 +213,8 @@ impl RewardFn for GatherBoostReward {
     }
 }
 
-struct SB3CombinedLogReward {
+
+pub struct SB3CombinedLogReward {
     reward_file: String,
     // lockfile: String,
     final_mult: f32,

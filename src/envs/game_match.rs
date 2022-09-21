@@ -15,7 +15,7 @@ pub struct GameMatch {
     pub _reward_fn: Box<dyn RewardFn>,
     pub _terminal_condition: CombinedTerminalConditions,
     pub _obs_builder: Box<dyn ObsBuilder>,
-    pub _action_parser: NectoAction,
+    pub _action_parser: Box<dyn Action,
     pub _state_setter: fn() -> Vec<f32>,
     pub agents: usize,
     pub observation_space: Vec<usize>,
