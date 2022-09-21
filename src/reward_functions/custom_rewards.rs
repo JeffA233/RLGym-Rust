@@ -1,13 +1,15 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::BLUE_TEAM};
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::BLUE_TEAM, math::{element_add_vec, element_mult_vec}};
 
 use super::{common_rewards::player_ball_rewards::VelocityPlayerToBallReward, default_reward::RewardFn, combined_reward::CombinedReward};
 
-use numpy::*;
-use ndarray::*;
+// use numpy::*;
+// use ndarray::*;
 use std::fs::*;
 use std::io::{BufWriter, Write};
 use std::io::ErrorKind::*;
 use std::fs::File;
+use fs2::FileExt;
+use std::thread;
 
 
 pub struct JumpReward {}
@@ -184,8 +186,9 @@ struct SB3CombinedLogReward {
     reward_file: String,
     // lockfile: String,
     final_mult: f32,
-    returns: Array1<f32>,
-    combined_reward_struct: CombinedReward
+    returns: Vec<f32>,
+    combined_reward_fns: Vec<Box<dyn RewardFn>>,
+    combined_reward_weights: Vec<f32>
 }
 
 impl SB3CombinedLogReward {
@@ -202,35 +205,140 @@ impl SB3CombinedLogReward {
             Some(final_mult) => final_mult,
             None => 1.
         };
-        while true {
+        for i in 0..100 {
+            if i == 99 {
+                panic!("too many attempts taken to lock the file")
+            }
+
             let out = OpenOptions::new().create(true).open(&reward_file);
+
+            let file = match out {
+                Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+                Ok(_file) => _file
+            };
+
+            let out = file.lock_exclusive();
 
             match out {
                 Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
-                Ok(file) => break
+                Ok(_file) => _file
             };
+
+            file.unlock().unwrap();
         }
-        // let out = File::create(&logfile).unwrap();
-        // let mut ret = BufWriter::new(out);
-        // let vec = vec![1., 2.5, 3.5, 4.5, 6.6];
-        // let mut string = String::new();
-        // string = string + "[";
-        // for i in 0..vec.len()-2 {
-        //     string = string + &format!("{}, ", vec[i])
-        // }
-        // string = string + &format!("{}]", vec[vec.len()-1]);
-        // writeln!(&mut ret, "{}", string).unwrap();
 
         SB3CombinedLogReward {
             reward_file: reward_file,
             // lockfile: lockfile,
             final_mult: final_mult,
-            returns: Array1::<f32>::zeros(reward_structs.len()),
-            combined_reward_struct: CombinedReward::new(reward_structs, reward_weights)
+            returns: vec![0.; reward_structs.len()],
+            combined_reward_fns: reward_structs,
+            combined_reward_weights: reward_weights
         }
+    }
+
+    // fn file_put(returns_local: &Vec<f32>, reward_file: &String) {
+    //     for i in 0..100 {
+    //         if i == 99 {
+    //             panic!("too many attempts taken to lock the file")
+    //         }
+    //         let out = File::open(&reward_file);
+
+    //         let file = match out {
+    //             Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+    //             Ok(_file) => _file
+    //         };
+
+    //         let out = file.lock_exclusive();
+
+    //         match out {
+    //             Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+    //             Ok(_file) => _file
+    //         };
+
+    //         let mut buf = BufWriter::new(&file);
+
+    //         let mut string = String::new();
+    //         string = string + "[";
+    //         for i in 0..returns_local.len()-2 {
+    //             string = string + &format!("{}, ", returns_local[i])
+    //         }
+    //         string = string + &format!("{}]", returns_local[returns_local.len()-1]);
+    //         writeln!(&mut buf, "{}", string).unwrap();
+
+    //         file.unlock().unwrap();
+    //         break
+    //     }
+    // }
+}
+
+impl RewardFn for SB3CombinedLogReward {
+    fn reset(&mut self, _initial_state: GameState) {
+        self.returns = vec![0.; self.combined_reward_fns.len()];
+    }
+
+    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        let mut rewards = Vec::<f32>::new();
+
+        for func in &mut self.combined_reward_fns {
+            rewards.push(func.get_reward(player.clone(), state.clone(), previous_action.clone()));
+        }
+        
+        self.returns = element_add_vec(&self.returns, &rewards);
+        self.returns = element_mult_vec(&self.returns, &self.combined_reward_weights);
+
+        return self.returns.iter().sum::<f32>() * self.final_mult;
+    }
+
+    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+        let mut rewards = Vec::<f32>::new();
+
+        for func in &mut self.combined_reward_fns {
+            rewards.push(func.get_reward(player.clone(), state.clone(), previous_action.clone()));
+        }
+        
+        self.returns = element_add_vec(&self.returns, &rewards);
+        self.returns = element_mult_vec(&self.returns, &self.combined_reward_weights);
+
+        let local_ret = self.returns.clone();
+        let reward_file = self.reward_file.clone();
+
+        thread::spawn(move || file_put(&local_ret, &reward_file));
+
+        return self.returns.iter().sum::<f32>() * self.final_mult;
     }
 }
 
-// impl RewardFn for SB3CombinedLogReward {
+fn file_put(returns_local: &Vec<f32>, reward_file: &String) {
+    for i in 0..100 {
+        if i == 99 {
+            panic!("too many attempts taken to lock the file")
+        }
+        let out = File::open(&reward_file);
 
-// }
+        let file = match out {
+            Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+            Ok(_file) => _file
+        };
+
+        let out = file.lock_exclusive();
+
+        match out {
+            Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+            Ok(_file) => _file
+        };
+
+        let mut buf = BufWriter::new(&file);
+
+        let mut string = String::new();
+        string = string + "[";
+        for i in 0..returns_local.len()-2 {
+            string = string + &format!("{}, ", returns_local[i])
+        }
+        string = string + &format!("{}]", returns_local[returns_local.len()-1]);
+        writeln!(&mut buf, "{}", string).unwrap();
+
+        file.unlock().unwrap();
+        break
+    }
+}
