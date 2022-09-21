@@ -4,10 +4,10 @@ use super::{common_rewards::player_ball_rewards::VelocityPlayerToBallReward, def
 
 use numpy::*;
 use ndarray::*;
-use std::io::prelude::*;
+use std::fs::*;
 use std::io::{BufWriter, Write};
+use std::io::ErrorKind::*;
 use std::fs::File;
-
 
 
 pub struct JumpReward {}
@@ -181,8 +181,8 @@ impl RewardFn for GatherBoostReward {
 }
 
 struct SB3CombinedLogReward {
-    file_location: String,
-    lockfile: String,
+    reward_file: String,
+    // lockfile: String,
     final_mult: f32,
     returns: Array1<f32>,
     combined_reward_struct: CombinedReward
@@ -194,16 +194,36 @@ impl SB3CombinedLogReward {
             Some(file_location) => file_location,
             None => "combinedlogfiles".to_owned()
         };
+
+        let reward_file = format!("{}/rewards.txt", file_location);
+        // let lockfile = format!("{}/reward_lock", file_location);
+        
         let final_mult = match final_mult {
             Some(final_mult) => final_mult,
             None => 1.
         };
-        // File::options()
-        // File::create(path)
+        while true {
+            let out = OpenOptions::new().create(true).open(&reward_file);
+
+            match out {
+                Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+                Ok(file) => break
+            };
+        }
+        // let out = File::create(&logfile).unwrap();
+        // let mut ret = BufWriter::new(out);
+        // let vec = vec![1., 2.5, 3.5, 4.5, 6.6];
+        // let mut string = String::new();
+        // string = string + "[";
+        // for i in 0..vec.len()-2 {
+        //     string = string + &format!("{}, ", vec[i])
+        // }
+        // string = string + &format!("{}]", vec[vec.len()-1]);
+        // writeln!(&mut ret, "{}", string).unwrap();
 
         SB3CombinedLogReward {
-            file_location: format!("{}/rewards.txt", file_location),
-            lockfile: format!("{}/reward_lock", file_location),
+            reward_file: reward_file,
+            // lockfile: lockfile,
             final_mult: final_mult,
             returns: Array1::<f32>::zeros(reward_structs.len()),
             combined_reward_struct: CombinedReward::new(reward_structs, reward_weights)
