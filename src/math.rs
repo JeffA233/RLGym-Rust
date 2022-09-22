@@ -350,7 +350,7 @@ pub fn rand_vec3(max_norm: f32) -> Vec<f32> {
     let mut rng = thread_rng();
     let mut res: Vec<f32> = Vec::new();
     for i in res.iter_mut() {
-        let rand_num = rng.gen_range((0.)..(1.));
+        let rand_num = rng.gen::<f32>();
         let partial = rand_num * max_norm;
         *i = *i*partial;
     }

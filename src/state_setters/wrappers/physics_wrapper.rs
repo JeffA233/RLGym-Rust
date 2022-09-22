@@ -23,9 +23,9 @@ impl PhysicsWrapper {
 
     fn _read_from_physics_object(phys_obj: &PhysicsObject) -> PhysicsWrapper {
         PhysicsWrapper {
-            position: phys_obj.position,
-            linear_velocity: phys_obj.linear_velocity,
-            angular_velocity: phys_obj.angular_velocity
+            position: phys_obj.position.clone(),
+            linear_velocity: phys_obj.linear_velocity.clone(),
+            angular_velocity: phys_obj.angular_velocity.clone()
         }
     }
 
@@ -81,7 +81,7 @@ impl PhysicsWrapper {
         vec.append(&mut self.linear_velocity.clone());
         vec.append(&mut self.angular_velocity.clone());
 
-        let mut vec_str = Vec::<String>::new();
+        let vec_str: Vec<String>;
 
         vec_str = vec.iter().map(|x| x.to_string()).collect();
         vec_str.join(" ")

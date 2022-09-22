@@ -16,7 +16,7 @@ pub struct GameMatch {
     pub _terminal_condition: CombinedTerminalConditions,
     pub _obs_builder: Box<dyn ObsBuilder>,
     pub _action_parser: Box<dyn ActionParser>,
-    pub _state_setter: fn() -> Vec<f32>,
+    pub _state_setter: Box<dyn StateSetter>,
     pub agents: usize,
     pub observation_space: Vec<usize>,
     pub action_space: Vec<usize>,
@@ -36,7 +36,6 @@ pub struct GameMatch {
 //     fn new() -> Self;
 //     fn reset(initial_state: GameState);
 //     fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Array1<f32>) -> f32;
-
 // }
 
 impl GameMatch {

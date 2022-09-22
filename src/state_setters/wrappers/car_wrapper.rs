@@ -5,14 +5,14 @@ pub struct CarWrapper {
     rotation: Vec<f32>,
     team_num: i32,
     id: i32,
-    boost: f32,
+    pub boost: f32,
     position: Vec<f32>,
     linear_velocity: Vec<f32>,
     angular_velocity: Vec<f32>
 }
 
 impl CarWrapper {
-    pub fn new(team_num: Option<i32>, id: Option<i32>, player_data: Option<&PlayerData>) -> Self {
+    pub fn new(team_num: Option<i32>, id: Option<i32>, player_data: Option<&mut PlayerData>) -> Self {
         let team_num = match team_num {
             Some(team_num) => team_num,
             None => -1
@@ -36,15 +36,15 @@ impl CarWrapper {
         return wrapper
     }
 
-    fn _read_from_player_data(player_data: &PlayerData) -> CarWrapper {
+    fn _read_from_player_data(player_data: &mut PlayerData) -> CarWrapper {
         CarWrapper {
             rotation: player_data.car_data.euler_angles(),
             team_num: player_data.team_num,
             id: player_data.car_id,
             boost: player_data.boost_amount,
-            position: player_data.car_data.position,
-            linear_velocity: player_data.car_data.linear_velocity,
-            angular_velocity: player_data.car_data.angular_velocity
+            position: player_data.car_data.position.clone(),
+            linear_velocity: player_data.car_data.linear_velocity.clone(),
+            angular_velocity: player_data.car_data.angular_velocity.clone()
         }
     }
 
@@ -119,7 +119,7 @@ impl CarWrapper {
         let boost = self.boost;
 
 
-        let mut vec_str = Vec::<String>::new();
+        let vec_str: Vec<String>;
 
         vec_str = vec.iter().map(|x| x.to_string()).collect();
         let str = vec_str.join(" ");
