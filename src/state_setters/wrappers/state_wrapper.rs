@@ -13,7 +13,7 @@ pub struct StateWrapper {
 }
 
 impl StateWrapper {
-    pub fn new(blue_count: Option<i32>, orange_count: Option<i32>, game_state: Option<&mut GameState>) -> Self {
+    pub fn new(blue_count: Option<usize>, orange_count: Option<usize>, game_state: Option<&mut GameState>) -> Self {
         let blue_count = match blue_count {
             Some(blue_count) => blue_count,
             None => 0
@@ -27,10 +27,10 @@ impl StateWrapper {
             None => {
                 let mut cars = Vec::<CarWrapper>::new();
                 for i in 0..blue_count {
-                    cars.push(CarWrapper::new(Some(0), Some(BLUE_ID1 + i), None))
+                    cars.push(CarWrapper::new(Some(0), Some(BLUE_ID1 + i as i32), None))
                 }
                 for i in 0..orange_count {
-                    cars.push(CarWrapper::new(Some(1), Some(ORANGE_ID1 + i), None))
+                    cars.push(CarWrapper::new(Some(1), Some(ORANGE_ID1 + i as i32), None))
                 }
                 StateWrapper {
                     ball: PhysicsWrapper::new(None),
@@ -53,13 +53,15 @@ impl StateWrapper {
         }
     }
 
-    pub fn format_state(&self) -> String {
-        let ball_str = self.ball.encode();
-        let mut car_str_vec = Vec::<String>::new();
+    pub fn format_state(&self) -> Vec<f32> {
+        let mut ball_vec = self.ball.encode();
+        let mut full_vec = Vec::<f32>::new();
+        full_vec.append(&mut ball_vec);
         for c in &self.cars {
-            car_str_vec.push(c.encode());
+            full_vec.append(&mut c.encode());
         }
-        let car_str = car_str_vec.join(" ");
-        format!("{ball_str} {car_str}")
+        // let car_str = car_str_vec.join(" ");
+        // format!("{ball_str} {car_str}")
+        return full_vec
     }
 }

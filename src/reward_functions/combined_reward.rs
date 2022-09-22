@@ -20,25 +20,25 @@ impl CombinedReward {
 }
 
 impl RewardFn for CombinedReward {
-    fn reset(&mut self, initial_state: GameState) {
+    fn reset(&mut self, initial_state: &GameState) {
         for struc in &mut self.reward_structs {
-            struc.reset(initial_state.clone());
+            struc.reset(initial_state);
         }
     }
 
-    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let mut rewards = Vec::<f32>::new();
         for struc in &mut self.reward_structs {
-            rewards.push(struc.get_reward(player.clone(), state.clone(), previous_action.clone()));
+            rewards.push(struc.get_reward(player, state, previous_action.clone()));
         }
         let ret = element_mult_vec(&rewards, &self.reward_weights);
         return ret.iter().sum()
     }
 
-    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let mut rewards = Vec::<f32>::new();
         for struc in &mut self.reward_structs {
-            rewards.push(struc.get_reward(player.clone(), state.clone(), previous_action.clone()));
+            rewards.push(struc.get_reward(player, state, previous_action.clone()));
         }
         let ret = element_mult_vec(&rewards, &self.reward_weights);
         return ret.iter().sum()

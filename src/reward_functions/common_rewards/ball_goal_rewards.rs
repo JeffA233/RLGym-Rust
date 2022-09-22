@@ -25,11 +25,11 @@ impl VelocityBallToGoalReward {
 }
 
 impl RewardFn for VelocityBallToGoalReward {
-    fn reset(&mut self, initial_state: GameState) {
+    fn reset(&mut self, initial_state: &GameState) {
         
     }
 
-    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let objective: Vec<f32>;
         if (player.team_num == BLUE_TEAM && !self.own_goal) || (player.team_num == ORANGE_TEAM && self.own_goal) {
             objective = ORANGE_GOAL_BACK.to_vec();
@@ -49,7 +49,7 @@ impl RewardFn for VelocityBallToGoalReward {
         }
     }
 
-    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         self.get_reward(player, state, previous_action)
     }
 }

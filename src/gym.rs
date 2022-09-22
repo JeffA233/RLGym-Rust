@@ -2,7 +2,7 @@ use crate::action_parsers;
 use crate::common_values;
 use crate::communication;
 use crate::communication::communication_handler::{CommunicationHandler, format_pipe_id};
-use crate::communication::message::RLGYM_CONFIG_MESSAGE_HEADER;
+use crate::communication::message::{RLGYM_CONFIG_MESSAGE_HEADER, RLGYM_RESET_GAME_STATE_MESSAGE_HEADER, RLGYM_STATE_MESSAGE_HEADER, RLGYM_AGENT_ACTION_IMMEDIATE_RESPONSE_MESSAGE_HEADER};
 use crate::conditionals;
 use crate::envs;
 use crate::gamelaunch;
@@ -18,6 +18,7 @@ use crate::envs::game_match::GameMatch;
 use ndarray::*;
 use subprocess::Popen;
 use subprocess::Result;
+use std::collections::HashMap;
 use std::thread::JoinHandle;
 use std::thread::Thread;
 use std::thread;
@@ -35,7 +36,7 @@ pub struct Gym {
     pub _local_pipe_name: String,
     pub _local_pipe_id: usize,
     pub _game_process: Popen,
-    pub _minimizing_thread: JoinHandle<()>,
+    // pub _minimizing_thread: JoinHandle<()>,
     pub _minimized: bool,
     pub _auto_minimize: bool,
     pub _prev_state: GameState
@@ -79,7 +80,7 @@ impl Gym {
         comm_handler.open_pipe(Some(&pipe_name), None);
         comm_handler.send_message(None, Some(RLGYM_CONFIG_MESSAGE_HEADER.to_vec()), Some(game_match.get_config()));
         // TODO thread that minimizes the game
-        let handle = thread::spawn(||println!("hello"));
+        // let handle = thread::spawn(||println!("placeholder for minimizer"));
         // if force_paging {
         //     page_rocket_league()
         // }
@@ -97,19 +98,72 @@ impl Gym {
             _local_pipe_name: pipe_name.to_string(),
             _local_pipe_id: pipe_id,
             _game_process: proc,
-            _minimizing_thread: handle,
+            // _minimizing_thread: handle,
             _minimized: false,
             _auto_minimize: auto_minimize,
-            _prev_state: GameState::new(),
+            _prev_state: GameState::new(None),
         }
     }
 
-    pub fn _minimize_game(&mut self) {
-        if !self._minimized {
-            if self._minimizing_thread.is_finished() {
+    // pub fn _minimize_game(&mut self) {
+    //     if !self._minimized {
+    //         if self._minimizing_thread.is_finished() {
 
-            }
+    //         }
+    //     }
+    // }
+
+    pub fn reset(&mut self, return_info: Option<bool>) -> Vec<Vec<f32>> {
+        let return_info = match return_info {
+            Some(return_info) => return_info,
+            None => false
+        };
+
+        let state_str = self._game_match.get_reset_state();
+
+        self._comm_handler.send_message(None, Some(RLGYM_RESET_GAME_STATE_MESSAGE_HEADER.to_vec()), Some(state_str));
+
+        let mut state = self._receive_state();
+        self._game_match.episode_reset(&state);
+        self._prev_state = state.clone();
+
+        let obs = self._game_match.build_observations(&mut state);
+        // TODO will have to work out how to return info if so
+        // if return_info {
+        //     let mut h_m = HashMap::<&str,f32>::new();
+        //     h_m.insert("result", self._game_match.get_result(state) as f32);
+        // }
+        return obs
+    }
+
+    pub fn step(&mut self, actions: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, Vec<f32>, bool, HashMap<&str, f32>) {
+        let actions = self._game_match.parse_actions(actions, &self._prev_state);
+        self._send_actions(actions);
+
+        let mut state = self._receive_state();
+
+        let obs = self._game_match.build_observations(&mut state);
+        let done = self._game_match.is_done(&state);
+        self._prev_state = state.clone();
+        let reward = self._game_match.get_rewards(&state, &done);
+        let mut info = HashMap::<&str,f32>::new();
+        info.insert("result", self._game_match.get_result(state) as f32);
+        return (obs, reward, done, info)
+    }
+
+    fn _receive_state(&mut self) -> GameState {
+        let message = self._comm_handler.receive_message(Some(RLGYM_STATE_MESSAGE_HEADER.to_vec()));
+        return self._game_match.parse_state(message.body)
+    }
+
+    fn _send_actions(&mut self, actions: Vec<Vec<f32>>) {
+        for action in &actions {
+            assert!(action.len() == 8, "action was not of length 8")
         }
+
+        let actions_formatted = self._game_match.format_actions(actions);
+
+        self._comm_handler.send_message(None, Some(RLGYM_AGENT_ACTION_IMMEDIATE_RESPONSE_MESSAGE_HEADER.to_vec()), Some(actions_formatted));
     }
 }
 

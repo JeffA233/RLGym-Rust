@@ -46,15 +46,20 @@ impl AdvancedObsPadderStacker {
             ball_stack: Vec::<VecDeque<Vec<Vec<f32>>>>::new()
         };
         for i in 0..66 {
-            advobsps.blank_stack(i)
+            advobsps.blank_stack()
         }
         return advobsps
     }
 
-    fn blank_stack(&mut self, index: usize) {
-        for _ in 0..self.stack_size {
-            self.ball_stack[index].push_front(self.default_ball.clone())
+    fn blank_stack(&mut self) {
+        let mut default_deque = VecDeque::new();
+        for _i in 0..self.stack_size {
+            default_deque.push_front(self.default_ball.clone());
         }
+        self.ball_stack.push(default_deque)
+        // for _ in 0..self.stack_size {
+        //     self.ball_stack[index].push_front(self.default_ball.clone())
+        // }
     }
 
     fn add_ball_to_stack(&mut self, pos_std: Vec<f32>, lin_std: Vec<f32>, ang_std: Vec<f32>, index: usize) {
@@ -101,11 +106,15 @@ impl AdvancedObsPadderStacker {
 }
 
 impl ObsBuilder for AdvancedObsPadderStacker {
-    fn reset(&mut self, _initial_state: GameState) {
+    fn reset(&mut self, _initial_state: &GameState) {
         
     }
 
-    fn build_obs(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> Vec<f32> {
+    fn get_obs_space(&mut self) -> Vec<usize> {
+        vec![276]
+    }
+
+    fn build_obs(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> Vec<f32> {
         let inverted: bool;
         let ball: &PhysicsObject;
         let mut pads: Vec<f32>;
@@ -148,7 +157,7 @@ impl ObsBuilder for AdvancedObsPadderStacker {
         let mut ally_count = 0;
         let mut enemy_count = 0;
 
-        for other in state.players {
+        for other in &state.players {
             if other.car_id == player.team_num {
                 continue;
             }

@@ -74,16 +74,17 @@ impl PhysicsWrapper {
         };
     }
 
-    pub fn encode(&self) -> String {
+    pub fn encode(&self) -> Vec<f32> {
         let mut vec = Vec::<f32>::new();
 
         vec.append(&mut self.position.clone());
         vec.append(&mut self.linear_velocity.clone());
         vec.append(&mut self.angular_velocity.clone());
 
-        let vec_str: Vec<String>;
+        // let vec_str: Vec<String>;
 
-        vec_str = vec.iter().map(|x| x.to_string()).collect();
-        vec_str.join(" ")
+        // vec_str = vec.iter().map(|x| x.to_string()).collect();
+        // vec_str.join(" ")
+        return vec
     }
 }

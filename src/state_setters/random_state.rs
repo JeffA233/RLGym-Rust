@@ -90,9 +90,5 @@ impl StateSetter for RandomState {
         self._reset_ball_random(&mut state_wrapper, self.ball_rand_speed);
         self._reset_cars_random(&mut state_wrapper, self.cars_on_ground, self.cars_rand_speed);
     }
-
-    // fn build_wrapper(&mut self, max_team_size: i32, spawn_opponents: bool) -> StateWrapper {
-    //     StateWrapper::new(Some(max_team_size), if spawn_opponents {Some(max_team_size)} else {Some(0)}, None)
-    // }
 }
 

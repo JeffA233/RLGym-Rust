@@ -108,21 +108,24 @@ impl CarWrapper {
         };
     }
 
-    pub fn encode(&self) -> String {
+    pub fn encode(&self) -> Vec<f32> {
         let mut vec = Vec::<f32>::new();
 
+        vec.push(self.id.clone() as f32);
         vec.append(&mut self.position.clone());
         vec.append(&mut self.linear_velocity.clone());
         vec.append(&mut self.angular_velocity.clone());
         vec.append(&mut self.rotation.clone());
+        vec.push(self.boost.clone());
         let id = self.id;
         let boost = self.boost;
 
 
-        let vec_str: Vec<String>;
+        // let vec_str: Vec<String>;
 
-        vec_str = vec.iter().map(|x| x.to_string()).collect();
-        let str = vec_str.join(" ");
-        format!("{id} {str} {boost}")
+        // vec_str = vec.iter().map(|x| x.to_string()).collect();
+        // let str = vec_str.join(" ");
+        // format!("{id} {str} {boost}")
+        return vec
     }
 }

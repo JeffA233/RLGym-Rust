@@ -1,5 +1,7 @@
 use crate::gamestates::game_state::GameState;
 
+use super::action_parser::ActionParser;
+
 pub struct NectoAction {
     _lookup_table: Vec<Vec<f32>>
 }
@@ -46,17 +48,21 @@ impl NectoAction {
         }
         return actions
     }
+}
 
-    pub fn get_action_space(&self) -> Vec<f32> {
+impl ActionParser for NectoAction {
+    fn get_action_space(&mut self) -> Vec<f32> {
         let mut action_space = Vec::<f32>::new();
         action_space.push(self._lookup_table.len() as f32);
         return action_space
     }
 
-    pub fn parse_actions(&mut self, actions: Vec<f32>, state: GameState) -> Vec<Vec<f32>> {
+    fn parse_actions(&mut self, actions: Vec<Vec<f32>>, _state: &GameState) -> Vec<Vec<f32>> {
         let mut parsed_actions = Vec::<Vec<f32>>::new();
-        for action in actions {
-            parsed_actions.push(self._lookup_table[action as usize].clone());
+        for action_vec in actions {
+            for action in action_vec {
+                parsed_actions.push(self._lookup_table[action as usize].clone());
+            }
         }
         return parsed_actions
     }

@@ -14,9 +14,10 @@ pub const RLGYM_LAST_BOT_INPUT_MESSAGE_HEADER: [f32; 3] = [11781., 83782., 83983
 pub const RLGYM_RESET_TO_SPECIFIC_GAME_STATE_MESSAGE_HEADER: [f32; 3] = [12782., 83783., 80784.];
 
 #[derive(Default)]
+#[derive(Clone)]
 pub struct Message {
-    body: Vec<f32>,
-    header: Vec<f32>
+    pub body: Vec<f32>,
+    pub header: Vec<f32>
 }
 
 pub fn deserialize_header(message_floats: &Vec<f32>) -> Vec<f32> {

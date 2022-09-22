@@ -39,7 +39,7 @@ impl CommunicationHandler {
         }
     }
 
-    pub fn recieve_message(self, header: Option<Vec<f32>>) -> Message {
+    pub fn receive_message(&self, header: Option<Vec<f32>>) -> Message {
         if !self._connected {
             panic!("RLGYM ATTEMPTED TO RECEIVE MESSAGE WITH NO CONNECTION") 
         }
@@ -48,7 +48,7 @@ impl CommunicationHandler {
             None => Vec::<f32>::new()
         };
         // let received_message = self.message;
-        let mut received_message = self.message;
+        let mut received_message = self.message.clone();
         for i in 0..10 {
             let mut buffer = [0 as u8];
             let mut out: BOOL;

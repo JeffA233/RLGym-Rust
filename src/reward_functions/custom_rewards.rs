@@ -4,12 +4,13 @@ use super::{common_rewards::{player_ball_rewards::VelocityPlayerToBallReward, ba
 
 // use numpy::*;
 // use ndarray::*;
-use std::fs::*;
+use std::{fs::*, path::PathBuf};
 use std::io::{BufWriter, Write};
 use std::io::ErrorKind::*;
 use std::fs::File;
 use fs2::FileExt;
 use std::thread;
+use std::path::Path;
 
 
 pub fn get_custom_reward_func() -> Box<dyn RewardFn> {
@@ -49,13 +50,13 @@ impl JumpReward {
 }
 
 impl RewardFn for JumpReward {
-    fn reset(&mut self, _initial_state: GameState) {}
+    fn reset(&mut self, _initial_state: &GameState) {}
 
-    fn get_reward(&mut self, player: PlayerData, _state: GameState, _previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f32>) -> f32 {
         return player.has_jump as i32 as f32
     }
 
-    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         self.get_reward(player, state, previous_action)
     }
 }
@@ -78,11 +79,11 @@ impl LeftKickoffReward {
 }
 
 impl RewardFn for LeftKickoffReward {
-    fn reset(&mut self, _initial_state: GameState) {
+    fn reset(&mut self, _initial_state: &GameState) {
         self.vel_dir_reward.reset(_initial_state);
     }
 
-    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         if state.ball.position[0] == 0. && state.ball.position[1] == 0. {
             if self.kickoff_id_blue == -1 || self.kickoff_id_orange == -1 {
                 let mut blue_car: PlayerData = state.players[0].clone();
@@ -137,7 +138,7 @@ impl RewardFn for LeftKickoffReward {
         }
     }
 
-    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         self.get_reward(player, state, previous_action)
     }
 }
@@ -167,9 +168,9 @@ impl JumpTouchReward {
 }
 
 impl RewardFn for JumpTouchReward {
-    fn reset(&mut self, _initial_state: GameState) {}
+    fn reset(&mut self, _initial_state: &GameState) {}
 
-    fn get_reward(&mut self, player: PlayerData, state: GameState, _previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, _previous_action: Vec<f32>) -> f32 {
         if player.ball_touched && !player.on_ground && state.ball.position[2] >= self.min_height {
             return (state.ball.position[2] - 92.).powf(self.exp)-1.
         } else {
@@ -177,7 +178,7 @@ impl RewardFn for JumpTouchReward {
         }
     }
 
-    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         self.get_reward(player, state, previous_action)
     }
 }
@@ -194,9 +195,9 @@ impl GatherBoostReward{
 }
 
 impl RewardFn for GatherBoostReward {
-    fn reset(&mut self,  _initial_state: GameState) {}
+    fn reset(&mut self,  _initial_state: &GameState) {}
 
-    fn get_reward(&mut self, player: PlayerData, _state: GameState, _previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f32>) -> f32 {
         let boost_differential: f32;
         if player.boost_amount > self.last_boost {
             boost_differential = player.boost_amount - self.last_boost;
@@ -208,13 +209,14 @@ impl RewardFn for GatherBoostReward {
         return boost_differential/100.
     }
 
-    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         self.get_reward(player, state, previous_action)
     }
 }
 
 
 pub struct SB3CombinedLogReward {
+    reward_file_path: PathBuf,
     reward_file: String,
     // lockfile: String,
     final_mult: f32,
@@ -227,25 +229,34 @@ impl SB3CombinedLogReward {
     fn new(reward_structs: Vec<Box<dyn RewardFn>>, reward_weights: Vec<f32>, file_location: Option<String>, final_mult: Option<f32>) -> Self {
         let file_location = match file_location {
             Some(file_location) => file_location,
-            None => "combinedlogfiles".to_owned()
+            None => "./combinedlogfiles".to_owned()
         };
 
         let reward_file = format!("{}/rewards.txt", file_location);
+        let reward_file_path = Path::new(&reward_file);
         // let lockfile = format!("{}/reward_lock", file_location);
         
         let final_mult = match final_mult {
             Some(final_mult) => final_mult,
             None => 1.
         };
+        let exists = Path::new(&file_location).exists();
+        if !exists {
+            let res = create_dir(&file_location);
+            match res {
+                Err(error) => {if error.kind() == AlreadyExists {} else {panic!("{error}")}}
+                Ok(out) => out
+            }
+        }
         for i in 0..100 {
             if i == 99 {
-                panic!("too many attempts taken to lock the file")
+                panic!("too many attempts taken to lock the file in new")
             }
 
-            let out = OpenOptions::new().create(true).open(&reward_file);
+            let out = OpenOptions::new().create(true).write(true).open(&reward_file_path);
 
             let file = match out {
-                Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+                Err(out) => {if out.kind() == PermissionDenied {continue} else {println!("{out}");continue}},
                 Ok(_file) => _file
             };
 
@@ -257,9 +268,11 @@ impl SB3CombinedLogReward {
             };
 
             file.unlock().unwrap();
+            break
         }
 
         SB3CombinedLogReward {
+            reward_file_path: reward_file_path.to_owned(),
             reward_file: reward_file,
             // lockfile: lockfile,
             final_mult: final_mult,
@@ -305,15 +318,15 @@ impl SB3CombinedLogReward {
 }
 
 impl RewardFn for SB3CombinedLogReward {
-    fn reset(&mut self, _initial_state: GameState) {
+    fn reset(&mut self, _initial_state: &GameState) {
         self.returns = vec![0.; self.combined_reward_fns.len()];
     }
 
-    fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let mut rewards = Vec::<f32>::new();
 
         for func in &mut self.combined_reward_fns {
-            rewards.push(func.get_reward(player.clone(), state.clone(), previous_action.clone()));
+            rewards.push(func.get_reward(player, state, previous_action.clone()));
         }
         
         self.returns = element_add_vec(&self.returns, &rewards);
@@ -322,31 +335,31 @@ impl RewardFn for SB3CombinedLogReward {
         return self.returns.iter().sum::<f32>() * self.final_mult;
     }
 
-    fn get_final_reward(&mut self, player: PlayerData, state: GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let mut rewards = Vec::<f32>::new();
 
         for func in &mut self.combined_reward_fns {
-            rewards.push(func.get_reward(player.clone(), state.clone(), previous_action.clone()));
+            rewards.push(func.get_reward(player, state, previous_action.clone()));
         }
         
         self.returns = element_add_vec(&self.returns, &rewards);
         self.returns = element_mult_vec(&self.returns, &self.combined_reward_weights);
 
         let local_ret = self.returns.clone();
-        let reward_file = self.reward_file.clone();
+        let reward_file = self.reward_file_path.clone();
 
-        thread::spawn(move || file_put(&local_ret, &reward_file));
+        thread::spawn(move || file_put(&local_ret, reward_file.as_path()));
 
         return self.returns.iter().sum::<f32>() * self.final_mult;
     }
 }
 
-fn file_put(returns_local: &Vec<f32>, reward_file: &String) {
+fn file_put(returns_local: &Vec<f32>, reward_file: &Path) {
     for i in 0..100 {
         if i == 99 {
-            panic!("too many attempts taken to lock the file")
+            panic!("too many attempts taken to lock the file in file_put")
         }
-        let out = File::open(&reward_file);
+        let out = File::open(reward_file);
 
         let file = match out {
             Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
