@@ -29,7 +29,7 @@ pub fn _find_first(list: &Vec<f32>, target: Vec<f32>) -> usize {
     let list_len = list.len();
     let target_len = target.len();
     for i in 0..list_len {
-        if list[i] == target[i] && list[i..i+target_len] == target {
+        if list[i] == target[0] && list[i..i+target_len] == target {
             return i
         }
     }
@@ -40,11 +40,11 @@ pub fn _find_first_end(list: &Vec<f32>, target: Vec<f32>) -> usize {
     let list_len = list.len();
     let target_len = target.len();
     for i in list_len-4..list_len {
-        if list[i] == target[i] && list[i..i+target_len] == target {
+        if list[i] == target[0] && list[i..i+target_len] == target {
             return i
         }
     }
-    return 0
+    panic!("target not found in message")
 }
 
 impl Message {
@@ -70,11 +70,11 @@ impl Message {
     }
 
     pub fn deserialize(&mut self, message_floats: Vec<f32>) {
-        let header_end = _find_first(&message_floats, RLGYM_HEADER_END_TOKEN.to_vec());
+        let header_end = _find_first(&message_floats, RLGYM_HEADER_END_TOKEN.to_vec()) + RLGYM_HEADER_END_TOKEN.len();
         let header = message_floats[..header_end].to_vec();
 
-        let start = header_end + RLGYM_HEADER_END_TOKEN.len();
-        let end = _find_first_end(&message_floats, RLGYM_HEADER_END_TOKEN.to_vec());
+        let start = header_end;
+        let end = _find_first_end(&message_floats, RLGYM_BODY_END_TOKEN.to_vec());
         let body = message_floats[start..end].to_vec();
 
         self.body = body;

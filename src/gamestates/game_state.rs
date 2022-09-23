@@ -75,7 +75,7 @@ impl GameState {
         let num_ball_packets = 1;
         let state_val_len = state_vals.len();
 
-        let num_player_packets = (state_val_len - num_ball_packets * BALL_STATE_LENGTH - start - BOOST_PAD_LENGTH) / PLAYER_INFO_LENGTH;
+        let num_player_packets = (state_val_len as i32 - num_ball_packets as i32 * BALL_STATE_LENGTH as i32 - start as i32 - BOOST_PAD_LENGTH as i32) / PLAYER_INFO_LENGTH  as i32;
 
         self.blue_score = state_vals[1] as i32;
         self.orange_score = state_vals[2] as i32;

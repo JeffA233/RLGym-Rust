@@ -57,6 +57,7 @@ fn main() {
         false, 
         false, 
         false);
+    gym.reset(None);
     for i in 0..100 {
         gym.step(actions.clone());
     }

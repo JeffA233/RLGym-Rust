@@ -56,16 +56,18 @@ impl CommunicationHandler {
         let mut received_message = self.message.clone();
         for i in 0..10 {
             let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
-            let buffer_ptr: *mut c_void = &mut buffer.as_ptr() as *mut _ as *mut c_void;
+            let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
             let out: BOOL;
-            let bytes_read = 0 as u32;
+            let mut bytes_read = 0 as u32;
             unsafe {
-                out = ReadFile(self._pipe, Some(buffer_ptr), bytes_read, Some(&mut (RLGYM_DEFAULT_PIPE_SIZE as u32)), None);
+                out = ReadFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_read)), None);
             }
             // let bytes = out.0 as u32;
             // let decode_str =
             // let msg_floats = Vec::<f64>::new();
             let msg_floats = bytes_to_f32(&buffer);
+            let msg_floats_str = msg_floats.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+            println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
             let deserialized_header = deserialize_header(&msg_floats);
 
             if header.len() == 0 || header == deserialized_header {
@@ -73,7 +75,7 @@ impl CommunicationHandler {
                 unsafe {
                     let out: BOOL;
                     let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
-                    let buffer_ptr: *mut c_void = &mut buffer as *mut _ as *mut c_void;
+                    let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
                     out = PeekNamedPipe(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, None, None, None);
                     if buffer[0] == 0 {
                         break
@@ -104,16 +106,17 @@ impl CommunicationHandler {
         println!("message being sent: {printable}");
         // format!("{:02x}", 8 as u8);
         let mut u8_serialized = f32vec_as_u8_slice(&serialized);
-        let buffer_ptr: *mut c_void = &mut u8_serialized.as_ptr() as *mut _ as *mut c_void;
+        let buffer_ptr: *mut c_void = &mut *u8_serialized as *mut _ as *mut c_void;
         let printable = u8_serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
         println!("message being sent in bytes: {:x?}", printable);
         let out: BOOL;
         let mut bytes_written = 0 as u32;
         unsafe {
-            out = WriteFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_written as u32)), None);
+            out = WriteFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_written)), None);
         }
         let res_bool = out.as_bool();
-        println!("send_message WriteFile result: {res_bool}");
+        let res_int = out.0;
+        println!("send_message WriteFile bool result: {res_bool}; int result: {res_int}; bytes written: {bytes_written}");
         // let err;
         // unsafe {
         //     err = GetLastError().0;
@@ -128,6 +131,7 @@ impl CommunicationHandler {
             let err = err.to_hresult();
             let err = err.message();
             println!("WriteFile error: {err}"); 
+            u8_serialized;
         }
     }
 
@@ -210,19 +214,26 @@ impl CommunicationHandler {
         unsafe {
             out = ConnectNamedPipe(self._pipe, None);
         }
-        if !out.as_bool() {
-            let out = out.0;
-            println!("error connecting to named pipe: {out}");
-            let err;
-            unsafe {
-                err = WIN32_ERROR {
-                    0: GetLastError().0
-                };
-            }
-            let err = err.to_hresult();
-            let err = err.message();
-            println!("NamedPipe error: {err}");
-        }
+        let printable = out.0;
+        println!("ConnectNamedPipe code: {printable}");
+        let out = out.ok();
+        match out {
+            Ok(out) => out,
+            Err(error) => println!("Error connecting to named pipe: {error}")
+        };
+        // if !out.as_bool() {
+        //     let out = out.0;
+        //     println!("error connecting to named pipe: {out}");
+        //     let err;
+        //     unsafe {
+        //         err = WIN32_ERROR {
+        //             0: GetLastError().0
+        //         };
+        //     }
+        //     let err = err.to_hresult();
+        //     let err = err.message();
+        //     println!("NamedPipe error: {err}");
+        // }
         pipe_name_u16;
 
         self._connected = true;
@@ -255,7 +266,14 @@ pub fn bytes_to_f32(bytes: &[u8]) -> Vec<f32> {
     for i in (0..bytes.len()).step_by(4) {
         // let mut slice = [0 as u8; 4];
         let slice = bytes_vec[i..i+4].try_into().unwrap();
-        float_vec.push(f32::from_ne_bytes(slice) as f32);
+        let val = f32::from_ne_bytes(slice) as f32;
+        // if val == 0. {
+        //     break
+        // }
+        float_vec.push(val);
+        if val == 83774. {
+            break
+        }
     }
     return float_vec
 }
