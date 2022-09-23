@@ -3,7 +3,7 @@ use core::time;
 // use std::sync::Mutex;
 // use core::slice;
 use std::thread;
-use std::ffi::CString;
+use std::ffi::{CString, c_void};
 // use std::sync;
 
 use windows::Win32::Foundation::{HANDLE, BOOL, CloseHandle, HWND, GetLastError};
@@ -55,10 +55,11 @@ impl CommunicationHandler {
         // let received_message = self.message;
         let mut received_message = self.message.clone();
         for i in 0..10 {
-            let mut buffer = [0 as u8];
-            let mut out: BOOL;
+            let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
+            let buffer_ptr: *mut c_void = &mut buffer as *mut _ as *mut c_void;
+            let out: BOOL;
             unsafe {
-                out = ReadFile(self._pipe, Some(&mut buffer), None, None);
+                out = ReadFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (RLGYM_DEFAULT_PIPE_SIZE as u32)), None);
             }
             // let bytes = out.0 as u32;
             // let decode_str =
@@ -70,8 +71,9 @@ impl CommunicationHandler {
                 received_message.deserialize(msg_floats);
                 unsafe {
                     let out: BOOL;
-                    let mut buffer = [0 as u8];
-                    out = PeekNamedPipe(self._pipe, Some(&mut buffer), None, None, None);
+                    let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
+                    let buffer_ptr: *mut c_void = &mut buffer as *mut _ as *mut c_void;
+                    out = PeekNamedPipe(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, None, None, None);
                     if buffer[0] == 0 {
                         break
                     }
@@ -100,12 +102,13 @@ impl CommunicationHandler {
         let printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
         println!("message being sent: {printable}");
         // format!("{:02x}", 8 as u8);
-        let u8_serialized = f32vec_as_u8_slice(&serialized);
+        let mut u8_serialized = f32vec_as_u8_slice(&serialized);
+        let buffer_ptr: *mut c_void = &mut u8_serialized as *mut _ as *mut c_void;
         let printable = u8_serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
         println!("message being sent in bytes: {:x?}", printable);
         let out: BOOL;
         unsafe {
-            out = WriteFile(self._pipe, Some(u8_serialized.as_slice()), None, None);
+            out = WriteFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (RLGYM_DEFAULT_PIPE_SIZE as u32)), None);
         }
         let res_bool = out.as_bool();
         println!("send_message WriteFile result: {res_bool}");
