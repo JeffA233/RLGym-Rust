@@ -56,10 +56,11 @@ impl CommunicationHandler {
         let mut received_message = self.message.clone();
         for i in 0..10 {
             let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
-            let buffer_ptr: *mut c_void = &mut buffer as *mut _ as *mut c_void;
+            let buffer_ptr: *mut c_void = &mut buffer.as_ptr() as *mut _ as *mut c_void;
             let out: BOOL;
+            let bytes_read = 0 as u32;
             unsafe {
-                out = ReadFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (RLGYM_DEFAULT_PIPE_SIZE as u32)), None);
+                out = ReadFile(self._pipe, Some(buffer_ptr), bytes_read, Some(&mut (RLGYM_DEFAULT_PIPE_SIZE as u32)), None);
             }
             // let bytes = out.0 as u32;
             // let decode_str =
@@ -103,12 +104,13 @@ impl CommunicationHandler {
         println!("message being sent: {printable}");
         // format!("{:02x}", 8 as u8);
         let mut u8_serialized = f32vec_as_u8_slice(&serialized);
-        let buffer_ptr: *mut c_void = &mut u8_serialized as *mut _ as *mut c_void;
+        let buffer_ptr: *mut c_void = &mut u8_serialized.as_ptr() as *mut _ as *mut c_void;
         let printable = u8_serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
         println!("message being sent in bytes: {:x?}", printable);
         let out: BOOL;
+        let mut bytes_written = 0 as u32;
         unsafe {
-            out = WriteFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (RLGYM_DEFAULT_PIPE_SIZE as u32)), None);
+            out = WriteFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_written as u32)), None);
         }
         let res_bool = out.as_bool();
         println!("send_message WriteFile result: {res_bool}");
@@ -169,12 +171,13 @@ impl CommunicationHandler {
                 }
             }
         });
-        let pipe_name_u16: Vec<u16> = pipe_name.encode_utf16().collect();
+        let pipe_name_u16 = pipe_name.to_owned() + "\0";
+        let pipe_name_u16: Vec<u16> = pipe_name_u16.encode_utf16().collect();
         // let pipe_name_u16: = pipe_name.encode_utf16().collect();
         let out;
         let c_str = CString::new(pipe_name).expect("CString::new failed");
         let pcstr = PCSTR::from_raw(c_str.as_bytes_with_nul().as_ptr());
-        let pcwstr = PCWSTR::from_raw(pipe_name_u16.as_ptr());
+        // let pcwstr = PCWSTR::from_raw(pipe_name_u16.as_ptr());
         let pcstr_str;
         unsafe {
             out = CreateNamedPipeA(pcstr,
