@@ -26,7 +26,7 @@ pub fn get_custom_reward_func() -> Box<dyn RewardFn> {
     reward_fn_vec.push(Box::new(EventReward::new(None, None, None, None, Some(5.), Some(45.), Some(25.), None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, Some(100.), None, None, None, None, None, None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, Some(-100.), None, None, None, None, None)));
-
+    reward_fn_vec.push(Box::new(JumpReward::new()));
     // SB3CombinedLogReward {
     //     reward_file: "combinedlogfiles-v2".to_string(),
     //     final_mult: 0.1,
@@ -217,7 +217,7 @@ impl RewardFn for GatherBoostReward {
 
 pub struct SB3CombinedLogReward {
     reward_file_path: PathBuf,
-    reward_file: String,
+    // reward_file: String,
     // lockfile: String,
     final_mult: f32,
     returns: Vec<f32>,
@@ -273,7 +273,7 @@ impl SB3CombinedLogReward {
 
         SB3CombinedLogReward {
             reward_file_path: reward_file_path.to_owned(),
-            reward_file: reward_file,
+            // reward_file: reward_file,
             // lockfile: lockfile,
             final_mult: final_mult,
             returns: vec![0.; reward_structs.len()],

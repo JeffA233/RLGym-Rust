@@ -75,7 +75,15 @@ impl RewardFn for EventReward {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        let old_values  = self.last_registered_values.get(&player.car_id).unwrap();
+        let old_values  = self.last_registered_values.get(&player.car_id);
+        let old_values = match old_values {
+            Some(old_values) => old_values,
+            None => {
+                let values = EventReward::_extract_values(&player, &state);
+                self.last_registered_values.insert(player.car_id, values.clone());
+                self.last_registered_values.get(&player.car_id).unwrap()
+            }
+        };
         let new_values = EventReward::_extract_values(&player, &state);
 
         let diff_values = element_sub_vec(&new_values, old_values);
