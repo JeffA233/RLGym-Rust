@@ -96,7 +96,7 @@ impl GameMatch {
             action_space: Vec::<usize>::new(),
             // _prev_actions: Array2::<f32>::zeros((num_agents, 8)),
             _prev_actions: vec![vec![0.; 8]; num_agents],
-            _spectator_ids: Vec::<i32>::new(),
+            _spectator_ids: vec![0; 6],
             last_touch: 100,
             _initial_score: 0,
         }

@@ -38,7 +38,7 @@ fn main() {
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, None));
     let act_parse = Box::new(NectoAction::new());
     let state_set = Box::new(RandomState::new(None, None, None));
-    let actions = vec![vec![0.,0.,0.,0.,0.,0.,0.,0.]];
+    let actions = vec![vec![55.]];
     let mut gym = make::make(None, 
         None, 
         Some(false), 

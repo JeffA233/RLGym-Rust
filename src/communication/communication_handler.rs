@@ -1,16 +1,19 @@
+// use core::slice::SlicePattern;
 use core::time;
 // use std::sync::Mutex;
 // use core::slice;
 use std::thread;
+use std::ffi::CString;
 // use std::sync;
 
-use windows::Win32::Foundation::{HANDLE, BOOL, CloseHandle, HWND};
-use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile, PIPE_ACCESS_DUPLEX, FILE_FLAG_OVERLAPPED};
-// use windows::Win32::System::IO::OVERLAPPED;
-use windows::Win32::System::Pipes::{PeekNamedPipe, CreateNamedPipeW, PIPE_TYPE_MESSAGE, PIPE_READMODE_MESSAGE, PIPE_WAIT};
+use windows::Win32::Foundation::{HANDLE, BOOL, CloseHandle, HWND, GetLastError};
+use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile, PIPE_ACCESS_DUPLEX, FILE_FLAG_OVERLAPPED, WriteFileEx};
+use windows::Win32::System::IO::OVERLAPPED;
+use windows::Win32::System::Pipes::{PeekNamedPipe, CreateNamedPipeA, CreateNamedPipeW, PIPE_TYPE_MESSAGE, PIPE_READMODE_MESSAGE, PIPE_WAIT, ConnectNamedPipe};
 use windows::Win32::UI::WindowsAndMessaging::{FindWindowA, IsWindowVisible, DestroyWindow};
 use windows::s;
-use windows::core::PCWSTR;
+use windows::Win32::Foundation::WIN32_ERROR;
+use windows::core::{PCSTR, PCWSTR};
 use crate::communication::message::Message;
 use crate::communication::message::{RLGYM_NULL_MESSAGE_HEADER, RLGYM_NULL_MESSAGE_BODY};
 
@@ -26,7 +29,8 @@ pub struct CommunicationHandler {
     _current_pipe_name: String,
     _pipe: HANDLE,
     _connected: bool,
-    message: Message
+    message: Message,
+    overlapped_struct: OVERLAPPED
 }
 
 impl CommunicationHandler {
@@ -35,6 +39,7 @@ impl CommunicationHandler {
             _current_pipe_name: RLGYM_GLOBAL_PIPE_NAME.to_string(),
             message: Message::new(),
             _connected: false,
+            overlapped_struct: OVERLAPPED::default(),
             ..Default::default()
         }
     }
@@ -77,7 +82,7 @@ impl CommunicationHandler {
         return received_message
     }
 
-    pub fn send_message(&self, message: Option<Message>, header: Option<Vec<f32>>, body: Option<Vec<f32>>) {
+    pub fn send_message(&mut self, message: Option<Message>, header: Option<Vec<f32>>, body: Option<Vec<f32>>) {
         let mut message = match message {
             Some(message) => message,
             None => Message::new()
@@ -92,12 +97,29 @@ impl CommunicationHandler {
         };
         message.set_body_header_vals(header, body);
         let serialized = message.serialize();
-
+        let printable = serialized.join(" ");
         let u8_serialized = f32vec_as_u8_slice(&serialized);
 
         let out: BOOL;
         unsafe {
             out = WriteFile(self._pipe, Some(u8_serialized), None, None);
+        }
+        let res_bool = out.as_bool();
+        println!("send_message WriteFile result: {res_bool}");
+        // let err;
+        // unsafe {
+        //     err = GetLastError().0;
+        // }
+        if !res_bool {
+            let err;
+            unsafe {
+                err = WIN32_ERROR {
+                    0: GetLastError().0
+                };
+            }
+            let err = err.to_hresult();
+            let err = err.message();
+            println!("WriteFile error: {err}"); 
         }
     }
 
@@ -122,6 +144,7 @@ impl CommunicationHandler {
         let immu_connected = _connected;
 
         let handler = thread::spawn(move || {
+            let mut i = 0;
             while !immu_connected {
                 let win_handle: HWND;
                 let is_visible: BOOL;
@@ -134,19 +157,64 @@ impl CommunicationHandler {
                     }
                 }
                 thread::sleep(time::Duration::new(1, 0));
+                i += 1;
+                if i > 6 {
+                    break
+                }
             }
         });
         let pipe_name_u16: Vec<u16> = pipe_name.encode_utf16().collect();
+        // let pipe_name_u16: = pipe_name.encode_utf16().collect();
+        let out;
+        let c_str = CString::new(pipe_name).expect("CString::new failed");
+        let pcstr = PCSTR::from_raw(c_str.as_bytes_with_nul().as_ptr());
+        let pcwstr = PCWSTR::from_raw(pipe_name_u16.as_ptr());
+        let pcstr_str;
         unsafe {
-            self._pipe = CreateNamedPipeW(PCWSTR::from_raw(pipe_name_u16.as_ptr()),
-                 PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+            out = CreateNamedPipeA(pcstr,
+                 PIPE_ACCESS_DUPLEX,
                   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                    num_allowed_instances as u32,
                     RLGYM_DEFAULT_PIPE_SIZE as u32,
                     RLGYM_DEFAULT_PIPE_SIZE as u32,
                       0,
                        None);
+            pcstr_str = pcstr.display();
         }
+        // let pipe_name_joinedstr: String = pipe_name_u16.join(" ");
+        // println!("");
+        println!("{pcstr_str}");
+        // match pcstr_str {
+        //     Ok(some) => println!("to_string -> {some}"),
+        //     Err(some) => println!("to_string error: {some}")
+        // }
+
+
+        match out {
+            Ok(out) => self._pipe = out,
+            Err(err) => panic!("CreateNamedPipeA Err: {err}")
+        };
+        let print = self._pipe.0;
+        println!("NamedPipe handle: {print}");
+        
+        let out;
+        unsafe {
+            out = ConnectNamedPipe(self._pipe, None);
+        }
+        if !out.as_bool() {
+            let out = out.0;
+            println!("error connecting to named pipe: {out}");
+            let err;
+            unsafe {
+                err = WIN32_ERROR {
+                    0: GetLastError().0
+                };
+            }
+            let err = err.to_hresult();
+            let err = err.message();
+            println!("NamedPipe error: {err}");
+        }
+        pipe_name_u16;
 
         self._connected = true;
         _connected = true;
@@ -191,6 +259,14 @@ pub fn bytes_to_f32(bytes: &[u8]) -> Vec<f32> {
 //     // }
 //     let u8_vec: Vec<u8> = f32_vec.iter().map(|x| *x as u8).collect();
 //     return u8_vec
+// }
+
+// pub fn f32vec_as_u8_slice(v: &[f32]) -> Vec<u8> {
+//     let mut u8_vec = Vec::<u8>::new();
+//     for val in v {
+//         u8_vec.append(&mut val.to_ne_bytes().to_vec())
+//     }
+//     u8_vec
 // }
 
 pub fn f32vec_as_u8_slice(v: &[f32]) -> &[u8] {
