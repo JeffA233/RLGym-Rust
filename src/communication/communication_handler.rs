@@ -97,12 +97,15 @@ impl CommunicationHandler {
         };
         message.set_body_header_vals(header, body);
         let serialized = message.serialize();
-        let printable = serialized.join(" ");
+        let printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+        println!("message being sent: {printable}");
+        // format!("{:02x}", 8 as u8);
         let u8_serialized = f32vec_as_u8_slice(&serialized);
-
+        let printable = u8_serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+        println!("message being sent in bytes: {:x?}", printable);
         let out: BOOL;
         unsafe {
-            out = WriteFile(self._pipe, Some(u8_serialized), None, None);
+            out = WriteFile(self._pipe, Some(u8_serialized.as_slice()), None, None);
         }
         let res_bool = out.as_bool();
         println!("send_message WriteFile result: {res_bool}");
@@ -243,7 +246,7 @@ pub fn bytes_to_f32(bytes: &[u8]) -> Vec<f32> {
     // let bytes_len = bytes.len();
     let mut float_vec = Vec::<f32>::new();
     let bytes_vec = bytes.to_vec();
-    for i in 0..bytes.len() {
+    for i in (0..bytes.len()).step_by(4) {
         // let mut slice = [0 as u8; 4];
         let slice = bytes_vec[i..i+4].try_into().unwrap();
         float_vec.push(f32::from_ne_bytes(slice) as f32);
@@ -261,22 +264,31 @@ pub fn bytes_to_f32(bytes: &[u8]) -> Vec<f32> {
 //     return u8_vec
 // }
 
-// pub fn f32vec_as_u8_slice(v: &[f32]) -> Vec<u8> {
-//     let mut u8_vec = Vec::<u8>::new();
-//     for val in v {
-//         u8_vec.append(&mut val.to_ne_bytes().to_vec())
+pub fn f32vec_as_u8_slice(v: &[f32]) -> Vec<u8> {
+    let mut u8_vec = Vec::<u8>::new();
+    for val in v {
+        u8_vec.extend_from_slice(&mut val.to_ne_bytes())
+    }
+    u8_vec
+}
+
+// pub fn f32vec_as_u8_slice(v: &[f32]) -> &[u8] {
+//     unsafe {
+//         std::slice::from_raw_parts(
+//             v.as_ptr() as *const u8,
+//             v.len() * std::mem::size_of::<f32>(),
+//         )
 //     }
-//     u8_vec
 // }
 
-pub fn f32vec_as_u8_slice(v: &[f32]) -> &[u8] {
-    unsafe {
-        std::slice::from_raw_parts(
-            v.as_ptr() as *const u8,
-            v.len() * std::mem::size_of::<f32>(),
-        )
-    }
-}
+// pub fn f32_vec_as_u8_slice(v: &[f32]) -> &[u8] {
+//     let res = Vec::<u8>::new();
+
+//     for f in v {
+//         let bits = f.to_ne_bytes();
+
+//     }
+// }
 
 // pub fn handle_diemwin_potential(connected: &sync::Mutex<bool>) {
 //     while !*connected.lock().unwrap() {

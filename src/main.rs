@@ -33,6 +33,8 @@ pub mod make;
 // math.norm_func();
 
 fn main() {
+    // let str = format!("{:02x}", 8 as u8);
+    // println!("{str}");
     let term_cond = Box::new(CombinedTerminalConditions::new(8));
     let reward_fn = get_custom_reward_func();
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, None));
