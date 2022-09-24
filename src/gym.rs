@@ -145,10 +145,15 @@ impl Gym {
         let obs = self._game_match.build_observations(&mut state);
         let done = self._game_match.is_done(&state);
         self._prev_state = state.clone();
-        let reward = self._game_match.get_rewards(&state, &done);
+        let reward = self._game_match.get_rewards(&state, done);
         let mut info = HashMap::<&str,f32>::new();
         info.insert("result", self._game_match.get_result(state) as f32);
         return (obs, reward, done, info)
+    }
+
+    pub fn close(&mut self) {
+        self._comm_handler.close_pipe();
+        self._game_process.terminate().unwrap();
     }
 
     fn _receive_state(&mut self) -> GameState {

@@ -4,7 +4,7 @@ use super::{common_rewards::{player_ball_rewards::VelocityPlayerToBallReward, ba
 
 // use numpy::*;
 // use ndarray::*;
-use std::{fs::*, path::PathBuf};
+use std::{fs::*, path::PathBuf, io::{Seek, SeekFrom}, collections::HashMap};
 use std::io::{BufWriter, Write};
 use std::io::ErrorKind::*;
 use std::fs::File;
@@ -84,58 +84,58 @@ impl RewardFn for LeftKickoffReward {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        if state.ball.position[0] == 0. && state.ball.position[1] == 0. {
-            if self.kickoff_id_blue == -1 || self.kickoff_id_orange == -1 {
-                let mut blue_car: PlayerData = state.players[0].clone();
-                let mut orange_car: PlayerData = state.players[1].clone();
-                self.kickoff_id_blue = -1;
-                self.kickoff_id_orange = -1;
+        // if state.ball.position[0] == 0. && state.ball.position[1] == 0. {
+        //     if self.kickoff_id_blue == -1 || self.kickoff_id_orange == -1 {
+        //         let mut blue_car: PlayerData = state.players[0].clone();
+        //         let mut orange_car: PlayerData = state.players[1].clone();
+        //         self.kickoff_id_blue = -1;
+        //         self.kickoff_id_orange = -1;
 
-                for car in &state.players {
-                    if car.team_num == BLUE_TEAM {
-                        blue_car = car.clone();
-                    } else {
-                        orange_car = car.clone();
-                    }
-                }
+        //         for car in &state.players {
+        //             if car.team_num == BLUE_TEAM {
+        //                 blue_car = car.clone();
+        //             } else {
+        //                 orange_car = car.clone();
+        //             }
+        //         }
 
-                for car in &state.players {
-                    if car.team_num == blue_car.team_num {
-                        if car.car_data.position[1] >= blue_car.car_data.position[1] &&
-                        car.car_data.position[0] > blue_car.car_data.position[0] {
-                            blue_car = car.clone();
-                        }
-                    }
-                    if car.team_num == orange_car.team_num {
-                        if car.inverted_car_data.position[1] >= orange_car.inverted_car_data.position[1] &&
-                        car.inverted_car_data.position[0] > orange_car.inverted_car_data.position[0] {
-                            orange_car = car.clone();
-                        }
-                    }
-                }
-                self.kickoff_id_blue = blue_car.car_id;
-                self.kickoff_id_orange = orange_car.car_id;
-            }
+        //         for car in &state.players {
+        //             if car.team_num == blue_car.team_num {
+        //                 if car.car_data.position[1] >= blue_car.car_data.position[1] &&
+        //                 car.car_data.position[0] > blue_car.car_data.position[0] {
+        //                     blue_car = car.clone();
+        //                 }
+        //             }
+        //             if car.team_num == orange_car.team_num {
+        //                 if car.inverted_car_data.position[1] >= orange_car.inverted_car_data.position[1] &&
+        //                 car.inverted_car_data.position[0] > orange_car.inverted_car_data.position[0] {
+        //                     orange_car = car.clone();
+        //                 }
+        //             }
+        //         }
+        //         self.kickoff_id_blue = blue_car.car_id;
+        //         self.kickoff_id_orange = orange_car.car_id;
+        //     }
 
-            if player.team_num == BLUE_TEAM {
-                if player.car_id == self.kickoff_id_blue {
-                    return self.vel_dir_reward.get_reward(player, state, previous_action)
-                } else {
-                    return 0.
-                }
-            } else {
-                if player.car_id == self.kickoff_id_orange {
-                    return self.vel_dir_reward.get_reward(player, state, previous_action)
-                } else {
-                    return 0.
-                }
-            }
+        //     if player.team_num == BLUE_TEAM {
+        //         if player.car_id == self.kickoff_id_blue {
+        //             return self.vel_dir_reward.get_reward(player, state, previous_action)
+        //         } else {
+        //             return 0.
+        //         }
+        //     } else {
+        //         if player.car_id == self.kickoff_id_orange {
+        //             return self.vel_dir_reward.get_reward(player, state, previous_action)
+        //         } else {
+        //             return 0.
+        //         }
+        //     }
 
-        } else {
+        // } else {
             self.kickoff_id_blue = -1;
             self.kickoff_id_orange = -1;
             return 0.
-        }
+    //     }
     }
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
@@ -185,26 +185,35 @@ impl RewardFn for JumpTouchReward {
 
 
 pub struct GatherBoostReward {
-    last_boost: f32
+    last_boost: HashMap<i32, f32>
 }
 
 impl GatherBoostReward{
     pub fn new() -> Self {
-        GatherBoostReward { last_boost: 34. }
+        let mut hashmap = HashMap::new();
+        for i in 0..6 {
+            hashmap.insert(i, 34.);
+        }
+        GatherBoostReward { last_boost: hashmap }
     }
 }
 
 impl RewardFn for GatherBoostReward {
-    fn reset(&mut self,  _initial_state: &GameState) {}
+    fn reset(&mut self,  _initial_state: &GameState) {
+        for player in &_initial_state.players {
+            self.last_boost.insert(player.car_id, 34.);
+        }
+    }
 
     fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f32>) -> f32 {
+        let last_boost = self.last_boost.get(&player.car_id).unwrap();
         let boost_differential: f32;
-        if player.boost_amount > self.last_boost {
-            boost_differential = player.boost_amount - self.last_boost;
-            self.last_boost = player.boost_amount;
+        if player.boost_amount > *last_boost {
+            boost_differential = player.boost_amount - last_boost;
+            self.last_boost.insert(player.car_id, player.boost_amount);
         } else {
             boost_differential = 0.;
-            self.last_boost = player.boost_amount;
+            self.last_boost.insert(player.car_id, player.boost_amount);
         }
         return boost_differential/100.
     }
@@ -253,7 +262,7 @@ impl SB3CombinedLogReward {
                 panic!("too many attempts taken to lock the file in new")
             }
 
-            let out = OpenOptions::new().create(true).write(true).open(&reward_file_path);
+            let out = OpenOptions::new().create(true).write(true).truncate(true).open(&reward_file_path);
 
             let file = match out {
                 Err(out) => {if out.kind() == PermissionDenied {continue} else {println!("{out}");continue}},
@@ -319,7 +328,8 @@ impl SB3CombinedLogReward {
 
 impl RewardFn for SB3CombinedLogReward {
     fn reset(&mut self, _initial_state: &GameState) {
-        self.returns = vec![0.; self.combined_reward_fns.len()];
+        // self.returns = vec![0.; self.combined_reward_fns.len()];
+        self.returns.fill(0.);
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
@@ -332,7 +342,7 @@ impl RewardFn for SB3CombinedLogReward {
         self.returns = element_add_vec(&self.returns, &rewards);
         self.returns = element_mult_vec(&self.returns, &self.combined_reward_weights);
 
-        return self.returns.iter().sum::<f32>() * self.final_mult;
+        return self.returns.clone().iter().sum::<f32>() * self.final_mult;
     }
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
@@ -347,10 +357,11 @@ impl RewardFn for SB3CombinedLogReward {
 
         let local_ret = self.returns.clone();
         let reward_file = self.reward_file_path.clone();
+        
 
         thread::spawn(move || file_put(&local_ret, reward_file.as_path()));
 
-        return self.returns.iter().sum::<f32>() * self.final_mult;
+        return self.returns.clone().iter().sum::<f32>() * self.final_mult;
     }
 }
 
@@ -359,17 +370,21 @@ fn file_put(returns_local: &Vec<f32>, reward_file: &Path) {
         if i == 99 {
             panic!("too many attempts taken to lock the file in file_put")
         }
-        let out = File::open(reward_file);
+        let out = OpenOptions::new().append(true).read(true).open(reward_file);
 
-        let file = match out {
-            Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+        let mut file = match out {
+            Err(out) => {
+                println!("file error: {out}");
+                if out.kind() == PermissionDenied {continue} else {continue};},
             Ok(_file) => _file
         };
 
         let out = file.lock_exclusive();
 
         match out {
-            Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+            Err(out) => {
+                println!("lock error: {out}");
+                if out.kind() == PermissionDenied {continue} else {continue};},
             Ok(_file) => _file
         };
 
@@ -382,7 +397,11 @@ fn file_put(returns_local: &Vec<f32>, reward_file: &Path) {
         }
         string = string + &format!("{}]", returns_local[returns_local.len()-1]);
         writeln!(&mut buf, "{}", string).unwrap();
-
+        let out = buf.flush();
+        match out {
+            Ok(out) => out,
+            Err(err) => println!("buf.flush in logger failed with error: {err}")
+        };
         file.unlock().unwrap();
         break
     }

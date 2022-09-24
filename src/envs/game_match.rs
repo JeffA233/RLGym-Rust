@@ -135,13 +135,13 @@ impl GameMatch {
         return observations
     }
 
-    pub fn get_rewards(&mut self, state: &GameState, done: &bool) -> Vec<f32> {
+    pub fn get_rewards(&mut self, state: &GameState, done: bool) -> Vec<f32> {
         let mut rewards = Vec::<f32>::new();
 
         self._reward_fn.pre_step(&state);
 
         for (i, player) in state.players.iter().enumerate() {
-            if *done {
+            if done {
                 rewards.push(self._reward_fn.get_final_reward(player, &state, self._prev_actions[i].clone()));
             } else {
                 rewards.push(self._reward_fn.get_reward(player, &state, self._prev_actions[i].clone()));

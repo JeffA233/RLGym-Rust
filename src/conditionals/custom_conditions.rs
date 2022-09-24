@@ -30,10 +30,11 @@ impl TerminalCondition for CombinedTerminalConditions {
     }
 
     fn is_terminal(&mut self, current_state: &GameState) -> bool {
-        return [self.timeout_condition.is_terminal(current_state), 
+        let bool = [self.timeout_condition.is_terminal(current_state), 
         self.no_touch_timeout_condition.is_terminal(current_state), 
         self.goal_scored_condition.is_terminal(current_state), 
-        self.no_touch_kickoff_condition.is_terminal(current_state)].into_iter().any(|x| x)
+        self.no_touch_kickoff_condition.is_terminal(current_state)].iter().any(|x| x == &true);
+        return bool
     }
 }
 

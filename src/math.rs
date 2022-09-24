@@ -40,20 +40,20 @@ pub fn element_mult_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
     return z;
 }
 
-    /// divide elementwise vec a / vec b
-    pub fn element_div_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
-        assert!(a.len() == b.len(), "length of a did not match length of b");
-        let mut z: Vec<f32> = Vec::new();
+/// divide elementwise vec a / vec b
+pub fn element_div_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {
+    assert!(a.len() == b.len(), "length of a did not match length of b");
+    let mut z: Vec<f32> = Vec::new();
 
-        for i in 0..a.len() {
-            let x = a[i];
-            let y = b[i];
+    for i in 0..a.len() {
+        let x = a[i];
+        let y = b[i];
 
-            z.push(x / y);
-        }
-
-        return z;
+        z.push(x / y);
     }
+
+    return z;
+}
 
 /// subtract elementwise vec b from vec a
 pub fn element_sub_vec(a: &Vec<f32>, b: &Vec<f32>) -> Vec<f32> {

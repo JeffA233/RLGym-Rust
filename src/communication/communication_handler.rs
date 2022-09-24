@@ -65,9 +65,9 @@ impl CommunicationHandler {
             // let bytes = out.0 as u32;
             // let decode_str =
             // let msg_floats = Vec::<f64>::new();
-            let msg_floats = bytes_to_f32(&buffer);
+            let msg_floats = bytes_to_f32(&buffer, &bytes_read);
             let msg_floats_str = msg_floats.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-            println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
+            // println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
             let deserialized_header = deserialize_header(&msg_floats);
 
             if header.len() == 0 || header == deserialized_header {
@@ -102,21 +102,25 @@ impl CommunicationHandler {
         };
         message.set_body_header_vals(header, body);
         let serialized = message.serialize();
-        let printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-        println!("message being sent: {printable}");
+        let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+        // println!("message being sent: {printable}");
         // format!("{:02x}", 8 as u8);
         let mut u8_serialized = f32vec_as_u8_slice(&serialized);
+        let u8_ser_len = u8_serialized.len();
         let buffer_ptr: *mut c_void = &mut *u8_serialized as *mut _ as *mut c_void;
         let printable = u8_serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-        println!("message being sent in bytes: {:x?}", printable);
+        // println!("message being sent in bytes: {:x?}", printable);
         let out: BOOL;
         let mut bytes_written = 0 as u32;
+        let bytes_written_ptr = &mut bytes_written;
         unsafe {
-            out = WriteFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_written)), None);
+            out = WriteFile(self._pipe, Some(buffer_ptr), u8_ser_len as u32, Some(&mut *bytes_written_ptr), None);
         }
+        // drop(u8_serialized);
+        // drop(buffer_ptr);
         let res_bool = out.as_bool();
         let res_int = out.0;
-        println!("send_message WriteFile bool result: {res_bool}; int result: {res_int}; bytes written: {bytes_written}");
+        // println!("send_message WriteFile bool result: {res_bool}; int result: {res_int}; bytes written: {bytes_written}");
         // let err;
         // unsafe {
         //     err = GetLastError().0;
@@ -124,14 +128,20 @@ impl CommunicationHandler {
         if !res_bool {
             let err;
             unsafe {
+                let err_int = GetLastError().0;
+                println!("error code: {err_int}");
                 err = WIN32_ERROR {
-                    0: GetLastError().0
+                    0: err_int
                 };
             }
             let err = err.to_hresult();
             let err = err.message();
-            println!("WriteFile error: {err}"); 
-            u8_serialized;
+            println!("WriteFile error: {err}");
+            println!("bytes: {printable}");
+            println!("mesasge: {message_printable}");
+            println!("bytes written variable {bytes_written}");
+            let pipe_handle = self._pipe.0;
+            println!("pipe_handle: {pipe_handle}");
         }
     }
 
@@ -196,7 +206,7 @@ impl CommunicationHandler {
         }
         // let pipe_name_joinedstr: String = pipe_name_u16.join(" ");
         // println!("");
-        println!("{pcstr_str}");
+        // println!("{pcstr_str}");
         // match pcstr_str {
         //     Ok(some) => println!("to_string -> {some}"),
         //     Err(some) => println!("to_string error: {some}")
@@ -208,14 +218,14 @@ impl CommunicationHandler {
             Err(err) => panic!("CreateNamedPipeA Err: {err}")
         };
         let print = self._pipe.0;
-        println!("NamedPipe handle: {print}");
+        // println!("NamedPipe handle: {print}");
         
         let out;
         unsafe {
             out = ConnectNamedPipe(self._pipe, None);
         }
         let printable = out.0;
-        println!("ConnectNamedPipe code: {printable}");
+        // println!("ConnectNamedPipe code: {printable}");
         let out = out.ok();
         match out {
             Ok(out) => out,
@@ -259,21 +269,21 @@ pub fn format_pipe_id(pipe_id: usize) -> String {
     return r"\\.\pipe\!".replace("!", &pipe_id.to_string())
 }
 
-pub fn bytes_to_f32(bytes: &[u8]) -> Vec<f32> {
+pub fn bytes_to_f32(bytes: &[u8], bytes_read: &u32) -> Vec<f32> {
     // let bytes_len = bytes.len();
     let mut float_vec = Vec::<f32>::new();
-    let bytes_vec = bytes.to_vec();
-    for i in (0..bytes.len()).step_by(4) {
+    // let bytes_vec = bytes.to_vec();
+    for i in (0..*bytes_read as usize).step_by(4) {
         // let mut slice = [0 as u8; 4];
-        let slice = bytes_vec[i..i+4].try_into().unwrap();
-        let val = f32::from_ne_bytes(slice) as f32;
+        let slice = bytes[i..i+4].try_into().unwrap();
+        let val = f32::from_le_bytes(slice) as f32;
         // if val == 0. {
         //     break
         // }
         float_vec.push(val);
-        if val == 83774. {
-            break
-        }
+        // if val == 83774. {
+        //     break
+        // }
     }
     return float_vec
 }

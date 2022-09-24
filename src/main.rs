@@ -1,4 +1,5 @@
 // use ndarray::*;
+use std::time::*;
 
 use action_parsers::necto_parser_2::NectoAction;
 use conditionals::custom_conditions::CombinedTerminalConditions;
@@ -58,11 +59,25 @@ fn main() {
         false, 
         false);
     gym.reset(None);
-    for i in 0..100 {
-        gym.step(actions.clone());
+    let start_time = Instant::now();
+    for i in 0..(20 * 360) {
+        let (obs, reward, done, info) = gym.step(actions.clone());
+        if done {
+            gym.reset(None);
+        }
     }
+    let end_time = start_time.elapsed();
+    // let seconds_elapsed = end_time.as_secs_f64();
+    // println!("seconds elapsed: {seconds_elapsed}");
+    // let fps = (120.*360.)/seconds_elapsed;
+    // println!("fps: {fps}");
     gym.reset(None);
-    for i in 0..100 {
-        gym.step(actions.clone());
+    for i in 0..(15 * 360) {
+        let (obs, reward, done, info) = gym.step(actions.clone());
+        if done {
+            gym.reset(None);
+        }
     }
+    println!("closing Rocket League");
+    gym.close();
 }
