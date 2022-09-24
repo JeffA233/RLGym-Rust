@@ -77,22 +77,31 @@ impl RewardFn for EventReward {
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let id = player.car_id;
-        let old_values = self.last_registered_values.get(&id);
-        let values;
+        // let old_values = self.last_registered_values.get(&id);
+        // let values;
+        // let old_values = match old_values {
+        //     Some(old_values) => old_values,
+        //     None => {
+        //         // this always goes to the None branch for some reason??
+        //         println!("car_id value not found for EventReward, setting new value for car_id: {id}");
+        //         // panic!("could not get values for event reward hashmap")
+        //         values = EventReward::_extract_values(&player, &state);
+        //         self.last_registered_values.insert(id, values);
+        //         self.last_registered_values.get(&id).unwrap()
+        //     }
+        // };
+        let new_values = EventReward::_extract_values(&player, &state);
+        let old_values = self.last_registered_values.insert(id, new_values.clone());
         let old_values = match old_values {
             Some(old_values) => old_values,
             None => {
                 // this always goes to the None branch for some reason??
                 println!("car_id value not found for EventReward, setting new value for car_id: {id}");
                 // panic!("could not get values for event reward hashmap")
-                values = EventReward::_extract_values(&player, &state);
-                self.last_registered_values.insert(id, values);
-                self.last_registered_values.get(&id).unwrap()
+                EventReward::_extract_values(&player, &state)
             }
         };
-        let new_values = EventReward::_extract_values(&player, &state);
-
-        let diff_values = element_sub_vec(&new_values, old_values);
+        let diff_values = element_sub_vec(&new_values, &old_values);
 
         self.last_registered_values.insert(id, new_values);
         let is_value_positive: Vec<f32> = diff_values.iter().map(|x| if *x > 0. {*x} else {0.}).collect();
