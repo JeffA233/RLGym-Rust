@@ -14,7 +14,7 @@ pub struct CombinedTerminalConditions {
 impl CombinedTerminalConditions {
     pub fn new(tick_skip: usize) -> Self {
         CombinedTerminalConditions {
-            timeout_condition: TimeoutCondition::new(400*120/tick_skip as i64),
+            timeout_condition: TimeoutCondition::new(225 as i64),
             no_touch_timeout_condition: NoTouchTimeoutCondition::new(100*120/tick_skip as i64),
             goal_scored_condition: GoalScoredCondition::new(),
             no_touch_kickoff_condition: NoTouchKickoffTimeoutCondition::new(20*120/tick_skip as i64)
@@ -34,6 +34,9 @@ impl TerminalCondition for CombinedTerminalConditions {
         self.no_touch_timeout_condition.is_terminal(current_state), 
         self.goal_scored_condition.is_terminal(current_state), 
         self.no_touch_kickoff_condition.is_terminal(current_state)].iter().any(|x| x == &true);
+        // if bool {
+        //     println!("bool is true!!");
+        // }
         return bool
     }
 }
@@ -51,23 +54,6 @@ impl NoTouchKickoffTimeoutCondition {
         }
     }
 
-    // pub fn reset(&mut self, _initial_state: &GameState) {
-    //     self.steps = 0
-    // }
-
-    // pub fn is_terminal(&mut self, current_state: &GameState) -> bool {
-    //     if current_state.ball.position[0] == 0. && current_state.ball.position[1] == 0. {
-    //         if current_state.players.clone().into_iter().any(|x| x.ball_touched) {
-    //             self.steps = 0;
-    //             return false
-    //         } else {
-    //             self.steps += 1;
-    //             return if self.steps >= self.max_steps {true} else {false}
-    //         }
-    //     } else {
-    //         return false
-    //     }
-    // }
 }
 
 impl TerminalCondition for NoTouchKickoffTimeoutCondition {

@@ -1,13 +1,15 @@
 // use ndarray::*;
 // use std::time::*;
 
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
 use action_parsers::necto_parser_2::NectoAction;
 use conditionals::custom_conditions::CombinedTerminalConditions;
 use obs_builders::aspo4_array::AdvancedObsPadderStacker;
 use reward_functions::custom_rewards::get_custom_reward_func;
 use state_setters::random_state::RandomState;
+
+use crate::state_setters::default_state::DefaultState;
 // use crate::state_setters::state_setter::StateSetter;
 
 pub mod random_test;
@@ -35,16 +37,31 @@ pub mod make;
 
 // math.norm_func();
 
+// pub struct test{
+//     hashmap: Box<HashMap<i32, Vec<i32>>>
+// }
+
+// impl test {
+//     pub fn new() -> Self {
+//         test { hashmap: Box::new(HashMap::new()) }
+//     }
+//     pub fn get_set(&mut self, val: &i32) -> bool {
+//         // let temp_vec = vec![0, 1, 2];
+//         let out = self.hashmap.get(val);
+//         let out = match out {
+//             Some(out) => true,
+//             None => false
+//         };
+//         self.hashmap.insert(0, vec![0, 1, 2]);
+//         return out
+//     }
+// }
+
 fn main() {
     // let str = format!("{:02x}", 8 as u8);
-    // let mut hashmap = HashMap::new();
-    // hashmap.insert(0, vec![0, 1, 2]);
-    // let temp_vec = vec![0, 1, 2];
-    // let out = hashmap.get(&0);
-    // let out = match out {
-    //     Some(out) => out,
-    //     None => &temp_vec
-    // };
+    // let mut test_struct = test::new();
+    // test_struct.get_set(&0);
+    // test_struct.get_set(&0);
     // println!("{str}");
     // let vec_1 = vec![5.; 10];
     // let vec_2 = vec![2.; 10];
@@ -55,7 +72,7 @@ fn main() {
     let reward_fn = get_custom_reward_func();
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, None));
     let act_parse = Box::new(NectoAction::new());
-    let state_set = Box::new(RandomState::new(None, None, None));
+    let state_set = Box::new(DefaultState::new());
     let actions = vec![vec![55.]];
     let mut gym = make::make(None, 
         None, 
@@ -93,6 +110,8 @@ fn main() {
         if done {
             gym.reset(None);
         }
+        let rew_str: String = reward.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+        println!("{rew_str}");
         rew_val += reward[0];
     }
     let end_val = rew_val / (15.*360.);

@@ -206,14 +206,14 @@ impl RewardFn for GatherBoostReward {
     }
 
     fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f32>) -> f32 {
-        let last_boost = self.last_boost.get(&player.car_id).unwrap().clone();
+        let last_boost = self.last_boost.insert(player.car_id, player.boost_amount).unwrap().clone();
         let boost_differential: f32;
         if player.boost_amount > last_boost {
             boost_differential = player.boost_amount - last_boost;
-            self.last_boost.insert(player.car_id, player.boost_amount);
+            // self.last_boost.insert(player.car_id, player.boost_amount);
         } else {
             boost_differential = 0.;
-            self.last_boost.insert(player.car_id, player.boost_amount);
+            // self.last_boost.insert(player.car_id, player.boost_amount);
         }
         return boost_differential
     }
@@ -329,6 +329,9 @@ impl SB3CombinedLogReward {
 impl RewardFn for SB3CombinedLogReward {
     fn reset(&mut self, _initial_state: &GameState) {
         // self.returns = vec![0.; self.combined_reward_fns.len()];
+        for func in &mut self.combined_reward_fns {
+            func.reset(_initial_state);
+        }
         self.returns.fill(0.);
     }
 

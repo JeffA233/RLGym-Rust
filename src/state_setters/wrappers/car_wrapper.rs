@@ -3,7 +3,7 @@ use crate::gamestates::{player_data::PlayerData};
 
 pub struct CarWrapper {
     rotation: Vec<f32>,
-    team_num: i32,
+    pub team_num: i32,
     id: i32,
     pub boost: f32,
     position: Vec<f32>,

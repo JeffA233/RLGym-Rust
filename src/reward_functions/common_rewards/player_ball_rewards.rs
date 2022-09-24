@@ -19,9 +19,8 @@ impl VelocityPlayerToBallReward {
 }
 
 impl RewardFn for VelocityPlayerToBallReward {
-    fn reset(&mut self, initial_state: &GameState) {
-        
-    }
+    fn reset(&mut self, initial_state: &GameState) {}
+
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let vel = &player.car_data.linear_velocity;
 
@@ -32,10 +31,11 @@ impl RewardFn for VelocityPlayerToBallReward {
         } else {
             let partial = norm_func(&pos_diff);
             let norm_pos_diff = vec_div_variable(&pos_diff, &partial);
-            let norm_vel = vec_div_variable(&norm_pos_diff, &CAR_MAX_SPEED);
+            let norm_vel = vec_div_variable(&vel, &CAR_MAX_SPEED);
             return element_mult_vec(&norm_pos_diff, &norm_vel).iter().sum()
         }
     }
+
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         self.get_reward(player, state, previous_action)
     }

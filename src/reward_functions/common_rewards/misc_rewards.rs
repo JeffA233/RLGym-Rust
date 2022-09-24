@@ -68,7 +68,7 @@ impl EventReward {
 
 impl RewardFn for EventReward {
     fn reset(&mut self, initial_state: &GameState) {
-        self.last_registered_values = HashMap::new();
+        self.last_registered_values.clear();
         for player in &initial_state.players {
             let id = player.car_id;
             self.last_registered_values.insert(id, EventReward::_extract_values(&player, &initial_state));
@@ -77,6 +77,12 @@ impl RewardFn for EventReward {
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
         let id = player.car_id;
+        // let is_empty = self.last_registered_values.is_empty();
+        // let weights: Vec<String> = self.weights.iter().map(|x| x.to_string()).collect();
+        // let weights_str = weights.join(" ");
+        // println!("weights: {weights_str}");
+        // self.weights[0] = 0.5;
+        // println!("EventReward HashMap is_empty: {is_empty}");
         // let old_values = self.last_registered_values.get(&id);
         // let values;
         // let old_values = match old_values {
