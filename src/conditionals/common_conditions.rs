@@ -24,7 +24,7 @@ impl TerminalCondition for TimeoutCondition {
 
     fn is_terminal(&mut self, _current_state: &GameState) -> bool {
         self.steps += 1;
-        return if self.steps >= self.max_steps {true} else {false}
+        return self.steps >= self.max_steps
     }
 }
 
@@ -48,12 +48,12 @@ impl TerminalCondition for NoTouchTimeoutCondition {
     }
 
     fn is_terminal(&mut self, current_state: &GameState) -> bool {
-        if current_state.players.clone().into_iter().any(|x| x.ball_touched) {
+        if current_state.players.clone().into_iter().any(|x| x.ball_touched == true) {
             self.steps = 0;
             return false
         } else {
             self.steps += 1;
-            return if self.steps >= self.max_steps {true} else {false}
+            return self.steps >= self.max_steps
         }
     }
 }

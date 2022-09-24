@@ -395,7 +395,7 @@ fn file_put(returns_local: &Vec<f32>, reward_file: &Path) {
 
         let mut string = String::new();
         string = string + "[";
-        for i in 0..returns_local.len()-2 {
+        for i in 0..returns_local.len()-1 {
             string = string + &format!("{}, ", returns_local[i])
         }
         string = string + &format!("{}]", returns_local[returns_local.len()-1]);

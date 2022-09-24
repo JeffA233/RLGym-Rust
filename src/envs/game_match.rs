@@ -97,7 +97,7 @@ impl GameMatch {
             // _prev_actions: Array2::<f32>::zeros((num_agents, 8)),
             _prev_actions: vec![vec![0.; 8]; num_agents],
             _spectator_ids: vec![0; 6],
-            last_touch: 100,
+            last_touch: -1,
             _initial_score: 0,
         }
     }
@@ -115,16 +115,16 @@ impl GameMatch {
     pub fn build_observations(&mut self, mut state: &mut GameState) -> Vec<Vec<f32>> {
         let mut observations = Vec::<Vec<f32>>::new();
 
-        self._obs_builder.pre_step(&state);
-
-        for (i, player) in state.players.iter().enumerate() {
-            observations.push(self._obs_builder.build_obs(player, &state, self._prev_actions[i].clone()));
-        }
-
         if state.last_touch == -1 {
             state.last_touch = self.last_touch.clone();
         } else {
             self.last_touch = state.last_touch;
+        }
+
+        self._obs_builder.pre_step(&state);
+
+        for (i, player) in state.players.iter().enumerate() {
+            observations.push(self._obs_builder.build_obs(player, &state, self._prev_actions[i].clone()));
         }
 
         // if observations.len() == 1 {

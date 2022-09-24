@@ -70,26 +70,32 @@ impl RewardFn for EventReward {
     fn reset(&mut self, initial_state: &GameState) {
         self.last_registered_values = HashMap::new();
         for player in &initial_state.players {
-            self.last_registered_values.insert(player.car_id, EventReward::_extract_values(&player, &initial_state));
+            let id = player.car_id;
+            self.last_registered_values.insert(id, EventReward::_extract_values(&player, &initial_state));
         }
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        let old_values  = self.last_registered_values.get(&player.car_id);
+        let id = player.car_id;
+        let old_values = self.last_registered_values.get(&id);
+        let values;
         let old_values = match old_values {
             Some(old_values) => old_values,
             None => {
-                let values = EventReward::_extract_values(&player, &state);
-                self.last_registered_values.insert(player.car_id, values.clone());
-                self.last_registered_values.get(&player.car_id).unwrap()
+                // this always goes to the None branch for some reason??
+                println!("car_id value not found for EventReward, setting new value for car_id: {id}");
+                // panic!("could not get values for event reward hashmap")
+                values = EventReward::_extract_values(&player, &state);
+                self.last_registered_values.insert(id, values);
+                self.last_registered_values.get(&id).unwrap()
             }
         };
         let new_values = EventReward::_extract_values(&player, &state);
 
         let diff_values = element_sub_vec(&new_values, old_values);
 
-        self.last_registered_values.insert(player.car_id.clone(), new_values.clone());
-        let is_value_positive: Vec<f32> = diff_values.iter().map(|x| if x > &0. {x.clone()} else {0.}).collect();
+        self.last_registered_values.insert(id, new_values);
+        let is_value_positive: Vec<f32> = diff_values.iter().map(|x| if *x > 0. {*x} else {0.}).collect();
         let ret = element_mult_vec(&is_value_positive, &self.weights).iter().sum();
         return ret 
     }

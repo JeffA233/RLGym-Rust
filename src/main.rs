@@ -1,6 +1,8 @@
 // use ndarray::*;
 // use std::time::*;
 
+use std::collections::HashMap;
+
 use action_parsers::necto_parser_2::NectoAction;
 use conditionals::custom_conditions::CombinedTerminalConditions;
 use obs_builders::aspo4_array::AdvancedObsPadderStacker;
@@ -35,6 +37,14 @@ pub mod make;
 
 fn main() {
     // let str = format!("{:02x}", 8 as u8);
+    // let mut hashmap = HashMap::new();
+    // hashmap.insert(0, vec![0, 1, 2]);
+    // let temp_vec = vec![0, 1, 2];
+    // let out = hashmap.get(&0);
+    // let out = match out {
+    //     Some(out) => out,
+    //     None => &temp_vec
+    // };
     // println!("{str}");
     // let vec_1 = vec![5.; 10];
     // let vec_2 = vec![2.; 10];
