@@ -6,14 +6,14 @@ use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
 // use std::os::*;
 use std::env;
 use std::io::BufReader;
-use std::io::prelude::*;
+// use std::io::prelude::*;
 use std::fs::File;
-use std::path::Path;
-use std::ffi::OsStr;
+// use std::path::Path;
+// use std::ffi::OsStr;
 use std::iter::zip;
 use std::{thread, time};
 // use json::*;
-use glob::{glob, glob_with};
+use glob::glob;
 use serde_json::{Map, Value, from_reader};
 // use psutil::*;
 use sysinfo::*;
@@ -22,7 +22,7 @@ use webbrowser::*;
 
 
 pub fn launch_with_epic_simple(mut ideal_args: Vec<String>) -> Result<Popen> {
-    let epic_rl_exe_path = locate_epic_RL_binary();
+    let epic_rl_exe_path = locate_epic_rl_binary();
     // let argv = [epic_rl_exe_path, ideal_args, "-EpicPortal".to_string()];
     let mut argv = [epic_rl_exe_path.clone()].to_vec();
     argv.append(&mut ideal_args);
@@ -61,29 +61,29 @@ pub fn launch_with_epic_simple(mut ideal_args: Vec<String>) -> Result<Popen> {
 //     }
 // }
 
-fn get_epic_login_trick_args(ideal_args: Vec<String>) -> Vec<String> {
-    open("com.epicgames.launcher://apps/Sugar?action=launch&silent=true").unwrap();
-    let mut pid: Pid = Pid::from(0);
-    let mut proc_name: String = "".to_string();
-    let mut cmd_line: Vec<String> = Vec::<String>::new();
-    for _i in 0..10 {
-        let time = time::Duration::new(1, 0);
-        thread::sleep(time);
-        (pid, proc_name, cmd_line) = get_running_processes("RocketLeague.exe".to_string(), vec!["-EpicPortal".to_string()]);
-        if proc_name != "".to_string() {
-            break
-        }
-    }
-    if proc_name == "".to_string() {
-        return cmd_line
-    }
-    let sys = System::new_all();
-    let proc = sys.process(pid).unwrap();
-    proc.kill();
-    return cmd_line
-}
+// fn get_epic_login_trick_args(ideal_args: Vec<String>) -> Vec<String> {
+//     open("com.epicgames.launcher://apps/Sugar?action=launch&silent=true").unwrap();
+//     let mut pid: Pid = Pid::from(0);
+//     let mut proc_name: String = "".to_string();
+//     let mut cmd_line: Vec<String> = Vec::<String>::new();
+//     for _i in 0..10 {
+//         let time = time::Duration::new(1, 0);
+//         thread::sleep(time);
+//         (pid, proc_name, cmd_line) = get_running_processes("RocketLeague.exe".to_string(), vec!["-EpicPortal".to_string()]);
+//         if proc_name != "".to_string() {
+//             break
+//         }
+//     }
+//     if proc_name == "".to_string() {
+//         return cmd_line
+//     }
+//     let sys = System::new_all();
+//     let proc = sys.process(pid).unwrap();
+//     proc.kill();
+//     return cmd_line
+// }
 
-pub fn locate_epic_RL_binary() -> String {
+pub fn locate_epic_rl_binary() -> String {
     let possible_registry_locations_regkey = [
         RegKey::predef(HKEY_LOCAL_MACHINE), 
         RegKey::predef(HKEY_LOCAL_MACHINE),
@@ -202,26 +202,26 @@ pub fn locate_epic_RL_binary() -> String {
     return install_path
 }
 
-fn get_running_processes(process_name: String, required_args: Vec<String>) -> (Pid, String, Vec<String>) {
-    let sys = System::new_all();
-    let res = sys.processes_by_name(&process_name);
-    let pid: Pid = Pid::from(0);
-    for process in res {
-        let pid = process.pid();
-        let proc_name = process.name();
-        let cmd = process.cmd();
-        let cmd = &cmd[1..];
-        let mut matching_args: bool = true;
-        for (arg_req, arg) in zip(&required_args, cmd) {
-            let reg = Regex::new(&arg_req.to_lowercase()).unwrap();
-            matching_args = reg.is_match(&arg.to_lowercase());
-            if !matching_args {
-                break
-            }
-        }
-        if matching_args {
-            return (pid, proc_name.to_owned(), cmd.to_owned())
-        }
-    }
-    return (pid, "".to_owned(), Vec::<String>::new())
-}
+// fn get_running_processes(process_name: String, required_args: Vec<String>) -> (Pid, String, Vec<String>) {
+//     let sys = System::new_all();
+//     let res = sys.processes_by_name(&process_name);
+//     let pid: Pid = Pid::from(0);
+//     for process in res {
+//         let pid = process.pid();
+//         let proc_name = process.name();
+//         let cmd = process.cmd();
+//         let cmd = &cmd[1..];
+//         let mut matching_args: bool = true;
+//         for (arg_req, arg) in zip(&required_args, cmd) {
+//             let reg = Regex::new(&arg_req.to_lowercase()).unwrap();
+//             matching_args = reg.is_match(&arg.to_lowercase());
+//             if !matching_args {
+//                 break
+//             }
+//         }
+//         if matching_args {
+//             return (pid, proc_name.to_owned(), cmd.to_owned())
+//         }
+//     }
+//     return (pid, "".to_owned(), Vec::<String>::new())
+// }

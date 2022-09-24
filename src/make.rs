@@ -46,7 +46,7 @@ pub fn make(
     };
     let launch_pref = match launch_preference {
         Some(launch_pref) => launch_pref,
-        None => LaunchPreference::new().EPIC
+        None => LaunchPreference::new().epic
     };
     let game_match = GameMatch::new(
         reward_fn, 

@@ -1,10 +1,10 @@
-use std::{thread::{spawn, current}, any::Any, iter::Enumerate};
-use crate::{obs_builders::{aspo4_array::AdvancedObsPadderStacker, obs_builder::ObsBuilder}, action_parsers::{necto_parser_2::NectoAction, action_parser::ActionParser}, conditionals::{custom_conditions::CombinedTerminalConditions, terminal_condition::TerminalCondition}, reward_functions::default_reward::RewardFn, state_setters::state_setter::StateSetter};
+// use std::{thread::{spawn, current}, any::Any, iter::Enumerate};
+use crate::{obs_builders::{obs_builder::ObsBuilder}, action_parsers::{action_parser::ActionParser}, conditionals::{terminal_condition::TerminalCondition}, reward_functions::default_reward::RewardFn, state_setters::state_setter::StateSetter};
 
-use ndarray::*;
-use numpy::*;
+// use ndarray::*;
+// use numpy::*;
 
-use crate::gamestates::{game_state::GameState, player_data::PlayerData};
+use crate::gamestates::{game_state::GameState};
 
 pub struct GameMatch {
     pub _game_speed: f32,
@@ -108,7 +108,7 @@ impl GameMatch {
         self._terminal_condition.reset(&initial_state);
         self._reward_fn.reset(&initial_state);
         self._obs_builder.reset(&initial_state);
-        self.last_touch = 100;
+        self.last_touch = -1;
         self._initial_score = initial_state.blue_score - initial_state.orange_score;
     }
 

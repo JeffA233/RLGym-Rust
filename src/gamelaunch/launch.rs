@@ -3,39 +3,39 @@ use std::env::*;
 use subprocess::*;
 use crate::gamelaunch::epic_launch::launch_with_epic_simple;
 
-pub struct ROCKET_LEAGUE_PROCESS_INFO {
-    GAMEID: usize,
-    PROGRAM_NAME: String,
-    PROGRAM: String,
-    REQUIRED_ARGS: String
+pub struct RocketLeagueProcessInfo {
+    // game_id: usize,
+    // program_name: String,
+    // program: String,
+    // required_args: String
 }
 
-impl ROCKET_LEAGUE_PROCESS_INFO {
-    fn new() -> Self {
-        ROCKET_LEAGUE_PROCESS_INFO {
-            GAMEID: 252950,
-            PROGRAM_NAME: "RocketLeague.exe".to_string(),
-            PROGRAM: "RocketLeague.exe".to_string(),
-            REQUIRED_ARGS: "-pipe".to_string()
-        }
-    }
+impl RocketLeagueProcessInfo {
+    // fn new() -> Self {
+    //     RocketLeagueProcessInfo {
+    //         game_id: 252950,
+    //         program_name: "RocketLeague.exe".to_string(),
+    //         program: "RocketLeague.exe".to_string(),
+    //         required_args: "-pipe".to_string()
+    //     }
+    // }
     pub fn get_ideal_args(pipe_id: String) -> [String; 3] {
         return ["-pipe".to_string(), pipe_id, "-nomovie".to_string()]
     }
 }
 
 pub struct LaunchPreference {
-    pub STEAM: String,
-    pub EPIC: String,
-    pub EPIC_LOGIN_TRICK: String
+    pub steam: String,
+    pub epic: String,
+    pub epic_login_trick: String
 }
 
 impl LaunchPreference {
     pub fn new() -> Self {
         LaunchPreference {
-            STEAM: "steam".to_string(),
-            EPIC: "epic".to_string(),
-            EPIC_LOGIN_TRICK: "_login_trick".to_string()
+            steam: "steam".to_string(),
+            epic: "epic".to_string(),
+            epic_login_trick: "_login_trick".to_string()
         }
     }
 }
@@ -49,9 +49,9 @@ pub fn run_injector() {
 }
 
 pub fn launch_rocket_league(pipe_id: String, launch_preference: &String) -> Popen {
-    let ideal_args = ROCKET_LEAGUE_PROCESS_INFO::get_ideal_args(pipe_id);
+    let ideal_args = RocketLeagueProcessInfo::get_ideal_args(pipe_id);
     let default_launch_pref = LaunchPreference::new();
-    if !(launch_preference == &default_launch_pref.EPIC) || !(launch_preference == &default_launch_pref.STEAM) {
+    if !(launch_preference == &default_launch_pref.epic) || !(launch_preference == &default_launch_pref.steam) {
         if Path::new(&launch_preference).exists() {
             return Popen::create(&[launch_preference], PopenConfig::default()).unwrap()
         } else {

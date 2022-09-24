@@ -1,12 +1,12 @@
 // use ndarray::*;
-use std::time::*;
+// use std::time::*;
 
 use action_parsers::necto_parser_2::NectoAction;
 use conditionals::custom_conditions::CombinedTerminalConditions;
 use obs_builders::aspo4_array::AdvancedObsPadderStacker;
-use reward_functions::custom_rewards::{SB3CombinedLogReward, get_custom_reward_func};
+use reward_functions::custom_rewards::get_custom_reward_func;
 use state_setters::random_state::RandomState;
-use crate::state_setters::state_setter::StateSetter;
+// use crate::state_setters::state_setter::StateSetter;
 
 pub mod random_test;
 pub mod action_parsers;
@@ -36,6 +36,11 @@ pub mod make;
 fn main() {
     // let str = format!("{:02x}", 8 as u8);
     // println!("{str}");
+    // let vec_1 = vec![5.; 10];
+    // let vec_2 = vec![2.; 10];
+    // let out = math::element_add_vec(&vec_1, &vec_2);
+    // let printable = out.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+    // println!("{printable}");
     let term_cond = Box::new(CombinedTerminalConditions::new(8));
     let reward_fn = get_custom_reward_func();
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, None));
@@ -59,25 +64,29 @@ fn main() {
         false, 
         false);
     gym.reset(None);
-    let start_time = Instant::now();
-    for i in 0..(20 * 360) {
-        let (obs, reward, done, info) = gym.step(actions.clone());
+    // let start_time = Instant::now();
+    for _i in 0..(20 * 360) {
+        let (_obs, _reward, done, _info) = gym.step(actions.clone());
         if done {
             gym.reset(None);
         }
     }
-    let end_time = start_time.elapsed();
+    // let end_time = start_time.elapsed();
     // let seconds_elapsed = end_time.as_secs_f64();
     // println!("seconds elapsed: {seconds_elapsed}");
     // let fps = (120.*360.)/seconds_elapsed;
     // println!("fps: {fps}");
     gym.reset(None);
-    for i in 0..(15 * 360) {
-        let (obs, reward, done, info) = gym.step(actions.clone());
+    let mut rew_val: f32 = 0.;
+    for _i in 0..(15 * 360) {
+        let (_obs, reward, done, _info) = gym.step(actions.clone());
         if done {
             gym.reset(None);
         }
+        rew_val += reward[0];
     }
+    let end_val = rew_val / (15.*360.);
+    println!("rough reward per tick: {end_val}");
     println!("closing Rocket League");
     gym.close();
 }

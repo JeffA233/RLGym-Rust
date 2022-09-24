@@ -1,13 +1,13 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::BLUE_TEAM, math::{element_add_vec, element_mult_vec}};
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::{element_add_vec, element_mult_vec}};
 
 use super::{common_rewards::{player_ball_rewards::VelocityPlayerToBallReward, ball_goal_rewards::VelocityBallToGoalReward, misc_rewards::{SaveBoostReward, VelocityReward, EventReward}}, default_reward::RewardFn};
 
 // use numpy::*;
 // use ndarray::*;
-use std::{fs::*, path::PathBuf, io::{Seek, SeekFrom}, collections::HashMap};
+use std::{fs::*, path::PathBuf, collections::HashMap};
 use std::io::{BufWriter, Write};
 use std::io::ErrorKind::*;
-use std::fs::File;
+// use std::fs::File;
 use fs2::FileExt;
 use std::thread;
 use std::path::Path;
@@ -206,16 +206,16 @@ impl RewardFn for GatherBoostReward {
     }
 
     fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f32>) -> f32 {
-        let last_boost = self.last_boost.get(&player.car_id).unwrap();
+        let last_boost = self.last_boost.get(&player.car_id).unwrap().clone();
         let boost_differential: f32;
-        if player.boost_amount > *last_boost {
+        if player.boost_amount > last_boost {
             boost_differential = player.boost_amount - last_boost;
             self.last_boost.insert(player.car_id, player.boost_amount);
         } else {
             boost_differential = 0.;
             self.last_boost.insert(player.car_id, player.boost_amount);
         }
-        return boost_differential/100.
+        return boost_differential
     }
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
@@ -336,11 +336,13 @@ impl RewardFn for SB3CombinedLogReward {
         let mut rewards = Vec::<f32>::new();
 
         for func in &mut self.combined_reward_fns {
-            rewards.push(func.get_reward(player, state, previous_action.clone()));
+            let val = func.get_reward(player, state, previous_action.clone());
+            rewards.push(val);
         }
         
-        self.returns = element_add_vec(&self.returns, &rewards);
-        self.returns = element_mult_vec(&self.returns, &self.combined_reward_weights);
+        // self.returns = element_add_vec(&self.returns, &rewards);
+        let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
+        self.returns = element_add_vec(&self.returns, &vals);
 
         return self.returns.clone().iter().sum::<f32>() * self.final_mult;
     }
@@ -349,12 +351,13 @@ impl RewardFn for SB3CombinedLogReward {
         let mut rewards = Vec::<f32>::new();
 
         for func in &mut self.combined_reward_fns {
-            rewards.push(func.get_reward(player, state, previous_action.clone()));
+            let val = func.get_final_reward(player, state, previous_action.clone());
+            rewards.push(val);        
         }
         
-        self.returns = element_add_vec(&self.returns, &rewards);
-        self.returns = element_mult_vec(&self.returns, &self.combined_reward_weights);
-
+        let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
+        self.returns = element_add_vec(&self.returns, &vals);
+        
         let local_ret = self.returns.clone();
         let reward_file = self.reward_file_path.clone();
         

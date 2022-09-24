@@ -54,7 +54,7 @@ impl CommunicationHandler {
         };
         // let received_message = self.message;
         let mut received_message = self.message.clone();
-        for i in 0..10 {
+        for _i in 0..10 {
             let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
             let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
             let out: BOOL;
@@ -66,7 +66,7 @@ impl CommunicationHandler {
             // let decode_str =
             // let msg_floats = Vec::<f64>::new();
             let msg_floats = bytes_to_f32(&buffer, &bytes_read);
-            let msg_floats_str = msg_floats.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+            // let msg_floats_str = msg_floats.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
             // println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
             let deserialized_header = deserialize_header(&msg_floats);
 
@@ -119,7 +119,7 @@ impl CommunicationHandler {
         // drop(u8_serialized);
         // drop(buffer_ptr);
         let res_bool = out.as_bool();
-        let res_int = out.0;
+        // let res_int = out.0;
         // println!("send_message WriteFile bool result: {res_bool}; int result: {res_int}; bytes written: {bytes_written}");
         // let err;
         // unsafe {
@@ -174,7 +174,7 @@ impl CommunicationHandler {
                     win_handle = FindWindowA(None, s!("DIEmWin"));
                     is_visible = IsWindowVisible(win_handle);
                     if is_visible.as_bool() {
-                        let res = DestroyWindow(win_handle);
+                        DestroyWindow(win_handle).expect("window could not be destroyed");
                         println!("DIEmWin detector successfully closed window");
                     }
                 }
@@ -185,14 +185,14 @@ impl CommunicationHandler {
                 }
             }
         });
-        let pipe_name_u16 = pipe_name.to_owned() + "\0";
-        let pipe_name_u16: Vec<u16> = pipe_name_u16.encode_utf16().collect();
+        // let pipe_name_u16 = pipe_name.to_owned() + "\0";
+        // let pipe_name_u16: Vec<u16> = pipe_name_u16.encode_utf16().collect();
         // let pipe_name_u16: = pipe_name.encode_utf16().collect();
         let out;
         let c_str = CString::new(pipe_name).expect("CString::new failed");
         let pcstr = PCSTR::from_raw(c_str.as_bytes_with_nul().as_ptr());
         // let pcwstr = PCWSTR::from_raw(pipe_name_u16.as_ptr());
-        let pcstr_str;
+        // let pcstr_str;
         unsafe {
             out = CreateNamedPipeA(pcstr,
                  PIPE_ACCESS_DUPLEX,
@@ -202,7 +202,7 @@ impl CommunicationHandler {
                     RLGYM_DEFAULT_PIPE_SIZE as u32,
                       0,
                        None);
-            pcstr_str = pcstr.display();
+            // pcstr_str = pcstr.display();
         }
         // let pipe_name_joinedstr: String = pipe_name_u16.join(" ");
         // println!("");
@@ -217,14 +217,14 @@ impl CommunicationHandler {
             Ok(out) => self._pipe = out,
             Err(err) => panic!("CreateNamedPipeA Err: {err}")
         };
-        let print = self._pipe.0;
+        // let print = self._pipe.0;
         // println!("NamedPipe handle: {print}");
         
         let out;
         unsafe {
             out = ConnectNamedPipe(self._pipe, None);
         }
-        let printable = out.0;
+        // let printable = out.0;
         // println!("ConnectNamedPipe code: {printable}");
         let out = out.ok();
         match out {
@@ -244,19 +244,19 @@ impl CommunicationHandler {
         //     let err = err.message();
         //     println!("NamedPipe error: {err}");
         // }
-        pipe_name_u16;
+        // pipe_name_u16;
 
         self._connected = true;
         _connected = true;
 
-        let res = handler.join();
+        handler.join().expect("could not join thread");
 
     }
 
     pub fn close_pipe(&mut self) {
         self._connected = false;
         unsafe {
-            let out = CloseHandle(self._pipe);
+            CloseHandle(self._pipe).expect("pipe could not be closed");
         }
     }
 

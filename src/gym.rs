@@ -1,26 +1,26 @@
-use crate::action_parsers;
-use crate::common_values;
-use crate::communication;
+// use crate::action_parsers;
+// use crate::common_values;
+// use crate::communication;
 use crate::communication::communication_handler::{CommunicationHandler, format_pipe_id};
 use crate::communication::message::{RLGYM_CONFIG_MESSAGE_HEADER, RLGYM_RESET_GAME_STATE_MESSAGE_HEADER, RLGYM_STATE_MESSAGE_HEADER, RLGYM_AGENT_ACTION_IMMEDIATE_RESPONSE_MESSAGE_HEADER};
-use crate::conditionals;
-use crate::envs;
-use crate::gamelaunch;
+// use crate::conditionals;
+// use crate::envs;
+// use crate::gamelaunch;
 use crate::gamelaunch::launch::run_injector;
 use crate::gamelaunch::launch::{LaunchPreference, launch_rocket_league};
-use crate::gamestates;
+// use crate::gamestates;
 use crate::gamestates::game_state::GameState;
-use crate::math;
-use crate::obs_builders;
-use crate::reward_functions;
-use crate::state_setters;
+// use crate::math;
+// use crate::obs_builders;
+// use crate::reward_functions;
+// use crate::state_setters;
 use crate::envs::game_match::GameMatch;
-use ndarray::*;
+// use ndarray::*;
 use subprocess::Popen;
-use subprocess::Result;
+// use subprocess::Result;
 use std::collections::HashMap;
-use std::thread::JoinHandle;
-use std::thread::Thread;
+// use std::thread::JoinHandle;
+// use std::thread::Thread;
 use std::thread;
 use std::time::Duration;
 
@@ -50,7 +50,7 @@ impl Gym {
         };
         let launch_preference = match launch_preference {
             Some(preference) => preference,
-            None => LaunchPreference::new().EPIC
+            None => LaunchPreference::new().epic
         };
         let use_injector = match use_injector {
             Some(use_injector) => use_injector,
@@ -113,11 +113,11 @@ impl Gym {
     //     }
     // }
 
-    pub fn reset(&mut self, return_info: Option<bool>) -> Vec<Vec<f32>> {
-        let return_info = match return_info {
-            Some(return_info) => return_info,
-            None => false
-        };
+    pub fn reset(&mut self, _return_info: Option<bool>) -> Vec<Vec<f32>> {
+        // let _return_info = match _return_info {
+        //     Some(return_info) => return_info,
+        //     None => false
+        // };
 
         let state_str = self._game_match.get_reset_state();
 
@@ -129,7 +129,7 @@ impl Gym {
 
         let obs = self._game_match.build_observations(&mut state);
         // TODO will have to work out how to return info if so
-        // if return_info {
+        // if _return_info {
         //     let mut h_m = HashMap::<&str,f32>::new();
         //     h_m.insert("result", self._game_match.get_result(state) as f32);
         // }
