@@ -101,8 +101,7 @@ impl RewardFn for EventReward {
         let old_values = match old_values {
             Some(old_values) => old_values,
             None => {
-                // this always goes to the None branch for some reason??
-                println!("car_id value not found for EventReward, setting new value for car_id: {id}");
+                // println!("car_id value not found for EventReward, setting new value for car_id: {id}");
                 // panic!("could not get values for event reward hashmap")
                 EventReward::_extract_values(&player, &state)
             }

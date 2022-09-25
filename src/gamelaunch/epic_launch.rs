@@ -28,8 +28,8 @@ pub fn launch_with_epic_simple(mut ideal_args: Vec<String>) -> Result<Popen> {
     argv.append(&mut ideal_args);
     argv.push("-EpicPortal".to_string());
     let argv = argv.as_slice();
-    let print = argv.join(" ");
-    println!("{print}");
+    // let print = argv.join(" ");
+    // println!("{print}");
     let res;
     if epic_rl_exe_path.len() != 0 {
         res = Popen::create(argv, PopenConfig::default())

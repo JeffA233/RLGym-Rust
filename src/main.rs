@@ -1,5 +1,5 @@
 // use ndarray::*;
-// use std::time::*;
+use std::time::*;
 
 // use std::collections::HashMap;
 
@@ -30,7 +30,7 @@ pub mod gym;
 pub mod make;
 // use std::fs::File;
 // use std::fs::*;
-// use std::io::{BufWriter, Write};
+use std::io::{BufWriter, Write, stdin};
 // use std::env::*;
 // use std::path::Path;
 // use std::{thread, time};
@@ -46,8 +46,8 @@ fn main() {
     let act_parse = Box::new(NectoAction::new());
     let state_set = Box::new(DefaultState::new());
     let actions = vec![vec![55.]];
-    let mut gym = make::make(None, 
-        None, 
+    let mut gym = make::make(Some(100000.), 
+        Some(0), 
         Some(false), 
         Some(1), 
         None, 
@@ -81,31 +81,39 @@ fn main() {
 //     println!("{rew_f32}")
     // --END--
     gym.reset(None);
-    // let start_time = Instant::now();
-    for _i in 0..(20 * 360) {
-        let (_obs, _reward, done, _info) = gym.step(actions.clone());
-        if done {
-            gym.reset(None);
-        }
-    }
-    // let end_time = start_time.elapsed();
-    // let seconds_elapsed = end_time.as_secs_f64();
-    // println!("seconds elapsed: {seconds_elapsed}");
-    // let fps = (120.*360.)/seconds_elapsed;
-    // println!("fps: {fps}");
-    gym.reset(None);
+    gym.step(actions.clone());
+
     let mut rew_val: f32 = 0.;
-    for _i in 0..(15 * 360) {
+    let start_time = Instant::now();
+    for _i in 0..(120 * 360) {
         let (_obs, reward, done, _info) = gym.step(actions.clone());
         if done {
             gym.reset(None);
         }
-        let rew_str: String = reward.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-        println!("{rew_str}");
         rew_val += reward[0];
     }
-    let end_val = rew_val / (15.*360.);
-    println!("rough reward per tick: {end_val}");
-    println!("closing Rocket League");
+    let duration = start_time.elapsed();
+    let seconds_elapsed = duration.as_secs_f64();
+    println!("seconds elapsed: {seconds_elapsed}");
+    let fps = (120.*360.)/seconds_elapsed;
+    println!("fps: {fps}");
+
+    // gym.reset(None);
+
+    // let mut rew_val: f32 = 0.;
+    // for _i in 0..(15 * 360) {
+    //     let (_obs, reward, done, _info) = gym.step(actions.clone());
+    //     if done {
+    //         gym.reset(None);
+    //     }
+    //     let rew_str: String = reward.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+    //     // println!("{rew_str}");
+    //     rew_val += reward[0];
+    // }
+    // let end_val = rew_val / (15.*360.);
+    // println!("rough reward per tick: {end_val}");
+    // println!("closing Rocket League");
     gym.close();
+    println!("waiting");
+    stdin().read_line(&mut String::new()).unwrap();
 }
