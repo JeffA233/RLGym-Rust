@@ -141,7 +141,9 @@ impl RewardFn for VelocityReward {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        return norm_func(&player.car_data.linear_velocity) / CAR_MAX_SPEED * (1 - 2 * self.negative as i32) as f32
+        let norm = norm_func(&player.car_data.linear_velocity);
+        let norm_std = norm / CAR_MAX_SPEED * (1 - 2 * self.negative as i32) as f32;
+        return norm_std;
     }
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {

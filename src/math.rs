@@ -126,7 +126,7 @@ pub fn vector_projection(vec: Vec<f32>, dest_vec: Vec<f32>, mag_squared: Option<
 pub fn norm_func(nums: &Vec<f32>) -> f32 {
     let norm_val: f32 = nums.clone()
                             .into_iter()
-                            .map(|x| x.powf(2.))
+                            .map(|x| x.powi(2))
                             // .collect::<Vec<f32>>()
                             // .iter()
                             .sum::<f32>()

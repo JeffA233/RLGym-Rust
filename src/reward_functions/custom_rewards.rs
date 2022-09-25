@@ -33,9 +33,12 @@ pub fn get_custom_reward_func() -> Box<dyn RewardFn> {
     //     returns: Vec::<f32>::new()
     // }
 
+    let weights = vec![0.05, 0.2, 5.0, 0.01, 1.0, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
+    assert!(weights.len() == reward_fn_vec.len());
+
     Box::new(SB3CombinedLogReward::new(
         reward_fn_vec, 
-        vec![0.05, 0.2, 5.0, 0.01, 1.0, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006],
+        weights,
         Some("combinedlogfiles-v2".to_string()),
         Some(0.1)
     ))
@@ -343,11 +346,13 @@ impl RewardFn for SB3CombinedLogReward {
             rewards.push(val);
         }
         
-        // self.returns = element_add_vec(&self.returns, &rewards);
+        // 0, 6, 10 are suspect
         let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
         self.returns = element_add_vec(&self.returns, &vals);
+        let sum = vals.clone().iter().sum::<f32>();
+        let final_val = sum * self.final_mult; 
 
-        return self.returns.clone().iter().sum::<f32>() * self.final_mult;
+        return final_val;
     }
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
@@ -367,7 +372,10 @@ impl RewardFn for SB3CombinedLogReward {
 
         thread::spawn(move || file_put(&local_ret, reward_file.as_path()));
 
-        return self.returns.clone().iter().sum::<f32>() * self.final_mult;
+        let sum = vals.clone().iter().sum::<f32>();
+        let final_val = sum * self.final_mult; 
+
+        return final_val;    
     }
 }
 

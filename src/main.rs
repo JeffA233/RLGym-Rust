@@ -5,9 +5,11 @@
 
 use action_parsers::necto_parser_2::NectoAction;
 use conditionals::custom_conditions::CombinedTerminalConditions;
+// use envs::game_match::GameMatch;
+// use gamestates::game_state::{GameState};
 use obs_builders::aspo4_array::AdvancedObsPadderStacker;
 use reward_functions::custom_rewards::get_custom_reward_func;
-use state_setters::random_state::RandomState;
+// use state_setters::random_state::RandomState;
 
 use crate::state_setters::default_state::DefaultState;
 // use crate::state_setters::state_setter::StateSetter;
@@ -37,37 +39,7 @@ pub mod make;
 
 // math.norm_func();
 
-// pub struct test{
-//     hashmap: Box<HashMap<i32, Vec<i32>>>
-// }
-
-// impl test {
-//     pub fn new() -> Self {
-//         test { hashmap: Box::new(HashMap::new()) }
-//     }
-//     pub fn get_set(&mut self, val: &i32) -> bool {
-//         // let temp_vec = vec![0, 1, 2];
-//         let out = self.hashmap.get(val);
-//         let out = match out {
-//             Some(out) => true,
-//             None => false
-//         };
-//         self.hashmap.insert(0, vec![0, 1, 2]);
-//         return out
-//     }
-// }
-
 fn main() {
-    // let str = format!("{:02x}", 8 as u8);
-    // let mut test_struct = test::new();
-    // test_struct.get_set(&0);
-    // test_struct.get_set(&0);
-    // println!("{str}");
-    // let vec_1 = vec![5.; 10];
-    // let vec_2 = vec![2.; 10];
-    // let out = math::element_add_vec(&vec_1, &vec_2);
-    // let printable = out.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-    // println!("{printable}");
     let term_cond = Box::new(CombinedTerminalConditions::new(8));
     let reward_fn = get_custom_reward_func();
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, None));
@@ -90,6 +62,24 @@ fn main() {
         false, 
         false, 
         false);
+    // --TESTING OF MATCH/REWARDS/ETC.--
+    // let match_ = gym._game_match;
+//     let mut match_ = GameMatch::new(reward_fn, 
+//         term_cond, 
+//         obs_build, 
+//     act_parse, 
+// state_set, 
+// Some(1),
+// Some(8),
+// Some(100.),
+// Some(1.),
+// Some(1.),
+// Some(false));
+//     let fake_state = GameState::new_test();
+//     let rew = match_.get_rewards(&fake_state, false);
+//     let rew_f32: f32 = rew.iter().sum();
+//     println!("{rew_f32}")
+    // --END--
     gym.reset(None);
     // let start_time = Instant::now();
     for _i in 0..(20 * 360) {
