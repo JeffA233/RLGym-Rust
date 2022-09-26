@@ -10,15 +10,15 @@ use std::io::BufReader;
 use std::fs::File;
 // use std::path::Path;
 // use std::ffi::OsStr;
-use std::iter::zip;
-use std::{thread, time};
+// use std::iter::zip;
+// use std::{thread, time};
 // use json::*;
 use glob::glob;
 use serde_json::{Map, Value, from_reader};
 // use psutil::*;
-use sysinfo::*;
-use regex::*;
-use webbrowser::*;
+// use sysinfo::*;
+// use regex::*;
+// use webbrowser::*;
 
 
 pub fn launch_with_epic_simple(mut ideal_args: Vec<String>) -> Result<Popen> {

@@ -30,7 +30,7 @@ pub struct CommunicationHandler {
     _pipe: HANDLE,
     _connected: bool,
     message: Message,
-    overlapped_struct: OVERLAPPED
+    // overlapped_struct: OVERLAPPED
 }
 
 impl CommunicationHandler {
@@ -39,7 +39,7 @@ impl CommunicationHandler {
             _current_pipe_name: RLGYM_GLOBAL_PIPE_NAME.to_string(),
             message: Message::new(),
             _connected: false,
-            overlapped_struct: OVERLAPPED::default(),
+            // overlapped_struct: OVERLAPPED::default(),
             ..Default::default()
         }
     }
@@ -180,7 +180,7 @@ impl CommunicationHandler {
                 }
                 thread::sleep(time::Duration::new(1, 0));
                 i += 1;
-                if i > 6 {
+                if i > 10 {
                     break
                 }
             }

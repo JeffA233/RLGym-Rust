@@ -13,8 +13,8 @@ use std::thread;
 use std::path::Path;
 
 
-pub fn get_custom_reward_func() -> Box<dyn RewardFn> {
-    let mut reward_fn_vec = Vec::<Box<dyn RewardFn>>::new();
+pub fn get_custom_reward_func() -> Box<dyn RewardFn + Send> {
+    let mut reward_fn_vec = Vec::<Box<dyn RewardFn + Send>>::new();
 
     reward_fn_vec.push(Box::new(VelocityPlayerToBallReward::new(None)));
     reward_fn_vec.push(Box::new(VelocityBallToGoalReward::new(None, None)));
@@ -233,12 +233,12 @@ pub struct SB3CombinedLogReward {
     // lockfile: String,
     final_mult: f32,
     returns: Vec<f32>,
-    combined_reward_fns: Vec<Box<dyn RewardFn>>,
+    combined_reward_fns: Vec<Box<dyn RewardFn + Send>>,
     combined_reward_weights: Vec<f32>
 }
 
 impl SB3CombinedLogReward {
-    fn new(reward_structs: Vec<Box<dyn RewardFn>>, reward_weights: Vec<f32>, file_location: Option<String>, final_mult: Option<f32>) -> Self {
+    fn new(reward_structs: Vec<Box<dyn RewardFn + Send>>, reward_weights: Vec<f32>, file_location: Option<String>, final_mult: Option<f32>) -> Self {
         let file_location = match file_location {
             Some(file_location) => file_location,
             None => "./combinedlogfiles".to_owned()

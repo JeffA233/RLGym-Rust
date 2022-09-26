@@ -606,19 +606,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "numpy"
-version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "383ae168529a39fc97cbc1d9d4fa865377731a519bc27553ed96f50594de7c45"
-dependencies = [
- "libc",
- "ndarray 0.15.4",
- "num-complex 0.4.2",
- "num-traits",
- "pyo3",
-]
-
-[[package]]
 name = "objc"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -933,12 +920,10 @@ dependencies = [
  "gym",
  "json",
  "ndarray 0.15.4",
- "numpy",
  "pyo3",
  "rand 0.8.5",
  "regex",
  "registry",
- "serde",
  "serde_json",
  "subprocess",
  "sysinfo",
