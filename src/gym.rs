@@ -8,6 +8,7 @@ use crate::communication::message::{RLGYM_CONFIG_MESSAGE_HEADER, RLGYM_RESET_GAM
 // use crate::gamelaunch;
 use crate::gamelaunch::launch::run_injector;
 use crate::gamelaunch::launch::{LaunchPreference, launch_rocket_league};
+use crate::gamelaunch::minimize::toggle_rl_windows;
 // use crate::gamestates;
 use crate::gamestates::game_state::GameState;
 // use crate::math;
@@ -86,7 +87,7 @@ impl Gym {
         // }
         let observation_space = game_match.observation_space.clone();
         let action_space = game_match.action_space.clone(); 
-        Gym {
+        let mut gym =Gym {
             _game_match: game_match,
             observation_space,
             action_space,
@@ -102,16 +103,19 @@ impl Gym {
             _minimized: false,
             _auto_minimize: auto_minimize,
             _prev_state: GameState::new(None),
-        }
+        };
+        gym.reset(None);
+        gym._minimize_game();
+        return gym
     }
 
-    // pub fn _minimize_game(&mut self) {
-    //     if !self._minimized {
-    //         if self._minimizing_thread.is_finished() {
-
-    //         }
-    //     }
-    // }
+    pub fn _minimize_game(&mut self) {
+        if !self._minimized {
+            thread::spawn(|| toggle_rl_windows(true));
+            toggle_rl_windows(true);
+            self._minimized = true;
+        }
+    }
 
     pub fn reset(&mut self, _return_info: Option<bool>) -> Vec<Vec<f32>> {
         // let _return_info = match _return_info {
