@@ -61,7 +61,7 @@ fn main() {
         true, 
         false, 
         false, 
-        false);
+        true);
     // --TESTING OF MATCH/REWARDS/ETC.--
     // let match_ = gym._game_match;
 //     let mut match_ = GameMatch::new(reward_fn, 
@@ -80,7 +80,7 @@ fn main() {
 //     let rew_f32: f32 = rew.iter().sum();
 //     println!("{rew_f32}")
     // --END--
-    gym.reset(None);
+    // gym.reset(None);
     gym.step(actions.clone());
 
     let mut rew_val: f32 = 0.;

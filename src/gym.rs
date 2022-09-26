@@ -105,7 +105,9 @@ impl Gym {
             _prev_state: GameState::new(None),
         };
         gym.reset(None);
-        gym._minimize_game();
+        if gym._auto_minimize {
+            gym._minimize_game();
+        }
         return gym
     }
 
