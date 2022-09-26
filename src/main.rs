@@ -11,7 +11,7 @@ use obs_builders::aspo4_array::AdvancedObsPadderStacker;
 use reward_functions::custom_rewards::get_custom_reward_func;
 // use state_setters::random_state::RandomState;
 
-use crate::state_setters::default_state::DefaultState;
+use crate::state_setters::custom_state_setters::custom_state_setters;
 // use crate::state_setters::state_setter::StateSetter;
 
 pub mod random_test;
@@ -40,15 +40,15 @@ use std::io::{BufWriter, Write, stdin};
 // math.norm_func();
 
 fn main() {
-    let term_cond = Box::new(CombinedTerminalConditions::new(8));
+    let term_cond = Box::new(CombinedTerminalConditions::new(1));
     let reward_fn = get_custom_reward_func();
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, None));
     let act_parse = Box::new(NectoAction::new());
-    let state_set = Box::new(DefaultState::new());
+    let state_set = Box::new(custom_state_setters(1));
     let actions = vec![vec![55.]];
     let mut gym = make::make(Some(100000.), 
         Some(0), 
-        Some(false), 
+        Some(true), 
         Some(1), 
         None, 
         None, 

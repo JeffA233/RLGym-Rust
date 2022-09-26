@@ -18,14 +18,15 @@ pub fn toggle_rl_windows(minimize: bool) {
                 let out;
                 if &window_text == "Rocket League" {
                     out = ShowWindow(hwnd, SW_FORCEMINIMIZE);
+                    println!("Rocket League is now minimized");
                     return BOOL::from(true)
                 } else {
-                    out = BOOL::from(true);
-                    return out
+                    // out = BOOL::from(true);
+                    return BOOL::from(true)
                 }
             } else {
-                let out = BOOL::from(true);
-                return out
+                // let out = BOOL::from(true);
+                return BOOL::from(true)
             }
         }
         let func: WNDENUMPROC = Some(win_enum_handler);

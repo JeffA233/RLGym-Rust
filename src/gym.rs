@@ -112,11 +112,9 @@ impl Gym {
     }
 
     pub fn _minimize_game(&mut self) {
-        if !self._minimized {
-            thread::spawn(|| toggle_rl_windows(true));
-            toggle_rl_windows(true);
-            self._minimized = true;
-        }
+        thread::spawn(|| toggle_rl_windows(true));
+        toggle_rl_windows(true);
+        self._minimized = true;
     }
 
     pub fn reset(&mut self, _return_info: Option<bool>) -> Vec<Vec<f32>> {

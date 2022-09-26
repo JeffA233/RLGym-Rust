@@ -76,10 +76,10 @@ impl ReplaySetter {
     }
 
     fn _set_cars(state_wrapper: &mut StateWrapper, state: &mut Vec<f32>) {
-        let data = &mut state[9..state_wrapper.cars.len()];
+        let data = &mut state[9..state_wrapper.cars.len()*13+9];
         let mut i = 0;
         for car in state_wrapper.cars.iter_mut() {
-            car.set_pos(Some(data[i+0]), Some(data[i+1]), Some(data[i+2]));
+            car.set_pos(Some(data[i]), Some(data[i+1]), Some(data[i+2]));
             car.set_rot(Some(data[i+3]), Some(data[i+4]), Some(data[i+5]));
             car.set_lin_vel(Some(data[i+6]), Some(data[i+7]), Some(data[i+8]));
             car.set_ang_vel(Some(data[i+9]), Some(data[i+10]), Some(data[i+11]));
