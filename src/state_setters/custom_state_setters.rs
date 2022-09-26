@@ -1,26 +1,39 @@
+use super::default_state::DefaultState;
+use super::random_state::RandomState;
 use super::state_setter::StateSetter;
 use super::wrappers::state_wrapper::StateWrapper;
 use rand::Rng;
 use rand::distributions::weighted::WeightedIndex;
-use rand::prelude::{thread_rng, Distribution};
-use rand::rngs::ThreadRng;
+use rand::prelude::Distribution;
+use rand::{rngs::StdRng, SeedableRng, thread_rng};
 
 use zip::read::ZipArchive;
 use std::{fs::File, io::BufReader};
 use serde_json::from_reader;
 
 
+pub fn custom_state_setters(team_size: i32) -> WeightedSampleSetter {
+    let replay_setter_str = if team_size == 1 {"replay_folder/ssl_1v1.zip".to_owned()} else if team_size == 2 {"replay_folder/ssl_2v2.zip".to_owned()} else {"replay_folder/ssl_3v3.zip".to_owned()};
+    let state_setters: Vec<Box<dyn StateSetter + Send>> = vec![
+        Box::new(DefaultState::new()),
+        Box::new(RandomState::new(None, None, Some(false))),
+        Box::new(ReplaySetter::new(replay_setter_str))
+    ];
+    WeightedSampleSetter::new(state_setters, vec![1.0, 0.15, 0.5])
+}
+
 pub struct WeightedSampleSetter {
     state_setters: Vec<Box<dyn StateSetter + Send>>,
     distribution: WeightedIndex<f32>,
-    rng: ThreadRng
+    rng: StdRng
 }
 
 impl WeightedSampleSetter {
     pub fn new(state_setters: Vec<Box<dyn StateSetter + Send>>, weights: Vec<f32>) -> Self {
         assert!(state_setters.len() == weights.len(), "WeightedSampleSetter requires the argument lengths match");
         let distribution =  WeightedIndex::new(&weights).unwrap();
-        let rng = thread_rng();
+        let seed = thread_rng().gen_range(0..10000);
+        let rng = StdRng::seed_from_u64(seed);
         WeightedSampleSetter {
             state_setters,
             distribution,
@@ -38,7 +51,7 @@ impl StateSetter for WeightedSampleSetter {
 
 pub struct ReplaySetter {
     states: Vec<Vec<f32>>,
-    rng: ThreadRng
+    rng: StdRng
 }
 
 impl ReplaySetter {
@@ -53,7 +66,8 @@ impl ReplaySetter {
             Err(values) => panic!("{values}")
         };
 
-        let rng = thread_rng();
+        let seed = thread_rng().gen_range(0..10000);
+        let rng = StdRng::seed_from_u64(seed);
         // rng.gen_range(0..states.len());
         ReplaySetter {
             states,
@@ -83,7 +97,8 @@ impl ReplaySetter {
 
 impl StateSetter for ReplaySetter {
     fn reset(&mut self, state_wrapper: &mut StateWrapper) {
-        let state = self.states[self.rng.gen_range(0..self.states.len())].clone();
-
+        let mut state = self.states[self.rng.gen_range(0..self.states.len())].clone();
+        ReplaySetter::_set_ball(state_wrapper, &mut state);
+        ReplaySetter::_set_cars(state_wrapper, &mut state);
     }
 }
