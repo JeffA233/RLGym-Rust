@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 pyo3 = { version = "0.16.5", features = ["extension-module"] }
-# numpy = { version = "0.16.2"}
+numpy = { version = "0.16.2"}
 ndarray = { version = "0.15.4"}
 rand = { version = "0.8.5"}
 gym = { version = "2.2.1"}
@@ -22,6 +22,7 @@ sysinfo = { version = "0.26.2"}
 regex = { version = "1.6.0"}
 webbrowser = { version = "0.8.0"}
 fs2 = { version = "0.4.3"}
+zip = { version = "0.6.2"}
 [dependencies.windows]
 version = "0.41.0"
 features = [

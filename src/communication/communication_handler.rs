@@ -8,7 +8,7 @@ use std::ffi::{CString, c_void};
 
 use windows::Win32::Foundation::{HANDLE, BOOL, CloseHandle, HWND, GetLastError};
 use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile, PIPE_ACCESS_DUPLEX, FILE_FLAG_OVERLAPPED, WriteFileEx};
-use windows::Win32::System::IO::OVERLAPPED;
+// use windows::Win32::System::IO::OVERLAPPED;
 use windows::Win32::System::Pipes::{PeekNamedPipe, CreateNamedPipeA, CreateNamedPipeW, PIPE_TYPE_MESSAGE, PIPE_READMODE_MESSAGE, PIPE_WAIT, ConnectNamedPipe};
 use windows::Win32::UI::WindowsAndMessaging::{FindWindowA, IsWindowVisible, DestroyWindow};
 use windows::s;
