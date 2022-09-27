@@ -4,7 +4,6 @@ use windows::Win32::UI::WindowsAndMessaging::{GetWindowTextW, EnumWindows, WNDEN
 
 pub fn toggle_rl_windows(minimize: bool) {
     if minimize {
-
         unsafe extern "system" fn win_enum_handler(hwnd: HWND, param1: LPARAM)  -> BOOL {
             let window_visible: bool;
             window_visible = IsWindowVisible(hwnd).as_bool();
@@ -17,11 +16,11 @@ pub fn toggle_rl_windows(minimize: bool) {
                 let window_text = match window_text {
                     Ok(window_text) => window_text,
                     Err(err) => {println!("FromUtf8Error: {err}");
-                    let window_u8_str = window_u16.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "); 
+                    // let window_u8_str = window_u16.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "); 
                     // println!("u8 line: {window_u8_str}");
                     String::new()}
                 };
-                println!("window text: {window_text}");
+                // println!("window text: {window_text}");
                 let out;
                 if window_text.contains("Rocket League") {
                     out = ShowWindow(hwnd, SW_FORCEMINIMIZE);

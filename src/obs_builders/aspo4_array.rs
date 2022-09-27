@@ -95,8 +95,8 @@ impl AdvancedObsPadderStacker {
 
         match player {
             Some(player) => {
-                obs.append(&mut vec_div_variable(&element_div_vec(&player_car.position, &player.position), &self.pos_std));
-                obs.append(&mut vec_div_variable(&element_div_vec(&player_car.linear_velocity, &player.linear_velocity), &self.pos_std));
+                obs.append(&mut vec_div_variable(&element_sub_vec(&player_car.position, &player.position), &self.pos_std));
+                obs.append(&mut vec_div_variable(&element_sub_vec(&player_car.linear_velocity, &player.linear_velocity), &self.pos_std));
             }
             None => ()
         };
@@ -148,7 +148,6 @@ impl ObsBuilder for AdvancedObsPadderStacker {
             obs.append(&mut pos_std);
             obs.append(&mut lin_std);
             obs.append(&mut ang_std);
-
         }
         self.add_ball_to_stack(ball.position.clone(), ball.linear_velocity.clone(), ball.angular_velocity.clone(), player.car_id as usize);
 
@@ -158,7 +157,7 @@ impl ObsBuilder for AdvancedObsPadderStacker {
         let mut enemy_count = 0;
 
         for other in &state.players {
-            if other.car_id == player.team_num {
+            if other.car_id == player.car_id {
                 continue;
             }
             
