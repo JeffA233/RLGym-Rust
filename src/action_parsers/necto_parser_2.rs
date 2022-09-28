@@ -22,8 +22,8 @@ impl NectoAction {
                         if boost == 1. && throttle != 1. {
                             continue
                         }
-                        actions.push(vec![if throttle == 1. || boost == 1. {1.} else {0.},
-                            steer, 0., steer, 0., 0., boost, handbrake]);
+                        let part: f32 = if throttle != 0. {throttle} else if boost != 0. {boost} else {0.};
+                        actions.push(vec![part, steer, 0., steer, 0., 0., boost, handbrake]);
                     }
                 }
             }
