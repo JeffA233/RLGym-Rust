@@ -78,7 +78,7 @@ fn main() {
     let fake_state = GameState::new_test();
     let mut out;
     for i in 0..89 {
-        let act_vec: Vec<Vec<f32>> = vec![vec![i as f32]];
+        let act_vec: Vec<Vec<f32>> = vec![vec![i as f32; 2]];
         out = act_parse.parse_actions(act_vec, &fake_state);
     }
     // let obs = match_.build_observations(&mut fake_state);

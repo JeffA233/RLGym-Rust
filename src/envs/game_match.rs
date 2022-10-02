@@ -180,6 +180,8 @@ impl GameMatch {
     pub fn format_actions(&mut self, mut actions: Vec<Vec<f32>>) -> Vec<f32> {
         let mut acts = Vec::<f32>::new();
 
+        self._prev_actions = actions.clone();
+
         for i in 0..actions.len() {
             acts.push(self._spectator_ids[i] as f32);
             acts.append(&mut actions[i]);
