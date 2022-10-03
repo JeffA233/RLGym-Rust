@@ -47,7 +47,6 @@ impl PhysicsObject {
         self.quaternion = car_data[3..7].to_vec();
         self.linear_velocity = car_data[7..10].to_vec();
         self.angular_velocity = car_data[10..].to_vec();
-
     }
 
     pub fn decode_ball_data(&mut self, ball_data: Vec<f32>) {
@@ -83,8 +82,16 @@ impl PhysicsObject {
         return partial_arr.to_owned().to_vec()
     }
 
-    pub fn pitch(&self) -> f32 {
-        self.euler_angles[0]
+    pub fn pitch(&mut self) -> f32 {
+        self.euler_angles()[0]
+    }
+
+    pub fn yaw(&mut self) -> f32 {
+        self.euler_angles()[1]
+    }
+
+    pub fn roll(&mut self) -> f32 {
+        self.euler_angles()[2]
     }
 
     pub fn euler_angles(&mut self) -> Vec<f32> {
@@ -120,7 +127,6 @@ impl PhysicsObject {
             row_vec.push(i)
         }
         repr.append(&mut row_vec);
-
 
         return repr
     }

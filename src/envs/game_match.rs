@@ -118,7 +118,7 @@ impl GameMatch {
         if state.last_touch == -1 {
             state.last_touch = self.last_touch.clone();
         } else {
-            self.last_touch = state.last_touch;
+            self.last_touch = state.last_touch.clone();
         }
 
         self._obs_builder.pre_step(&state);

@@ -152,11 +152,17 @@ impl GameState {
 impl GameState {
     pub fn new_test() -> Self {    
         let mut ball = PhysicsObject::new();
-        ball.position = vec![300., 300., 300.];
-        ball.linear_velocity = vec![10., 5., 10.];
+        ball.position = vec![300., 300., 92.75];
+        ball.linear_velocity = vec![100., 5., 10.];
+        ball.angular_velocity = vec![75., -2., 5.];
         let mut car = PhysicsObject::new();
-        car.position = vec![0., 0., 60.];
+        car.position = vec![0., 0., 17.0];
         car.linear_velocity = vec![-5., -3., 0.];
+        car.angular_velocity = vec![-3., -1., 0.1];
+        let mut car2 = PhysicsObject::new();
+        car2.position = vec![50., 0., 17.0];
+        car2.linear_velocity = vec![-5., -3., 0.];
+        car2.angular_velocity = vec![-3., -1., 0.1];
         GameState {
             game_type: 0,
             blue_score: 0,
@@ -179,6 +185,23 @@ impl GameState {
                 has_jump: true,
                 car_data: car,
                 inverted_car_data: PhysicsObject::new()
+                },
+                PlayerData {
+                    car_id: 2,
+                    team_num: BLUE_TEAM,
+                    match_goals: 0,
+                    match_saves: 0,
+                    match_shots: 0,
+                    match_demolishes: 0,
+                    boost_pickups: 0,
+                    is_demoed: false,
+                    boost_amount: 0.34,
+                    on_ground: true,
+                    ball_touched: false,
+                    has_flip: true,
+                    has_jump: true,
+                    car_data: car2,
+                    inverted_car_data: PhysicsObject::new()
                 }
             ],
             ball: ball,

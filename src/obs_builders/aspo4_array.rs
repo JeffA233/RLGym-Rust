@@ -45,7 +45,7 @@ impl AdvancedObsPadderStacker {
             stack_size: stack_size,
             ball_stack: Vec::<VecDeque<Vec<Vec<f32>>>>::new()
         };
-        for i in 0..66 {
+        for _i in 0..8 {
             advobsps.blank_stack()
         }
         return advobsps
@@ -83,7 +83,7 @@ impl AdvancedObsPadderStacker {
         rel_pos = vec_div_variable(&rel_pos, &self.pos_std);
         let mut rel_vel = element_sub_vec(&ball.linear_velocity, &player_car.linear_velocity);
         rel_vel = vec_div_variable(&rel_vel, &self.pos_std);
-
+        
         obs.append(&mut rel_pos);
         obs.append(&mut rel_vel);
         obs.append(&mut vec_div_variable(&player_car.position, &self.pos_std));
@@ -132,19 +132,19 @@ impl ObsBuilder for AdvancedObsPadderStacker {
         let lin: Vec<f32> = ball.linear_velocity.clone();
         let ang: Vec<f32> = ball.angular_velocity.clone();
 
-        let mut pos_std = vec_div_variable(&pos, &self.pos_std);
-        let mut lin_std = vec_div_variable(&lin, &self.pos_std);
-        let mut ang_std = vec_div_variable(&ang, &self.ang_std);
-
-        self.add_ball_to_stack(pos_std.clone(), lin_std.clone(), ang_std.clone(), player.car_id as usize);
+        let pos_std = vec_div_variable(&pos, &self.pos_std);
+        let lin_std = vec_div_variable(&lin, &self.pos_std);
+        let ang_std = vec_div_variable(&ang, &self.ang_std);
 
         let mut obs = Vec::<f32>::new();
 
-        obs.append(&mut pos_std);
-        obs.append(&mut lin_std);
-        obs.append(&mut ang_std);
+        obs.append(&mut pos_std.clone());
+        obs.append(&mut lin_std.clone());
+        obs.append(&mut ang_std.clone());
         obs.append(&mut previous_action.clone());
         obs.append(&mut pads);
+
+        // self.add_ball_to_stack(pos_std, lin_std, ang_std, player.car_id as usize);
 
         let ball_stack = self.ball_stack[player.car_id as usize].clone();
         for ball_vec in ball_stack {
@@ -155,6 +155,8 @@ impl ObsBuilder for AdvancedObsPadderStacker {
             obs.append(&mut lin_std);
             obs.append(&mut ang_std);
         }
+
+        self.add_ball_to_stack(pos_std, lin_std, ang_std, player.car_id as usize);
 
         let player_car = self._add_player_to_obs(&mut obs, &player, &ball, inverted, None);
 

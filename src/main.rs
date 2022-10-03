@@ -42,8 +42,8 @@ use std::io::{BufWriter, Write, stdin};
 fn main() {
     let term_cond = Box::new(CombinedTerminalConditions::new(1));
     let reward_fn = get_custom_reward_func();
-    let obs_build = Box::new(AdvancedObsPadderStacker::new(None, None));
-    let mut act_parse = Box::new(NectoAction::new());
+    let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
+    let act_parse = Box::new(NectoAction::new());
     let state_set = Box::new(custom_state_setters(1));
     // let actions = vec![vec![55.]];
     // let mut gym = make::make(Some(100000.), 
@@ -64,24 +64,25 @@ fn main() {
     //     true);
     // --TESTING OF MATCH/REWARDS/ETC.--
     // let match_ = gym._game_match;
-    // let mut match_ = GameMatch::new(reward_fn, 
-    //     term_cond, 
-    //     obs_build, 
-    //     act_parse, 
-    //     state_set, 
-    //     Some(1),
-    //     Some(8),
-    //     Some(100.),
-    //     Some(1.),
-    //     Some(1.),
-    //     Some(false));
-    let fake_state = GameState::new_test();
-    let mut out;
-    for i in 0..89 {
-        let act_vec: Vec<Vec<f32>> = vec![vec![i as f32; 2]];
-        out = act_parse.parse_actions(act_vec, &fake_state);
-    }
-    // let obs = match_.build_observations(&mut fake_state);
+    let mut match_ = GameMatch::new(reward_fn, 
+        term_cond, 
+        obs_build, 
+        act_parse, 
+        state_set, 
+        Some(2),
+        Some(8),
+        Some(100.),
+        Some(1.),
+        Some(1.),
+        Some(false));
+    let mut fake_state = GameState::new_test();
+    // let mut out;
+    // for i in 0..89 {
+    //     let act_vec: Vec<Vec<f32>> = vec![vec![i as f32; 2]];
+    //     out = act_parse.parse_actions(act_vec, &fake_state);
+    // }
+    match_.episode_reset(&fake_state);
+    let obs = match_.build_observations(&mut fake_state);
     // let rew_f32: f32 = rew.iter().sum();
     // println!("{rew_f32}");
     // --END--

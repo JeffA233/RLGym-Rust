@@ -220,32 +220,32 @@ pub fn quat_to_rot_mtx(nums: &Vec<f32>) -> Array2<f32> {
     let norm: f32 = nums.clone()
                         .into_iter()
                         .map(|x: f32| x.powf(2.))
-                        .collect::<Vec<f32>>()
-                        .iter()
+                        // .collect::<Vec<f32>>()
+                        // .iter()
                         .sum();
+
+    let w = -&nums[0];
+    let x = -&nums[1];
+    let y = -&nums[2];
+    let z = -&nums[3];
+
     let s: f32 = 1.0 / norm;
 
-    let w = &nums[0];
-    let x = &nums[1];
-    let y = &nums[2];
-    let z = &nums[3];
+    if norm != 0. {
+        theta[[0, 0]] = 1. - 2. * s * (y * y + z * z);
+        theta[[1, 0]] = 2. * s * (x * y + z * w);
+        theta[[2, 0]] = 2. * s * (x * z - y * w);
 
-    // front direction
-    theta[[0, 0]] = 1. - 2. * s * (y * y + z * z);
-    theta[[1, 0]] = 2. * s * (x * y + z * w);
-    theta[[2, 0]] = 2. * s * (x * z - y * w);
+        // left direction
+        theta[[0, 1]] = 2. * s * (x * y - z * w);
+        theta[[1, 1]] = 1. - 2. * s * (x * x + z * z);
+        theta[[2, 1]] = 2. * s * (y * z + x * w);
 
-    // left direction
-    theta[[0, 1]] = 2. * s * (x * y - z * w);
-    theta[[1, 1]] = 1. - 2. * s * (x * x + z * z);
-    theta[[2, 1]] = 2. * s * (y * z + x * w);
-
-    // up direction
-    theta[[0, 2]] = 2. * s * (x * z + y * w);
-    theta[[1, 2]] = 2. * s * (y * z - x * w);
-    theta[[2, 2]] = 1. - 2. * s * (x * x + y * y);
-
-    // let theta_arr = theta.to_pyarray(py);
+        // up direction
+        theta[[0, 2]] = 2. * s * (x * z + y * w);
+        theta[[1, 2]] = 2. * s * (y * z - x * w);
+        theta[[2, 2]] = 1. - 2. * s * (x * x + y * y);
+    }
 
     return theta;
 }

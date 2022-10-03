@@ -111,7 +111,7 @@ impl Gym {
         return gym
     }
 
-    pub fn _minimize_game(&mut self) {
+    fn _minimize_game(&mut self) {
         thread::spawn(|| toggle_rl_windows(true));
         toggle_rl_windows(true);
         self._minimized = true;
@@ -132,7 +132,7 @@ impl Gym {
         self._prev_state = state.clone();
 
         let obs = self._game_match.build_observations(&mut state);
-        // TODO will have to work out how to return info if so
+        // TODO return Option except that state and get_result don't match
         // if _return_info {
         //     let mut h_m = HashMap::<&str,f32>::new();
         //     h_m.insert("result", self._game_match.get_result(state) as f32);

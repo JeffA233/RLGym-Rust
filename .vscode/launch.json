@@ -28,7 +28,7 @@
             "name": "Debug unit tests in executable 'rlgym_rust'",
             "cargo": {
                 "args": [
-                    "test",
+                    "dev",
                     "--no-run",
                     "--bin=rlgym_rust",
                     "--package=rlgym_rust"
