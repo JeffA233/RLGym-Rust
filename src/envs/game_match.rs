@@ -7,9 +7,9 @@ use crate::{obs_builders::{obs_builder::ObsBuilder}, action_parsers::{action_par
 use crate::gamestates::{game_state::GameState};
 
 pub struct GameMatch {
-    pub _game_speed: f32,
-    pub _gravity: f32,
-    pub _boost_consumption: f32,
+    pub _game_speed: f64,
+    pub _gravity: f64,
+    pub _boost_consumption: f64,
     pub _team_size: usize,
     pub _spawn_opponents: bool,
     pub _tick_skip: usize,
@@ -21,7 +21,7 @@ pub struct GameMatch {
     pub agents: usize,
     pub observation_space: Vec<usize>,
     pub action_space: Vec<usize>,
-    pub _prev_actions: Vec<Vec<f32>>,
+    pub _prev_actions: Vec<Vec<f64>>,
     pub _spectator_ids: Vec<i32>,
     pub last_touch: i32,
     pub _initial_score: i32
@@ -36,7 +36,7 @@ pub struct GameMatch {
 // pub trait RewardFuncMethods {
 //     fn new() -> Self;
 //     fn reset(initial_state: GameState);
-//     fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Array1<f32>) -> f32;
+//     fn get_reward(&mut self, player: PlayerData, state: GameState, previous_action: Array1<f64>) -> f64;
 // }
 
 impl GameMatch {
@@ -48,9 +48,9 @@ impl GameMatch {
         state_setter: Box<dyn StateSetter>, 
         team_size: Option<usize>, 
         tick_skip: Option<usize>, 
-        game_speed: Option<f32>, 
-        gravity: Option<f32>, 
-        boost_consumption: Option<f32>, 
+        game_speed: Option<f64>, 
+        gravity: Option<f64>, 
+        boost_consumption: Option<f64>, 
         spawn_opponents: Option<bool>
     ) -> Self {
         let team_size = match team_size {
@@ -94,7 +94,7 @@ impl GameMatch {
             agents: num_agents,
             observation_space: Vec::<usize>::new(),
             action_space: Vec::<usize>::new(),
-            // _prev_actions: Array2::<f32>::zeros((num_agents, 8)),
+            // _prev_actions: Array2::<f64>::zeros((num_agents, 8)),
             _prev_actions: vec![vec![0.; 8]; num_agents],
             _spectator_ids: vec![0; 6],
             last_touch: -1,
@@ -112,8 +112,8 @@ impl GameMatch {
         self._initial_score = initial_state.blue_score - initial_state.orange_score;
     }
 
-    pub fn build_observations(&mut self, mut state: &mut GameState) -> Vec<Vec<f32>> {
-        let mut observations = Vec::<Vec<f32>>::new();
+    pub fn build_observations(&mut self, mut state: &mut GameState) -> Vec<Vec<f64>> {
+        let mut observations = Vec::<Vec<f64>>::new();
 
         if state.last_touch == -1 {
             state.last_touch = self.last_touch.clone();
@@ -135,8 +135,8 @@ impl GameMatch {
         return observations
     }
 
-    pub fn get_rewards(&mut self, state: &GameState, done: bool) -> Vec<f32> {
-        let mut rewards = Vec::<f32>::new();
+    pub fn get_rewards(&mut self, state: &GameState, done: bool) -> Vec<f64> {
+        let mut rewards = Vec::<f64>::new();
 
         self._reward_fn.pre_step(&state);
 
@@ -169,43 +169,43 @@ impl GameMatch {
         return current_score - self._initial_score;
     }
 
-    pub fn parse_state(&self, state_floats: Vec<f32>) -> GameState {
+    pub fn parse_state(&self, state_floats: Vec<f64>) -> GameState {
         return GameState::new(Some(state_floats))
     }
 
-    pub fn parse_actions(&mut self, actions: Vec<Vec<f32>>, state: &GameState) -> Vec<Vec<f32>> {
+    pub fn parse_actions(&mut self, actions: Vec<Vec<f64>>, state: &GameState) -> Vec<Vec<f64>> {
         return self._action_parser.parse_actions(actions, &state)
     }
 
-    pub fn format_actions(&mut self, mut actions: Vec<Vec<f32>>) -> Vec<f32> {
-        let mut acts = Vec::<f32>::new();
+    pub fn format_actions(&mut self, mut actions: Vec<Vec<f64>>) -> Vec<f64> {
+        let mut acts = Vec::<f64>::new();
 
         self._prev_actions = actions.clone();
 
         for i in 0..actions.len() {
-            acts.push(self._spectator_ids[i] as f32);
+            acts.push(self._spectator_ids[i] as f64);
             acts.append(&mut actions[i]);
         }
         return acts
     }
 
-    pub fn get_reset_state(&mut self) -> Vec<f32> {
+    pub fn get_reset_state(&mut self) -> Vec<f64> {
         let mut new_state = self._state_setter.build_wrapper(self._team_size.clone(), self._spawn_opponents.clone());
         self._state_setter.reset(&mut new_state);
         return new_state.format_state()
     }
 
-    pub fn get_config(&self) -> Vec<f32> {
+    pub fn get_config(&self) -> Vec<f64> {
         let spawn_opponents_bool = if self._spawn_opponents {1} else {0};
-        return vec![self._team_size as f32, 
-        spawn_opponents_bool as f32, 
-        self._tick_skip as f32,
-        self._game_speed as f32,
-        self._gravity as f32,
-        self._boost_consumption as f32]
+        return vec![self._team_size as f64, 
+        spawn_opponents_bool as f64, 
+        self._tick_skip as f64,
+        self._game_speed as f64,
+        self._gravity as f64,
+        self._boost_consumption as f64]
     }
 
-    pub fn update_settings(&mut self, game_speed: Option<f32>, gravity: Option<f32>, boost_consumption: Option<f32>) {
+    pub fn update_settings(&mut self, game_speed: Option<f64>, gravity: Option<f64>, boost_consumption: Option<f64>) {
         match game_speed {
             Some(game_speed) => self._game_speed = game_speed,
             None => ()

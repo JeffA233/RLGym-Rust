@@ -117,7 +117,7 @@ impl Gym {
         self._minimized = true;
     }
 
-    pub fn reset(&mut self, _return_info: Option<bool>) -> Vec<Vec<f32>> {
+    pub fn reset(&mut self, _return_info: Option<bool>) -> Vec<Vec<f64>> {
         // let _return_info = match _return_info {
         //     Some(return_info) => return_info,
         //     None => false
@@ -134,13 +134,13 @@ impl Gym {
         let obs = self._game_match.build_observations(&mut state);
         // TODO return Option except that state and get_result don't match
         // if _return_info {
-        //     let mut h_m = HashMap::<&str,f32>::new();
-        //     h_m.insert("result", self._game_match.get_result(state) as f32);
+        //     let mut h_m = HashMap::<&str,f64>::new();
+        //     h_m.insert("result", self._game_match.get_result(state) as f64);
         // }
         return obs
     }
 
-    pub fn step(&mut self, actions: Vec<Vec<f32>>) -> (Vec<Vec<f32>>, Vec<f32>, bool, HashMap<&str, f32>) {
+    pub fn step(&mut self, actions: Vec<Vec<f64>>) -> (Vec<Vec<f64>>, Vec<f64>, bool, HashMap<&str, f64>) {
         let actions = self._game_match.parse_actions(actions, &self._prev_state);
         self._send_actions(actions);
 
@@ -150,8 +150,8 @@ impl Gym {
         let done = self._game_match.is_done(&state);
         self._prev_state = state.clone();
         let reward = self._game_match.get_rewards(&state, done);
-        let mut info = HashMap::<&str,f32>::new();
-        info.insert("result", self._game_match.get_result(state) as f32);
+        let mut info = HashMap::<&str,f64>::new();
+        info.insert("result", self._game_match.get_result(state) as f64);
         return (obs, reward, done, info)
     }
 
@@ -165,7 +165,7 @@ impl Gym {
         return self._game_match.parse_state(message.body)
     }
 
-    fn _send_actions(&mut self, actions: Vec<Vec<f32>>) {
+    fn _send_actions(&mut self, actions: Vec<Vec<f64>>) {
         for action in &actions {
             assert!(action.len() == 8, "action was not of length 8")
         }

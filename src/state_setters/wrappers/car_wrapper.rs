@@ -2,13 +2,13 @@ use crate::gamestates::{player_data::PlayerData};
 
 
 pub struct CarWrapper {
-    rotation: Vec<f32>,
+    rotation: Vec<f64>,
     pub team_num: i32,
     id: i32,
-    pub boost: f32,
-    position: Vec<f32>,
-    linear_velocity: Vec<f32>,
-    angular_velocity: Vec<f32>
+    pub boost: f64,
+    position: Vec<f64>,
+    linear_velocity: Vec<f64>,
+    angular_velocity: Vec<f64>
 }
 
 impl CarWrapper {
@@ -48,7 +48,7 @@ impl CarWrapper {
         }
     }
 
-    pub fn set_rot(&mut self, pitch: Option<f32>, yaw: Option<f32>, roll: Option<f32>) {
+    pub fn set_rot(&mut self, pitch: Option<f64>, yaw: Option<f64>, roll: Option<f64>) {
         match pitch {
             Some(pitch) => self.rotation[0] = pitch,
             None => ()
@@ -63,7 +63,7 @@ impl CarWrapper {
         };
     }
 
-    pub fn set_pos(&mut self, x: Option<f32>, y: Option<f32>, z: Option<f32>) {
+    pub fn set_pos(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
             Some(x) => self.position[0] = x,
             None => ()
@@ -78,7 +78,7 @@ impl CarWrapper {
         };
     }
 
-    pub fn set_lin_vel(&mut self, x: Option<f32>, y: Option<f32>, z: Option<f32>) {
+    pub fn set_lin_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
             Some(x) => self.linear_velocity[0] = x,
             None => ()
@@ -93,7 +93,7 @@ impl CarWrapper {
         };
     }
 
-    pub fn set_ang_vel(&mut self, x: Option<f32>, y: Option<f32>, z: Option<f32>) {
+    pub fn set_ang_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
             Some(x) => self.angular_velocity[0] = x,
             None => ()
@@ -108,10 +108,10 @@ impl CarWrapper {
         };
     }
 
-    pub fn encode(&self) -> Vec<f32> {
-        let mut vec = Vec::<f32>::new();
+    pub fn encode(&self) -> Vec<f64> {
+        let mut vec = Vec::<f64>::new();
 
-        vec.push(self.id.clone() as f32);
+        vec.push(self.id.clone() as f64);
         vec.append(&mut self.position.clone());
         vec.append(&mut self.linear_velocity.clone());
         vec.append(&mut self.angular_velocity.clone());

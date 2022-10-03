@@ -20,7 +20,7 @@ pub mod continuous_action {
         return SpaceTemplate::BOX { high: vec_high, low: vec_low, shape: vec };
     }
 
-    pub fn parse_actions(mut actions: Vec<f32>) -> Vec<f32> {
+    pub fn parse_actions(mut actions: Vec<f64>) -> Vec<f64> {
         // let mut actions = actions.clone();
         // let mut clipped_actions = &actions[0 as usize..5];
         actions = clip(actions, 1., -1.);

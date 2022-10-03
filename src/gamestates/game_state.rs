@@ -14,8 +14,8 @@ pub struct GameState {
     pub players: Vec<PlayerData>,
     pub ball: PhysicsObject,
     pub inverted_ball: PhysicsObject,
-    pub boost_pads: Vec<f32>,
-    pub inverted_boost_pads: Vec<f32>
+    pub boost_pads: Vec<f64>,
+    pub inverted_boost_pads: Vec<f64>
 }
 
 const BOOST_PAD_LENGTH: usize = 34;
@@ -25,7 +25,7 @@ const PLAYER_TERTIARY_INFO_LENGTH: usize = 11;
 const PLAYER_INFO_LENGTH: usize = 2 + 2 * PLAYER_CAR_STATE_LENGTH + PLAYER_TERTIARY_INFO_LENGTH;
 
 impl GameState {
-    pub fn new(state_floats: Option<Vec<f32>>) -> Self {
+    pub fn new(state_floats: Option<Vec<f64>>) -> Self {
         let game_st = match state_floats {
             Some(state_floats) => {                
                 let mut game_st = GameState {
@@ -36,8 +36,8 @@ impl GameState {
                     players: Vec::<PlayerData>::new(),
                     ball: PhysicsObject::new(),
                     inverted_ball: PhysicsObject::new(),
-                    boost_pads: Vec::<f32>::new(),
-                    inverted_boost_pads: Vec::<f32>::new()
+                    boost_pads: Vec::<f64>::new(),
+                    inverted_boost_pads: Vec::<f64>::new()
                 };
                 game_st.decode(state_floats);
                 return game_st
@@ -51,8 +51,8 @@ impl GameState {
                     players: Vec::<PlayerData>::new(),
                     ball: PhysicsObject::new(),
                     inverted_ball: PhysicsObject::new(),
-                    boost_pads: Vec::<f32>::new(),
-                    inverted_boost_pads: Vec::<f32>::new()
+                    boost_pads: Vec::<f64>::new(),
+                    inverted_boost_pads: Vec::<f64>::new()
                 }
             }
         };
@@ -71,7 +71,7 @@ impl GameState {
         return game_st
     }
 
-    pub fn decode(&mut self, state_vals: Vec<f32>) {
+    pub fn decode(&mut self, state_vals: Vec<f64>) {
         let mut start = 3;
         let num_ball_packets = 1;
         let state_val_len = state_vals.len();
@@ -95,7 +95,7 @@ impl GameState {
         for _ in 0..num_player_packets {
             let player = self.decode_player(state_vals[start..start+PLAYER_INFO_LENGTH].to_vec());
             if player.ball_touched {
-                self.last_touch = player.car_id as i32;
+                self.last_touch = player.car_id.clone();
             }
             self.players.push(player);
             start = start + PLAYER_INFO_LENGTH;
@@ -104,7 +104,7 @@ impl GameState {
         self.players.sort_unstable_by_key(|p| p.car_id);
     }
 
-    fn decode_player(&self, full_player_data: Vec<f32>) -> PlayerData {
+    fn decode_player(&self, full_player_data: Vec<f64>) -> PlayerData {
         let mut player_data = PlayerData::new();
 
         let mut start: usize = 2;
@@ -144,8 +144,8 @@ impl GameState {
 //     pub players: Vec<PlayerData>,
 //     pub ball: PhysicsObject,
 //     pub inverted_ball: PhysicsObject,
-//     pub boost_pads: Vec<f32>,
-//     pub inverted_boost_pads: Vec<f32>
+//     pub boost_pads: Vec<f64>,
+//     pub inverted_boost_pads: Vec<f64>
 // }
 
 
@@ -170,21 +170,21 @@ impl GameState {
             last_touch: 0,
             players: vec![
                 PlayerData {
-                car_id: 1,
-                team_num: BLUE_TEAM,
-                match_goals: 0,
-                match_saves: 0,
-                match_shots: 0,
-                match_demolishes: 0,
-                boost_pickups: 0,
-                is_demoed: false,
-                boost_amount: 0.34,
-                on_ground: true,
-                ball_touched: false,
-                has_flip: true,
-                has_jump: true,
-                car_data: car,
-                inverted_car_data: PhysicsObject::new()
+                    car_id: 1,
+                    team_num: BLUE_TEAM,
+                    match_goals: 0,
+                    match_saves: 0,
+                    match_shots: 0,
+                    match_demolishes: 0,
+                    boost_pickups: 0,
+                    is_demoed: false,
+                    boost_amount: 0.34,
+                    on_ground: true,
+                    ball_touched: false,
+                    has_flip: true,
+                    has_jump: true,
+                    car_data: car,
+                    inverted_car_data: PhysicsObject::new()
                 },
                 PlayerData {
                     car_id: 2,
@@ -211,7 +211,7 @@ impl GameState {
         }
     }
 
-    // pub fn decode(&mut self, state_vals: Vec<f32>) {
+    // pub fn decode(&mut self, state_vals: Vec<f64>) {
     //     let mut start = 3;
     //     let num_ball_packets = 1;
     //     let state_val_len = state_vals.len();
@@ -244,7 +244,7 @@ impl GameState {
     //     self.players.sort_unstable_by_key(|p| p.car_id);
     // }
 
-    // fn decode_player(&self, full_player_data: Vec<f32>) -> PlayerData {
+    // fn decode_player(&self, full_player_data: Vec<f64>) -> PlayerData {
     //     let mut player_data = PlayerData::new();
 
     //     let mut start: usize = 2;

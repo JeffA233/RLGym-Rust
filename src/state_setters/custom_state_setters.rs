@@ -24,12 +24,12 @@ pub fn custom_state_setters(team_size: i32) -> WeightedSampleSetter {
 
 pub struct WeightedSampleSetter {
     state_setters: Vec<Box<dyn StateSetter + Send>>,
-    distribution: WeightedIndex<f32>,
+    distribution: WeightedIndex<f64>,
     rng: StdRng
 }
 
 impl WeightedSampleSetter {
-    pub fn new(state_setters: Vec<Box<dyn StateSetter + Send>>, weights: Vec<f32>) -> Self {
+    pub fn new(state_setters: Vec<Box<dyn StateSetter + Send>>, weights: Vec<f64>) -> Self {
         assert!(state_setters.len() == weights.len(), "WeightedSampleSetter requires the argument lengths match");
         let distribution =  WeightedIndex::new(&weights).unwrap();
         let seed = thread_rng().gen_range(0..10000);
@@ -50,7 +50,7 @@ impl StateSetter for WeightedSampleSetter {
 }
 
 pub struct ReplaySetter {
-    states: Vec<Vec<f32>>,
+    states: Vec<Vec<f64>>,
     rng: StdRng
 }
 
@@ -60,7 +60,7 @@ impl ReplaySetter {
         let mut zip_file = ZipArchive::new(file).unwrap();
         let zip_file = zip_file.by_index(0).unwrap();
         let reader = BufReader::new(zip_file);
-        let states: Result<Vec<Vec<f32>>, serde_json::Error> = from_reader(reader);
+        let states: Result<Vec<Vec<f64>>, serde_json::Error> = from_reader(reader);
         let states = match states {
             Ok(values) => values,
             Err(values) => panic!("{values}")
@@ -75,7 +75,7 @@ impl ReplaySetter {
         }
     }
 
-    fn _set_cars(state_wrapper: &mut StateWrapper, state: &mut Vec<f32>) {
+    fn _set_cars(state_wrapper: &mut StateWrapper, state: &mut Vec<f64>) {
         let data = &mut state[9..state_wrapper.cars.len()*13+9];
         let mut i = 0;
         for car in state_wrapper.cars.iter_mut() {
@@ -88,7 +88,7 @@ impl ReplaySetter {
         }
     }
 
-    fn _set_ball(state_wrapper: &mut StateWrapper, data: &mut Vec<f32>) {
+    fn _set_ball(state_wrapper: &mut StateWrapper, data: &mut Vec<f64>) {
         state_wrapper.ball.set_pos(Some(data[0]), Some(data[1]), Some(data[2]));
         state_wrapper.ball.set_lin_vel(Some(data[3]), Some(data[4]), Some(data[5]));
         state_wrapper.ball.set_lin_vel(Some(data[6]), Some(data[7]), Some(data[8]));

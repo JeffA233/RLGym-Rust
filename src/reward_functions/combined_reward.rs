@@ -6,11 +6,11 @@ use super::{default_reward::RewardFn};
 
 pub struct CombinedReward {
     reward_structs: Vec<Box<dyn RewardFn>>,
-    reward_weights: Vec<f32>
+    reward_weights: Vec<f64>
 }
 
 impl CombinedReward {
-    pub fn new(reward_structs: Vec<Box<dyn RewardFn>>, reward_weights: Vec<f32>) -> Self {
+    pub fn new(reward_structs: Vec<Box<dyn RewardFn>>, reward_weights: Vec<f64>) -> Self {
         assert!(reward_structs.len() == reward_weights.len(), "reward functions did not match reward weights");
         CombinedReward {
             reward_structs: reward_structs,
@@ -26,8 +26,8 @@ impl RewardFn for CombinedReward {
         }
     }
 
-    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        let mut rewards = Vec::<f32>::new();
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
+        let mut rewards = Vec::<f64>::new();
         for struc in &mut self.reward_structs {
             rewards.push(struc.get_reward(player, state, previous_action.clone()));
         }
@@ -35,8 +35,8 @@ impl RewardFn for CombinedReward {
         return ret.iter().sum()
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        let mut rewards = Vec::<f32>::new();
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
+        let mut rewards = Vec::<f64>::new();
         for struc in &mut self.reward_structs {
             rewards.push(struc.get_reward(player, state, previous_action.clone()));
         }

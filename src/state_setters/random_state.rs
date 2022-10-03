@@ -1,17 +1,17 @@
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use rand::prelude::*;
 
 use crate::math::rand_vec3;
 
 use super::{wrappers::state_wrapper::StateWrapper, state_setter::StateSetter};
 
-const X_MAX: f32 = 7000.;
-const Y_MAX: f32 = 9000.;
-const Z_MAX_BALL: f32 = 1850.;
-const Z_MAX_CAR: f32 = 1900.;
-const PITCH_MAX: f32 = PI/2.;
-const YAW_MAX: f32 = PI;
-const ROLL_MAX: f32 = PI;
+const X_MAX: f64 = 7000.;
+const Y_MAX: f64 = 9000.;
+const Z_MAX_BALL: f64 = 1850.;
+const Z_MAX_CAR: f64 = 1900.;
+const PITCH_MAX: f64 = PI/2.;
+const YAW_MAX: f64 = PI;
+const ROLL_MAX: f64 = PI;
 
 pub struct RandomState {
     ball_rand_speed: bool,
@@ -48,7 +48,7 @@ impl RandomState {
 
     fn _reset_ball_random(&self, state_wrapper: &mut StateWrapper, random_speed: bool) {
         let mut rng  = rand::thread_rng();
-        state_wrapper.ball.set_pos(Some(rng.gen::<f32>() * X_MAX - X_MAX/2.), Some(rng.gen::<f32>() * Y_MAX - Y_MAX/2.), Some(rng.gen::<f32>() * Z_MAX_BALL + 100.));
+        state_wrapper.ball.set_pos(Some(rng.gen::<f64>() * X_MAX - X_MAX/2.), Some(rng.gen::<f64>() * Y_MAX - Y_MAX/2.), Some(rng.gen::<f64>() * Z_MAX_BALL + 100.));
         if random_speed {
             let lin_vel = rand_vec3(3000.);
             let ang_vel = rand_vec3(6.);
@@ -61,12 +61,12 @@ impl RandomState {
         let mut rng  = rand::thread_rng();
         // let cars = &mut state_wrapper.cars;
         for mut car in &mut state_wrapper.cars {
-            car.set_pos(Some(rng.gen::<f32>() * X_MAX - X_MAX/2.), Some(rng.gen::<f32>()
-            * Y_MAX - Y_MAX/2.), Some(rng.gen::<f32>() * Z_MAX_CAR + 150.));
-            car.set_rot(Some(rng.gen::<f32>() * PITCH_MAX - PITCH_MAX/2.), Some(rng.gen::<f32>()
-            * YAW_MAX - YAW_MAX/2.), Some(rng.gen::<f32>() * ROLL_MAX - ROLL_MAX/2.));
+            car.set_pos(Some(rng.gen::<f64>() * X_MAX - X_MAX/2.), Some(rng.gen::<f64>()
+            * Y_MAX - Y_MAX/2.), Some(rng.gen::<f64>() * Z_MAX_CAR + 150.));
+            car.set_rot(Some(rng.gen::<f64>() * PITCH_MAX - PITCH_MAX/2.), Some(rng.gen::<f64>()
+            * YAW_MAX - YAW_MAX/2.), Some(rng.gen::<f64>() * ROLL_MAX - ROLL_MAX/2.));
             
-            car.boost = rng.gen::<f32>();
+            car.boost = rng.gen::<f64>();
 
             if random_speed {
                 let lin_vel = rand_vec3(2300.);
@@ -75,7 +75,7 @@ impl RandomState {
                 car.set_ang_vel(Some(ang_vel[0]), Some(ang_vel[1]), Some(ang_vel[2]));
             }
 
-            if on_ground || rng.gen::<f32>() < 0.5 {
+            if on_ground || rng.gen::<f64>() < 0.5 {
                 car.set_pos(None, None, Some(17.));
                 car.set_lin_vel(None, None, Some(0.));
                 car.set_rot(Some(0.), None, Some(0.));

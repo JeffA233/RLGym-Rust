@@ -3,12 +3,12 @@ use std::process::id;
 
 
 pub fn make(
-    game_speed: Option<f32>,
+    game_speed: Option<f64>,
     tick_skip: Option<usize>,
     spawn_opponents: Option<bool>,
     team_size: Option<usize>,
-    gravity: Option<f32>,
-    boost_consumption: Option<f32>,
+    gravity: Option<f64>,
+    boost_consumption: Option<f64>,
     terminal_condition: Box<dyn TerminalCondition>,
     reward_fn: Box<dyn RewardFn>,
     obs_builder: Box<dyn ObsBuilder>,

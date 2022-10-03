@@ -3,14 +3,14 @@ use std::collections::HashMap;
 
 
 pub struct EventReward {
-    weights: Vec<f32>,
-    last_registered_values: HashMap<i32, Vec<f32>>
+    weights: Vec<f64>,
+    last_registered_values: HashMap<i32, Vec<f64>>
 }
 
 impl EventReward {
-    pub fn new(goal: Option<f32>, team_goal: Option<f32>, concede: Option<f32>,
-    touch: Option<f32>, shot: Option<f32>, save: Option<f32>, 
-    demo: Option<f32>, boost_pickup: Option<f32>) -> Self {
+    pub fn new(goal: Option<f64>, team_goal: Option<f64>, concede: Option<f64>,
+    touch: Option<f64>, shot: Option<f64>, save: Option<f64>, 
+    demo: Option<f64>, boost_pickup: Option<f64>) -> Self {
         let goal = match goal {
             Some(goal) => goal,
             None => 0.
@@ -50,7 +50,7 @@ impl EventReward {
         }
     }
 
-    fn _extract_values(player: &PlayerData, state: &GameState) -> Vec<f32> {
+    fn _extract_values(player: &PlayerData, state: &GameState) -> Vec<f64> {
         let team: i32;
         let opponent: i32;
         if player.team_num == BLUE_TEAM {
@@ -61,8 +61,8 @@ impl EventReward {
             opponent = state.blue_score;
         }
 
-        return vec![player.match_goals as f32, team as f32, opponent as f32, player.ball_touched as i64 as f32, player.match_shots as f32,
-        player.match_saves as f32, player.match_demolishes as f32, player.boost_amount]
+        return vec![player.match_goals as f64, team as f64, opponent as f64, player.ball_touched as i64 as f64, player.match_shots as f64,
+        player.match_saves as f64, player.match_demolishes as f64, player.boost_amount]
     }
 }
 
@@ -75,7 +75,7 @@ impl RewardFn for EventReward {
         }
     }
 
-    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         let id = player.car_id;
         // let is_empty = self.last_registered_values.is_empty();
         // let weights: Vec<String> = self.weights.iter().map(|x| x.to_string()).collect();
@@ -109,12 +109,12 @@ impl RewardFn for EventReward {
         let diff_values = element_sub_vec(&new_values, &old_values);
 
         self.last_registered_values.insert(id, new_values);
-        let is_value_positive: Vec<f32> = diff_values.iter().map(|x| if *x > 0. {*x} else {0.}).collect();
+        let is_value_positive: Vec<f64> = diff_values.iter().map(|x| if *x > 0. {*x} else {0.}).collect();
         let ret = element_mult_vec(&is_value_positive, &self.weights).iter().sum();
         return ret 
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         self.get_reward(player, state, previous_action)
     }
 }
@@ -139,13 +139,13 @@ impl RewardFn for VelocityReward {
         
     }
 
-    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         let norm = norm_func(&player.car_data.linear_velocity);
-        let norm_std = norm / CAR_MAX_SPEED * (1 - 2 * self.negative as i32) as f32;
+        let norm_std = norm / CAR_MAX_SPEED * (1 - 2 * self.negative as i32) as f64;
         return norm_std;
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         self.get_reward(player, state, previous_action)
     }
 }
@@ -164,11 +164,11 @@ impl RewardFn for SaveBoostReward {
         
     }
 
-    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         return player.boost_amount.sqrt()
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         self.get_reward(player, state, previous_action)
     }
 }

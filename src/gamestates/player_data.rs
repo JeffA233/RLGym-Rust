@@ -14,7 +14,7 @@ pub struct PlayerData {
     pub ball_touched: bool,
     pub has_jump: bool,
     pub has_flip: bool,
-    pub boost_amount: f32,
+    pub boost_amount: f64,
     pub car_data: PhysicsObject,
     pub inverted_car_data: PhysicsObject
 }

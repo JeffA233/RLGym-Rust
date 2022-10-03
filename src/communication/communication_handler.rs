@@ -44,13 +44,13 @@ impl CommunicationHandler {
         }
     }
 
-    pub fn receive_message(&self, header: Option<Vec<f32>>) -> Message {
+    pub fn receive_message(&self, header: Option<Vec<f64>>) -> Message {
         if !self._connected {
             panic!("RLGYM ATTEMPTED TO RECEIVE MESSAGE WITH NO CONNECTION") 
         }
         let header = match header {
             Some(header) => header,
-            None => Vec::<f32>::new()
+            None => Vec::<f64>::new()
         };
         // let received_message = self.message;
         let mut received_message = self.message.clone();
@@ -66,6 +66,7 @@ impl CommunicationHandler {
             // let decode_str =
             // let msg_floats = Vec::<f64>::new();
             let msg_floats = bytes_to_f32(&buffer, &bytes_read);
+            let msg_floats = msg_floats.iter().map(|x| *x as f64).collect();
             // let msg_floats_str = msg_floats.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
             // println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
             let deserialized_header = deserialize_header(&msg_floats);
@@ -87,7 +88,7 @@ impl CommunicationHandler {
         return received_message
     }
 
-    pub fn send_message(&mut self, message: Option<Message>, header: Option<Vec<f32>>, body: Option<Vec<f32>>) {
+    pub fn send_message(&mut self, message: Option<Message>, header: Option<Vec<f64>>, body: Option<Vec<f64>>) {
         let mut message = match message {
             Some(message) => message,
             None => Message::new()
@@ -105,6 +106,7 @@ impl CommunicationHandler {
         let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
         // println!("message being sent: {printable}");
         // format!("{:02x}", 8 as u8);
+        let serialized: Vec<f32> = serialized.iter().map(|x| *x as f32).collect();
         let mut u8_serialized = f32vec_as_u8_slice(&serialized);
         let u8_ser_len = u8_serialized.len();
         let buffer_ptr: *mut c_void = &mut *u8_serialized as *mut _ as *mut c_void;

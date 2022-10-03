@@ -53,9 +53,9 @@ impl StateWrapper {
         }
     }
 
-    pub fn format_state(&self) -> Vec<f32> {
+    pub fn format_state(&self) -> Vec<f64> {
         let mut ball_vec = self.ball.encode();
-        let mut full_vec = Vec::<f32>::new();
+        let mut full_vec = Vec::<f64>::new();
         full_vec.append(&mut ball_vec);
         for c in &self.cars {
             full_vec.append(&mut c.encode());

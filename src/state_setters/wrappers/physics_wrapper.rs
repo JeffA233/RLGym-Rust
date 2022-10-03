@@ -3,9 +3,9 @@ use crate::gamestates::physics_object::PhysicsObject;
 
 
 pub struct PhysicsWrapper {
-    position: Vec<f32>,
-    linear_velocity: Vec<f32>,
-    angular_velocity: Vec<f32>
+    position: Vec<f64>,
+    linear_velocity: Vec<f64>,
+    angular_velocity: Vec<f64>
 }
 
 impl PhysicsWrapper {
@@ -29,7 +29,7 @@ impl PhysicsWrapper {
         }
     }
 
-    pub fn set_pos(&mut self, x: Option<f32>, y: Option<f32>, z: Option<f32>) {
+    pub fn set_pos(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
             Some(x) => self.position[0] = x,
             None => ()
@@ -44,7 +44,7 @@ impl PhysicsWrapper {
         };
     }
 
-    pub fn set_lin_vel(&mut self, x: Option<f32>, y: Option<f32>, z: Option<f32>) {
+    pub fn set_lin_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
             Some(x) => self.linear_velocity[0] = x,
             None => ()
@@ -59,7 +59,7 @@ impl PhysicsWrapper {
         };
     }
 
-    pub fn set_ang_vel(&mut self, x: Option<f32>, y: Option<f32>, z: Option<f32>) {
+    pub fn set_ang_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
             Some(x) => self.angular_velocity[0] = x,
             None => ()
@@ -74,8 +74,8 @@ impl PhysicsWrapper {
         };
     }
 
-    pub fn encode(&self) -> Vec<f32> {
-        let mut vec = Vec::<f32>::new();
+    pub fn encode(&self) -> Vec<f64> {
+        let mut vec = Vec::<f64>::new();
 
         vec.append(&mut self.position.clone());
         vec.append(&mut self.linear_velocity.clone());

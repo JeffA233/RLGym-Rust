@@ -30,7 +30,7 @@ pub fn get_custom_reward_func() -> Box<dyn RewardFn + Send> {
     // SB3CombinedLogReward {
     //     reward_file: "combinedlogfiles-v2".to_string(),
     //     final_mult: 0.1,
-    //     returns: Vec::<f32>::new()
+    //     returns: Vec::<f64>::new()
     // }
 
     let weights = vec![0.05, 0.2, 5.0, 0.01, 1.0, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
@@ -55,11 +55,11 @@ impl JumpReward {
 impl RewardFn for JumpReward {
     fn reset(&mut self, _initial_state: &GameState) {}
 
-    fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f32>) -> f32 {
-        return player.has_jump as i32 as f32
+    fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f64>) -> f64 {
+        return player.has_jump as i32 as f64
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         self.get_reward(player, state, previous_action)
     }
 }
@@ -86,7 +86,7 @@ impl RewardFn for LeftKickoffReward {
         self.vel_dir_reward.reset(_initial_state);
     }
 
-    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         // if state.ball.position[0] == 0. && state.ball.position[1] == 0. {
         //     if self.kickoff_id_blue == -1 || self.kickoff_id_orange == -1 {
         //         let mut blue_car: PlayerData = state.players[0].clone();
@@ -141,19 +141,19 @@ impl RewardFn for LeftKickoffReward {
     //     }
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         self.get_reward(player, state, previous_action)
     }
 }
 
 
 pub struct JumpTouchReward {
-    min_height: f32,
-    exp: f32
+    min_height: f64,
+    exp: f64
 }
 
 impl JumpTouchReward {
-    fn new(min_height: Option<f32>, exp: Option<f32>) -> Self {
+    fn new(min_height: Option<f64>, exp: Option<f64>) -> Self {
         let min_height = match min_height {
             Some(min_height) => min_height,
             None => 93.
@@ -173,7 +173,7 @@ impl JumpTouchReward {
 impl RewardFn for JumpTouchReward {
     fn reset(&mut self, _initial_state: &GameState) {}
 
-    fn get_reward(&mut self, player: &PlayerData, state: &GameState, _previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, _previous_action: Vec<f64>) -> f64 {
         if player.ball_touched && !player.on_ground && state.ball.position[2] >= self.min_height {
             return (state.ball.position[2] - 92.).powf(self.exp)-1.
         } else {
@@ -181,14 +181,14 @@ impl RewardFn for JumpTouchReward {
         }
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         self.get_reward(player, state, previous_action)
     }
 }
 
 
 pub struct GatherBoostReward {
-    last_boost: HashMap<i32, f32>
+    last_boost: HashMap<i32, f64>
 }
 
 impl GatherBoostReward{
@@ -208,9 +208,9 @@ impl RewardFn for GatherBoostReward {
         }
     }
 
-    fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f32>) -> f32 {
+    fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: Vec<f64>) -> f64 {
         let last_boost = self.last_boost.insert(player.car_id, player.boost_amount).unwrap().clone();
-        let boost_differential: f32;
+        let boost_differential: f64;
         if player.boost_amount > last_boost {
             boost_differential = player.boost_amount - last_boost;
             // self.last_boost.insert(player.car_id, player.boost_amount);
@@ -221,7 +221,7 @@ impl RewardFn for GatherBoostReward {
         return boost_differential
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
         self.get_reward(player, state, previous_action)
     }
 }
@@ -231,14 +231,14 @@ pub struct SB3CombinedLogReward {
     reward_file_path: PathBuf,
     // reward_file: String,
     // lockfile: String,
-    final_mult: f32,
-    returns: Vec<f32>,
+    final_mult: f64,
+    returns: Vec<f64>,
     combined_reward_fns: Vec<Box<dyn RewardFn + Send>>,
-    combined_reward_weights: Vec<f32>
+    combined_reward_weights: Vec<f64>
 }
 
 impl SB3CombinedLogReward {
-    fn new(reward_structs: Vec<Box<dyn RewardFn + Send>>, reward_weights: Vec<f32>, file_location: Option<String>, final_mult: Option<f32>) -> Self {
+    fn new(reward_structs: Vec<Box<dyn RewardFn + Send>>, reward_weights: Vec<f64>, file_location: Option<String>, final_mult: Option<f64>) -> Self {
         let file_location = match file_location {
             Some(file_location) => file_location,
             None => "./combinedlogfiles".to_owned()
@@ -294,7 +294,7 @@ impl SB3CombinedLogReward {
         }
     }
 
-    // fn file_put(returns_local: &Vec<f32>, reward_file: &String) {
+    // fn file_put(returns_local: &Vec<f64>, reward_file: &String) {
     //     for i in 0..100 {
     //         if i == 99 {
     //             panic!("too many attempts taken to lock the file")
@@ -338,8 +338,8 @@ impl RewardFn for SB3CombinedLogReward {
         self.returns.fill(0.);
     }
 
-    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        let mut rewards = Vec::<f32>::new();
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
+        let mut rewards = Vec::<f64>::new();
 
         for func in &mut self.combined_reward_fns {
             let val = func.get_reward(player, state, previous_action.clone());
@@ -349,14 +349,14 @@ impl RewardFn for SB3CombinedLogReward {
         // 0, 6, 10 are suspect
         let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
         self.returns = element_add_vec(&self.returns, &vals);
-        let sum = vals.clone().iter().sum::<f32>();
+        let sum = vals.clone().iter().sum::<f64>();
         let final_val = sum * self.final_mult; 
 
         return final_val;
     }
 
-    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f32>) -> f32 {
-        let mut rewards = Vec::<f32>::new();
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> f64 {
+        let mut rewards = Vec::<f64>::new();
 
         for func in &mut self.combined_reward_fns {
             let val = func.get_final_reward(player, state, previous_action.clone());
@@ -372,14 +372,14 @@ impl RewardFn for SB3CombinedLogReward {
 
         thread::spawn(move || file_put(&local_ret, reward_file.as_path()));
 
-        let sum = vals.clone().iter().sum::<f32>();
+        let sum = vals.clone().iter().sum::<f64>();
         let final_val = sum * self.final_mult; 
 
         return final_val;    
     }
 }
 
-fn file_put(returns_local: &Vec<f32>, reward_file: &Path) {
+fn file_put(returns_local: &Vec<f64>, reward_file: &Path) {
     for i in 0..100 {
         if i == 99 {
             panic!("too many attempts taken to lock the file in file_put")
