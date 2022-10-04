@@ -51,7 +51,7 @@ pub fn run_injector() {
 pub fn launch_rocket_league(pipe_id: String, launch_preference: &String) -> Popen {
     let ideal_args = RocketLeagueProcessInfo::get_ideal_args(pipe_id);
     let default_launch_pref = LaunchPreference::new();
-    if !(launch_preference == &default_launch_pref.epic) || !(launch_preference == &default_launch_pref.steam) {
+    if !(launch_preference == &default_launch_pref.epic || launch_preference == &default_launch_pref.steam) {
         if Path::new(&launch_preference).exists() {
             return Popen::create(&[launch_preference], PopenConfig::default()).unwrap()
         } else {

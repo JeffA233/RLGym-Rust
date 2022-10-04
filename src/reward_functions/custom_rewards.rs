@@ -33,7 +33,7 @@ pub fn get_custom_reward_func() -> Box<dyn RewardFn + Send> {
     //     returns: Vec::<f64>::new()
     // }
 
-    let weights = vec![0.05, 0.2, 5.0, 0.01, 1.0, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
+    let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
     assert!(weights.len() == reward_fn_vec.len());
 
     Box::new(SB3CombinedLogReward::new(

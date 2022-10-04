@@ -14,7 +14,7 @@ pub struct CombinedTerminalConditions {
 impl CombinedTerminalConditions {
     pub fn new(tick_skip: usize) -> Self {
         CombinedTerminalConditions {
-            timeout_condition: TimeoutCondition::new(225 as i64),
+            timeout_condition: TimeoutCondition::new(400 * 120 / tick_skip as i64),
             no_touch_timeout_condition: NoTouchTimeoutCondition::new(100*120/tick_skip as i64),
             goal_scored_condition: GoalScoredCondition::new(),
             no_touch_kickoff_condition: NoTouchKickoffTimeoutCondition::new(20*120/tick_skip as i64)
@@ -34,9 +34,6 @@ impl TerminalCondition for CombinedTerminalConditions {
         self.no_touch_timeout_condition.is_terminal(current_state), 
         self.goal_scored_condition.is_terminal(current_state), 
         self.no_touch_kickoff_condition.is_terminal(current_state)].iter().any(|x| x == &true);
-        // if bool {
-        //     println!("bool is true!!");
-        // }
         return bool
     }
 }
