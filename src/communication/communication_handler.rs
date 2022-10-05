@@ -66,7 +66,7 @@ impl CommunicationHandler {
             // let decode_str =
             // let msg_floats = Vec::<f64>::new();
             let msg_floats = bytes_to_f32(&buffer, &bytes_read);
-            let msg_floats = msg_floats.iter().map(|x| *x as f64).collect();
+            let msg_floats: Vec<f64> = msg_floats.iter().map(|x| *x as f64).collect();
             // let msg_floats_str = msg_floats.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
             // println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
             let deserialized_header = deserialize_header(&msg_floats);
@@ -104,7 +104,7 @@ impl CommunicationHandler {
         message.set_body_header_vals(header, body);
         let serialized = message.serialize();
         let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-        println!("message being sent: {message_printable}");
+        // println!("message being sent: {message_printable}");
         // format!("{:02x}", 8 as u8);
         let serialized: Vec<f32> = serialized.iter().map(|x| *x as f32).collect();
         let mut u8_serialized = f32vec_as_u8_slice(&serialized);
