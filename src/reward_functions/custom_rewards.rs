@@ -364,13 +364,14 @@ impl RewardFn for SB3CombinedLogReward {
         }
         
         let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
-        self.returns = element_add_vec(&self.returns, &vals);
+        // self.returns = element_add_vec(&self.returns, &vals);
+        let local_ret = element_add_vec(&self.returns, &vals);
         
-        let local_ret = self.returns.clone();
+        // let local_ret = self.returns.clone();
+        self.returns.fill(0.);
         let reward_file = self.reward_file_path.clone();
         
-
-        thread::spawn(move || file_put(&local_ret, reward_file.as_path()));
+        thread::spawn(move || file_put(local_ret, reward_file.as_path()));
 
         let sum = vals.clone().iter().sum::<f64>();
         let final_val = sum * self.final_mult; 
@@ -379,7 +380,7 @@ impl RewardFn for SB3CombinedLogReward {
     }
 }
 
-fn file_put(returns_local: &Vec<f64>, reward_file: &Path) {
+fn file_put(returns_local: Vec<f64>, reward_file: &Path) {
     for i in 0..100 {
         if i == 99 {
             panic!("too many attempts taken to lock the file in file_put")

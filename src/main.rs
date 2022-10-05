@@ -4,6 +4,7 @@ use std::time::*;
 // use std::collections::HashMap;
 
 use action_parsers::necto_parser_2::NectoAction;
+use communication::communication_handler::f32vec_as_u8_slice;
 use conditionals::custom_conditions::CombinedTerminalConditions;
 use envs::game_match::GameMatch;
 use gamestates::game_state::{GameState};
@@ -40,6 +41,8 @@ use std::io::{BufWriter, Write, stdin};
 // math.norm_func();
 
 fn main() {
+    let v = vec![93.0];
+    let bytes = f32vec_as_u8_slice(&v);
     // let term_cond = Box::new(CombinedTerminalConditions::new(1));
     let term_cond = Box::new(TimeoutCondition::new(225));
     let reward_fn = get_custom_reward_func();
