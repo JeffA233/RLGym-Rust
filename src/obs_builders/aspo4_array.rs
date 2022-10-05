@@ -73,7 +73,7 @@ impl AdvancedObsPadderStacker {
     }
 
     fn _add_dummy(obs: &mut Vec<f64>) {
-        obs.append(&mut vec![0.; 31]);
+        obs.extend([0.; 31]);
     }
 
     fn _add_player_to_obs(&self, obs: &mut Vec<f64>, car: &PlayerData, ball: &PhysicsObject, inverted: bool, player: Option<PhysicsObject>) -> PhysicsObject {
@@ -133,13 +133,13 @@ impl ObsBuilder for AdvancedObsPadderStacker {
             pads = state.inverted_boost_pads.clone();
         }
 
-        let pos: Vec<f64> = ball.position.clone();
-        let lin: Vec<f64> = ball.linear_velocity.clone();
-        let ang: Vec<f64> = ball.angular_velocity.clone();
+        let pos = &ball.position;
+        let lin = &ball.linear_velocity;
+        let ang = &ball.angular_velocity;
 
-        let pos_std = vec_div_variable(&pos, &self.pos_std);
-        let lin_std = vec_div_variable(&lin, &self.pos_std);
-        let ang_std = vec_div_variable(&ang, &self.ang_std);
+        let pos_std = vec_div_variable(pos, &self.pos_std);
+        let lin_std = vec_div_variable(lin, &self.pos_std);
+        let ang_std = vec_div_variable(ang, &self.ang_std);
 
         let mut obs = Vec::<f64>::new();
 
@@ -151,7 +151,7 @@ impl ObsBuilder for AdvancedObsPadderStacker {
 
         // self.add_ball_to_stack(pos_std, lin_std, ang_std, player.car_id as usize);
 
-        let ball_stack = self.ball_stack[player.car_id as usize].clone();
+        let ball_stack = &self.ball_stack[player.car_id as usize];
         for ball_vec in ball_stack {
             let mut pos_std = ball_vec[0].clone();
             let mut lin_std = ball_vec[1].clone();

@@ -13,7 +13,7 @@ impl PhysicsWrapper {
         let wrapper = match phys_obj {
             Some(phys_obj) => PhysicsWrapper::_read_from_physics_object(phys_obj),
             None => PhysicsWrapper {
-                position: vec![0.; 3],
+                position: vec![0., 0., 93.],
                 linear_velocity: vec![0.; 3],
                 angular_velocity: vec![0.; 3]
             }

@@ -104,7 +104,7 @@ impl CommunicationHandler {
         message.set_body_header_vals(header, body);
         let serialized = message.serialize();
         let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-        // println!("message being sent: {printable}");
+        println!("message being sent: {message_printable}");
         // format!("{:02x}", 8 as u8);
         let serialized: Vec<f32> = serialized.iter().map(|x| *x as f32).collect();
         let mut u8_serialized = f32vec_as_u8_slice(&serialized);
