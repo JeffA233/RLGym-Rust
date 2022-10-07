@@ -90,7 +90,7 @@ impl CommunicationHandler {
                 
             }
             if i == 9 {
-                panic!("receive message took too many attempts")
+                panic!("receive message took too many attempts (probably too many stacked pipe actions?)")
             }
         }
         return received_message

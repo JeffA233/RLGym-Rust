@@ -387,7 +387,7 @@ fn file_put(returns_local: Vec<f64>, reward_file: &Path) {
         }
         let out = OpenOptions::new().append(true).read(true).open(reward_file);
 
-        let mut file = match out {
+        let file = match out {
             Err(out) => {
                 println!("file error: {out}");
                 if out.kind() == PermissionDenied {continue} else {continue};},
