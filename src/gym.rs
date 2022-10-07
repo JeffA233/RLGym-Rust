@@ -140,7 +140,7 @@ impl Gym {
         return obs
     }
 
-    pub fn step(&mut self, actions: Vec<Vec<f64>>) -> (Vec<Vec<f64>>, Vec<f64>, bool, HashMap<&str, f64>) {
+    pub fn step(&mut self, actions: Vec<Vec<f64>>) -> (Vec<Vec<f64>>, Vec<f64>, bool, HashMap<String, f64>) {
         let actions = self._game_match.parse_actions(actions, &self._prev_state);
         self._send_actions(actions);
 
@@ -150,8 +150,8 @@ impl Gym {
         let done = self._game_match.is_done(&state);
         self._prev_state = state.clone();
         let reward = self._game_match.get_rewards(&state, done);
-        let mut info = HashMap::<&str,f64>::new();
-        info.insert("result", self._game_match.get_result(state) as f64);
+        let mut info = HashMap::<String,f64>::new();
+        info.insert("result".to_string(), self._game_match.get_result(state) as f64);
         return (obs, reward, done, info)
     }
 

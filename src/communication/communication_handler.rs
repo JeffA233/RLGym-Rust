@@ -44,7 +44,7 @@ impl CommunicationHandler {
         }
     }
 
-    pub fn receive_message(&self, header: Option<Vec<f64>>) -> Message {
+    pub fn receive_message(&mut self, header: Option<Vec<f64>>) -> Message {
         if !self._connected {
             panic!("RLGYM ATTEMPTED TO RECEIVE MESSAGE WITH NO CONNECTION") 
         }
@@ -54,7 +54,7 @@ impl CommunicationHandler {
         };
         // let received_message = self.message;
         let mut received_message = self.message.clone();
-        for _i in 0..10 {
+        for i in 0..10 {
             let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
             let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
             let out: BOOL;
@@ -62,11 +62,16 @@ impl CommunicationHandler {
             unsafe {
                 out = ReadFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_read)), None);
             }
+            let succeeded = out.as_bool();
+            if !succeeded {
+                self.close_pipe();
+                panic!("ReadFile was unsuccessful")
+            }
             // let bytes = out.0 as u32;
             // let decode_str =
             // let msg_floats = Vec::<f64>::new();
             let msg_floats = bytes_to_f32(&buffer, &bytes_read);
-            let msg_floats: Vec<f64> = msg_floats.iter().map(|x| *x as f64).collect();
+            let msg_floats = msg_floats.iter().map(|x| *x as f64).collect();
             // let msg_floats_str = msg_floats.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
             // println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
             let deserialized_header = deserialize_header(&msg_floats);
@@ -83,6 +88,9 @@ impl CommunicationHandler {
                     }
                 }
                 
+            }
+            if i == 9 {
+                panic!("receive message took too many attempts")
             }
         }
         return received_message
