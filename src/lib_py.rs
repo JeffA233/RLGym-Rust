@@ -12,7 +12,7 @@ pub mod state_setters;
 pub mod gym;
 pub mod make;
 
-use std::{collections::HashMap, thread::{JoinHandle, self}, sync::mpsc::{Receiver, Sender, channel}, time::Duration, iter::zip, process::id};
+use std::{collections::HashMap, thread::{JoinHandle, self}, sync::mpsc::{Receiver, Sender, channel, sync_channel, SyncSender}, time::Duration, iter::zip, process::id};
 
 use crate::gym::Gym;
 use pyo3::prelude::*;
@@ -155,9 +155,10 @@ impl GymWrapperRust {
 
 #[pyclass]
 pub struct GymManager {
+    #[pyo3(get)]
     waiting: bool,
     // threads: Vec<JoinHandle<()>>,
-    sends: Vec<Sender<ManagerPacket>>,
+    sends: Vec<SyncSender<ManagerPacket>>,
     recvs: Vec<Receiver<WorkerPacket>>,
     n_agents_per_env: Vec<i32>
 }
@@ -179,20 +180,20 @@ pub enum WorkerPacket {
 impl GymManager {
     #[new]
     pub fn new(match_nums: Vec<i32>, tick_skip: usize) -> Self {
-        let mut send_local: Sender<ManagerPacket>;
+        let mut send_local: SyncSender<ManagerPacket>;
         let mut rx: Receiver<ManagerPacket>;
-        let mut tx: Sender<WorkerPacket>;
+        let mut tx: SyncSender<WorkerPacket>;
         let mut recv_local: Receiver<WorkerPacket>;
         let mut recv_vec = Vec::<Receiver<WorkerPacket>>::new();
-        let mut send_vec = Vec::<Sender<ManagerPacket>>::new();
+        let mut send_vec = Vec::<SyncSender<ManagerPacket>>::new();
         let mut thrd_vec = Vec::<JoinHandle<()>>::new();
         let mut curr_id = 0;
 
         for match_num in match_nums.clone() {
             let mut retry_loop = true;
             while retry_loop {
-                (send_local, rx) = channel();
-                (tx, recv_local) = channel();
+                (send_local, rx) = sync_channel(0);
+                (tx, recv_local) = sync_channel(0);
                 let thrd1 = thread::spawn(move || worker(match_num/2, tick_skip, tx, rx, curr_id as usize));
                 curr_id += 1;
                 let err = send_local.send(ManagerPacket::Reset);
@@ -263,11 +264,11 @@ impl GymManager {
     }
 
     pub fn step_async(&mut self, actions: Vec<Vec<f64>>) {
-        let mut i: usize = 0;
-        for (sender, n_agents) in zip(&self.sends, &self.n_agents_per_env) {
-            let acts = actions[i..i+*n_agents as usize].to_vec();
+        // let mut i: usize = 0;
+        for (sender, action) in zip(&self.sends, actions) {
+            let acts = vec![action];
             sender.send(ManagerPacket::Step { actions: acts }).unwrap();
-            i += *n_agents as usize;
+            // i += 1;
         }
         self.waiting = true;
     }
@@ -305,7 +306,7 @@ impl GymManager {
     }
 }
 
-pub fn worker(team_num: i32, tick_skip: usize, send_chan: Sender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>, pipe_name: usize) {
+pub fn worker(team_num: i32, tick_skip: usize, send_chan: SyncSender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>, pipe_name: usize) {
     // maybe launch on separate thread and check if the gym is responding or not to check if Rocket League successfully launched
     let mut env = GymWrapperRust::new(team_num, tick_skip, Some(pipe_name));
     let pipe_id = env.gym._comm_handler._pipe;
