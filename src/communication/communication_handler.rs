@@ -25,9 +25,10 @@ pub const RLGYM_DEFAULT_PIPE_SIZE: usize = 1400;
 pub const RLGYM_DEFAULT_TIMEOUT: usize = 4000;
 
 #[derive(Default)]
+#[derive(Clone)]
 pub struct CommunicationHandler {
     _current_pipe_name: String,
-    _pipe: HANDLE,
+    pub _pipe: HANDLE,
     _connected: bool,
     message: Message,
     // overlapped_struct: OVERLAPPED
@@ -54,6 +55,8 @@ impl CommunicationHandler {
         };
         // let received_message = self.message;
         let mut received_message = self.message.clone();
+        
+        // this doesn't need to be a loop but for now will keep
         for i in 0..10 {
             let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
             let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
@@ -62,10 +65,20 @@ impl CommunicationHandler {
             unsafe {
                 out = ReadFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_read)), None);
             }
-            let succeeded = out.as_bool();
-            if !succeeded {
-                self.close_pipe();
-                panic!("ReadFile was unsuccessful")
+            let succeeded = out.0;
+            if succeeded == 0 {
+                println!("ReadFile was unsuccessful");
+                let err;
+                unsafe {
+                    err = GetLastError().0;
+                    let win_err = WIN32_ERROR {
+                        0: err
+                    };
+                    let h_result = win_err.to_hresult();
+                    let err_message = h_result.message();
+                    println!("ReadFile error: {err_message}");
+                }
+                continue
             }
             // let bytes = out.0 as u32;
             // let decode_str =
@@ -87,9 +100,9 @@ impl CommunicationHandler {
                         break
                     }
                 }
-                
             }
             if i == 9 {
+                self.close_pipe();
                 panic!("receive message took too many attempts (probably too many stacked pipe actions?)")
             }
         }
@@ -112,7 +125,7 @@ impl CommunicationHandler {
         message.set_body_header_vals(header, body);
         let serialized = message.serialize();
         let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
-        // println!("message being sent: {message_printable}");
+        // println!("message being sent: {printable}");
         // format!("{:02x}", 8 as u8);
         let serialized: Vec<f32> = serialized.iter().map(|x| *x as f32).collect();
         let mut u8_serialized = f32vec_as_u8_slice(&serialized);
@@ -276,7 +289,7 @@ impl CommunicationHandler {
 }
 
 pub fn format_pipe_id(pipe_id: usize) -> String {
-    return r"\\.\pipe\!".replace("!", &pipe_id.to_string())
+    return r"\\.\pipe\rlgym_!".replace("!", &pipe_id.to_string())
 }
 
 pub fn bytes_to_f32(bytes: &[u8], bytes_read: &u32) -> Vec<f32> {

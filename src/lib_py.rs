@@ -12,7 +12,7 @@ pub mod state_setters;
 pub mod gym;
 pub mod make;
 
-use std::{collections::HashMap, thread::{JoinHandle, self}, sync::mpsc::{Receiver, Sender, channel}, time::Duration, iter::zip};
+use std::{collections::HashMap, thread::{JoinHandle, self}, sync::mpsc::{Receiver, Sender, channel}, time::Duration, iter::zip, process::id};
 
 use crate::gym::Gym;
 use pyo3::prelude::*;
@@ -36,6 +36,7 @@ use windows::Win32::Foundation::{CloseHandle};
 pub fn rlgym_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     // m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_class::<GymWrapper>()?;
+    m.add_class::<GymManager>()?;
     Ok(())
 }
 
@@ -60,7 +61,8 @@ impl GymWrapper {
         Some(true), 
         Some(team_size as usize), 
         None, 
-        None, 
+        None,
+        None,  
         term_cond, 
         reward_fn, 
         obs_build, 
@@ -102,7 +104,7 @@ pub struct GymWrapperRust {
 
 impl GymWrapperRust {
     /// create the gym wrapper to be used (team_size: i32, tick_skip: usize)
-    pub fn new(team_size: i32, tick_skip: usize) -> Self {
+    pub fn new(team_size: i32, tick_skip: usize, pipe_name: Option<usize>) -> Self {
     let term_cond = Box::new(CombinedTerminalConditions::new(tick_skip));
     let reward_fn = get_custom_reward_func();
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
@@ -113,7 +115,8 @@ impl GymWrapperRust {
         Some(true), 
         Some(team_size as usize), 
         None, 
-        None, 
+        None,
+        pipe_name, 
         term_cond, 
         reward_fn, 
         obs_build, 
@@ -150,6 +153,7 @@ impl GymWrapperRust {
 // -------------------------------------------------------------------------------------
 // RLGym Manager in Rust for Python interface
 
+#[pyclass]
 pub struct GymManager {
     waiting: bool,
     // threads: Vec<JoinHandle<()>>,
@@ -171,8 +175,10 @@ pub enum WorkerPacket {
     ResetRet {obs: Vec<Vec<f64>>}
 }
 
+#[pymethods]
 impl GymManager {
-    pub fn new(team_nums: Vec<i32>, tick_skip: usize) -> Self {
+    #[new]
+    pub fn new(match_nums: Vec<i32>, tick_skip: usize) -> Self {
         let mut send_local: Sender<ManagerPacket>;
         let mut rx: Receiver<ManagerPacket>;
         let mut tx: Sender<WorkerPacket>;
@@ -180,17 +186,19 @@ impl GymManager {
         let mut recv_vec = Vec::<Receiver<WorkerPacket>>::new();
         let mut send_vec = Vec::<Sender<ManagerPacket>>::new();
         let mut thrd_vec = Vec::<JoinHandle<()>>::new();
+        let mut curr_id = 0;
 
-        for team_num in team_nums.clone() {
+        for match_num in match_nums.clone() {
             let mut retry_loop = true;
             while retry_loop {
                 (send_local, rx) = channel();
                 (tx, recv_local) = channel();
-                let thrd1 = thread::spawn(move || worker(team_num, tick_skip, tx, rx));
+                let thrd1 = thread::spawn(move || worker(match_num/2, tick_skip, tx, rx, curr_id as usize));
+                curr_id += 1;
                 let err = send_local.send(ManagerPacket::Reset);
                 match err {
                     Ok(out) => out,
-                    Err(err) => {println!("tx send error: {err}"); thread::sleep(Duration::new(1, 0)); continue;}
+                    Err(err) => {println!("tx send error: {err}"); continue;}
                 }
                 let out = recv_local.recv_timeout(Duration::new(60, 0));
 
@@ -204,7 +212,7 @@ impl GymManager {
                 match out {
                     Ok(packet) => packet,
                     Err(err) => {
-                        println!("recv timed out in new: {err}");
+                        println!("recv timed out in new func: {err}");
                         continue;
                     }
                 };
@@ -231,23 +239,25 @@ impl GymManager {
             // threads: thrd_vec,
             sends: send_vec,
             recvs: recv_vec,
-            n_agents_per_env: team_nums.iter().map(|x| x*2).collect()
+            n_agents_per_env: match_nums
         }
     }
 
-    pub fn reset(&self) -> Vec<Vec<Vec<f64>>> {
+    pub fn reset(&self) -> Vec<Vec<f64>> {
         for sender in &self.sends {
             sender.send(ManagerPacket::Reset).unwrap();
         }
 
-        let mut flat_obs = Vec::<Vec<Vec<f64>>>::new();
+        let mut flat_obs = Vec::<Vec<f64>>::new();
         for receiver in &self.recvs{
             let data = receiver.recv().unwrap();
             let obs = match data {
                 WorkerPacket::ResetRet { obs } => obs,
                 _ => panic!("ResetRet was not returned from Reset command given")
             };
-            flat_obs.push(obs);
+            for internal_vec in obs {
+                flat_obs.push(internal_vec);
+            }
         }
         return flat_obs
     }
@@ -262,11 +272,11 @@ impl GymManager {
         self.waiting = true;
     }
 
-    pub fn step_wait(&mut self) -> (Vec<Vec<Vec<f64>>>, Vec<Vec<f64>>, Vec<Vec<bool>>, Vec<Vec<HashMap<String, f64>>>) {
-        let mut flat_obs = Vec::<Vec<Vec<f64>>>::new();
-        let mut flat_rewards = Vec::<Vec<f64>>::new();
-        let mut flat_dones = Vec::<Vec<bool>>::new();
-        let mut flat_infos = Vec::<Vec<HashMap<String,f64>>>::new();
+    pub fn step_wait(&mut self) -> (Vec<Vec<f64>>, Vec<f64>, Vec<bool>, Vec<HashMap<String, f64>>) {
+        let mut flat_obs = Vec::<Vec<f64>>::new();
+        let mut flat_rewards = Vec::<f64>::new();
+        let mut flat_dones = Vec::<bool>::new();
+        let mut flat_infos = Vec::<HashMap<String,f64>>::new();
 
         for (receiver, n_agents) in zip(&self.recvs, &self.n_agents_per_env) {
             let data = receiver.recv().unwrap();
@@ -275,10 +285,14 @@ impl GymManager {
                 WorkerPacket::StepRet { obs, reward, done, info } => (obs, reward, done, info),
                 _ => panic!("StepRet was not returned from Reset command given")
             };
-            flat_obs.push(obs);
-            flat_rewards.push(rew);
-            flat_dones.push(vec![done; *n_agents as usize]);
-            flat_infos.push(vec![info; *n_agents as usize]);
+            for internal_vec in obs {
+                flat_obs.push(internal_vec);
+            }
+            for internal_rew in rew {
+                flat_rewards.push(internal_rew);
+            }
+            flat_dones.append(&mut vec![done; *n_agents as usize]);
+            flat_infos.append(&mut vec![info; *n_agents as usize]);
         }
         self.waiting = false;
         return (flat_obs, flat_rewards, flat_dones, flat_infos);
@@ -291,9 +305,9 @@ impl GymManager {
     }
 }
 
-pub fn worker(team_num: i32, tick_skip: usize, send_chan: Sender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>) {
+pub fn worker(team_num: i32, tick_skip: usize, send_chan: Sender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>, pipe_name: usize) {
     // maybe launch on separate thread and check if the gym is responding or not to check if Rocket League successfully launched
-    let mut env = GymWrapperRust::new(team_num, tick_skip);
+    let mut env = GymWrapperRust::new(team_num, tick_skip, Some(pipe_name));
     let pipe_id = env.gym._comm_handler._pipe;
     let thrd = thread::spawn(move || {env.reset(); return env;});
     let mut i = 0;
