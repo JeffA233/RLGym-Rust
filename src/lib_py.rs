@@ -12,13 +12,18 @@ pub mod state_setters;
 pub mod gym;
 pub mod make;
 
-use std::{collections::HashMap, thread::{JoinHandle, self}, sync::mpsc::{Receiver, sync_channel, SyncSender}, time::Duration, iter::zip};
+use std::{collections::HashMap, thread::{JoinHandle, self}, time::Duration, iter::zip, path::PathBuf};
+use crossbeam_channel::{bounded, Sender, Receiver};
+use std::path::Path;
+use std::io::{BufWriter, Write};
+use std::io::ErrorKind::PermissionDenied;
+use std::fs::OpenOptions;
 
 use crate::gym::Gym;
 use pyo3::prelude::*;
 
 use obs_builders::aspo4_array::AdvancedObsPadderStacker;
-use reward_functions::{custom_rewards::get_custom_reward_func};
+use reward_functions::{custom_rewards::{get_custom_reward_func, get_custom_reward_func_mult_inst}};
 use action_parsers::necto_parser_2::NectoAction;
 use conditionals::{custom_conditions::CombinedTerminalConditions};
 use state_setters::custom_state_setters::custom_state_setters;
@@ -105,9 +110,9 @@ pub struct GymWrapperRust {
 
 impl GymWrapperRust {
     /// create the gym wrapper to be used (team_size: i32, tick_skip: usize)
-    pub fn new(team_size: i32, tick_skip: usize, pipe_name: Option<usize>) -> Self {
+    pub fn new(team_size: i32, tick_skip: usize, pipe_name: Option<usize>, sender: Sender<Vec<f64>>) -> Self {
     let term_cond = Box::new(CombinedTerminalConditions::new(tick_skip));
-    let reward_fn = get_custom_reward_func();
+    let reward_fn = get_custom_reward_func_mult_inst(sender);
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
     let act_parse = Box::new(NectoAction::new());
     let state_set = Box::new(custom_state_setters(team_size));
@@ -160,7 +165,7 @@ pub struct GymManager {
     #[pyo3(get)]
     waiting: bool,
     // threads: Vec<JoinHandle<()>>,
-    sends: Vec<SyncSender<ManagerPacket>>,
+    sends: Vec<Sender<ManagerPacket>>,
     recvs: Vec<Receiver<WorkerPacket>>,
     n_agents_per_env: Vec<i32>
 }
@@ -177,6 +182,7 @@ pub enum ManagerPacket {
 /// packet that comes from the worker
 pub enum WorkerPacket {
     StepRet {obs: Vec<Vec<f64>>, reward: Vec<f64>, done: bool, info: HashMap<String, f64>},
+    StepRetDone {obs: Vec<Vec<f64>>, reward: Vec<f64>, done: bool, info: HashMap<String, f64>, terminal_obs: Vec<Vec<f64>>},
     ResetRet {obs: Vec<Vec<f64>>},
     InitReturn
 }
@@ -186,21 +192,28 @@ impl GymManager {
     #[new]
     pub fn new(match_nums: Vec<i32>, tick_skip: usize) -> Self {
         let mut recv_vec = Vec::<Receiver<WorkerPacket>>::new();
-        let mut send_vec = Vec::<SyncSender<ManagerPacket>>::new();
+        let mut send_vec = Vec::<Sender<ManagerPacket>>::new();
         let mut thrd_vec = Vec::<JoinHandle<()>>::new();
         let mut curr_id = 0;
+
+        let (reward_send, reward_recv) = bounded(100);
+        let reward_file_loc = r"F:\Users\Jeffrey\AppData\Local\Temp";
+        let reward_file_name = format!(r"{}\rewards.txt", reward_file_loc);
+        let reward_path = Path::new(&reward_file_name).to_owned();
+        let reward_thrd = thread::spawn(move || file_put_worker(reward_recv, reward_path));
 
         for match_num in match_nums.clone() {
             let mut retry_loop = true;
             // try to loop until the game successfully launches
             while retry_loop {
-                let send_local: SyncSender<ManagerPacket>;
+                let reward_send_local = reward_send.clone();
+                let send_local: Sender<ManagerPacket>;
                 let rx: Receiver<ManagerPacket>;
-                let tx: SyncSender<WorkerPacket>;
+                let tx: Sender<WorkerPacket>;
                 let recv_local: Receiver<WorkerPacket>;
-                (send_local, rx) = sync_channel(0);
-                (tx, recv_local) = sync_channel(0);
-                let thrd1 = thread::spawn(move || worker(match_num/2, tick_skip, tx, rx, curr_id as usize));
+                (send_local, rx) = bounded(0);
+                (tx, recv_local) = bounded(0);
+                let thrd1 = thread::spawn(move || worker(match_num/2, tick_skip, tx, rx, curr_id as usize, reward_send_local));
                 curr_id += 1;
 
                 // wait for worker to send back a packet or if it never does then restart loop to try again
@@ -262,32 +275,37 @@ impl GymManager {
         Ok(())
     }
 
-    pub fn step_wait(&mut self) -> PyResult<(Vec<Vec<f64>>, Vec<f64>, Vec<bool>, Vec<HashMap<String, f64>>)> {
+    pub fn step_wait(&mut self) -> PyResult<(Vec<Vec<f64>>, Vec<f64>, Vec<bool>, Vec<HashMap<String, f64>>, Vec<Option<Vec<Vec<f64>>>>)> {
         let mut flat_obs = Vec::<Vec<f64>>::new();
         let mut flat_rewards = Vec::<f64>::new();
         let mut flat_dones = Vec::<bool>::new();
         let mut flat_infos = Vec::<HashMap<String,f64>>::new();
+        let mut flat_term_obs = Vec::<Option<Vec<Vec<f64>>>>::new();
 
         for (receiver, n_agents) in zip(&self.recvs, &self.n_agents_per_env) {
             let data = receiver.recv().unwrap();
 
-            let (obs, rew, done, info) = match data {
-                WorkerPacket::StepRet { obs, reward, done, info } => (obs, reward, done, info),
+            let (obs, rew, done, info, terminal_obs) = match data {
+                WorkerPacket::StepRet { obs, reward, done, info } => (obs, reward, done, info, None),
+                WorkerPacket::StepRetDone { obs, reward, done, info, terminal_obs } => (obs, reward, done, info, Some(terminal_obs)),
                 _ => panic!("StepRet was not returned from Step command given")
             };
-            // same as above in reset and for rewards it will be a vec of f64 to be "flat" and so on
-            for internal_vec in obs {
-                flat_obs.push(internal_vec);
-            }
-            for internal_rew in rew {
-                flat_rewards.push(internal_rew);
-            }
+            // same as above in reset fn and for rewards it will be a vec of f64 to be "flat" and so on
+            flat_obs.extend(obs);
+
+            flat_rewards.extend(rew);
+
+            // since PyO3 cannot currently use HashMaps with enums we must push this outside of Rust into Python
+            match terminal_obs {
+                Some(obs) => flat_term_obs.extend(vec![Some(obs); *n_agents as usize]),
+                None => flat_term_obs.extend(vec![None; *n_agents as usize])
+            };
             // since the env will emit done and info as the same for every agent in the match, we just multiply them to fill the number of agents
-            flat_dones.append(&mut vec![done; *n_agents as usize]);
-            flat_infos.append(&mut vec![info; *n_agents as usize]);
+            flat_dones.extend(vec![done; *n_agents as usize]);
+            flat_infos.extend(vec![info; *n_agents as usize]);
         }
         self.waiting = false;
-        return Ok((flat_obs, flat_rewards, flat_dones, flat_infos));
+        return Ok((flat_obs, flat_rewards, flat_dones, flat_infos, flat_term_obs));
     }
 
     pub fn close(&mut self) -> PyResult<()> {
@@ -298,11 +316,11 @@ impl GymManager {
     }
 }
 
-pub fn worker(team_num: i32, tick_skip: usize, send_chan: SyncSender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>, pipe_name: usize) {
+pub fn worker(team_num: i32, tick_skip: usize, send_chan: Sender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>, pipe_name: usize, reward_sender: Sender<Vec<f64>>) {
     // launches env and then sends the reset action to a new thread since receiving a message from the plugin will be blocking,
     // waits for x seconds for thread to return the env if it is a success else tries to force close the pipe and 
     // make the gym crash (which should terminate the game)
-    let mut env = GymWrapperRust::new(team_num, tick_skip, Some(pipe_name));
+    let mut env = GymWrapperRust::new(team_num, tick_skip, Some(pipe_name), reward_sender);
     let pipe_id = env.gym._comm_handler._pipe;
     let thrd = thread::spawn(move || {env.reset(); return env;});
     let mut i = 0;
@@ -326,7 +344,7 @@ pub fn worker(team_num: i32, tick_skip: usize, send_chan: SyncSender<WorkerPacke
     // for cmd in rec_chan.iter() {
     loop {
         // simple loop that tries to recv for as long as the Manager channel is not hung up waiting for commands from the Manager
-        let obs: Vec<Vec<f64>>;
+        let mut obs: Vec<Vec<f64>>;
         let reward: Vec<f64>;
         let done: bool;
         let info: HashMap<String, f64>;
@@ -341,7 +359,16 @@ pub fn worker(team_num: i32, tick_skip: usize, send_chan: SyncSender<WorkerPacke
         match cmd {
             ManagerPacket::Step { actions } => {
                 (obs, reward, done, info) = env.step(actions);
-                let out = send_chan.send(WorkerPacket::StepRet {obs, reward, done, info});
+                let out;
+                // check if match is done, unfortunately we must send this to Python somehow because HashMaps with enums 
+                // (for multiple-type HashMaps) cannot be translated into Python
+                if done {
+                    let terminal_obs = obs;
+                    obs = env.reset();
+                    out = send_chan.send(WorkerPacket::StepRetDone {obs, reward, done, info, terminal_obs});
+                } else {
+                    out = send_chan.send(WorkerPacket::StepRet {obs, reward, done, info});
+                }
                 match out {
                     Ok(res) => res,
                     Err(err) => {
@@ -367,3 +394,54 @@ pub fn worker(team_num: i32, tick_skip: usize, send_chan: SyncSender<WorkerPacke
     }
     env.close();
 }
+
+fn file_put_worker(receiver: Receiver<Vec<f64>>, reward_file: PathBuf) {
+    loop {
+        let out = OpenOptions::new().append(true).read(true).open(reward_file.as_path());
+
+        let file = match out {
+            Err(out) => {
+                println!("file error: {out}");
+                // half a second 
+                thread::sleep(Duration::new(0, 500000000));
+                if out.kind() == PermissionDenied {continue} else {continue};},
+            Ok(_file) => _file
+        };
+        let mut buf = BufWriter::new(&file);
+
+        let mut i = 0;
+        loop {
+            let recv_data = receiver.recv();
+            let returns_local = match recv_data {
+                Ok(data) => data,
+                Err(err) => {
+                    println!("recv err in file_put_worker: {err}");
+                    break;
+                }
+            };
+
+            let mut string = String::new();
+            string = string + "[";
+            for i in 0..returns_local.len()-1 {
+                string = string + &format!("{}, ", returns_local[i])
+            }
+            string = string + &format!("{}]", returns_local[returns_local.len()-1]);
+            writeln!(&mut buf, "{}", string).unwrap();
+            
+            i += 1;
+
+            if receiver.is_empty() || i > 3 {
+                let out = buf.flush();
+                match out {
+                    Ok(out) => out,
+                    Err(err) => println!("buf.flush in logger failed with error: {err}")
+                };
+                i = 0;
+                // break;
+            }
+        }
+        println!("logger worker is exiting");
+        break;
+    }
+}
+

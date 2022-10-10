@@ -164,7 +164,7 @@ impl GameMatch {
         }
     }
 
-    pub fn get_result(&self, state: GameState) -> i32 {
+    pub fn get_result(&self, state: &GameState) -> i32 {
         let current_score = state.blue_score - state.orange_score;
         return current_score - self._initial_score;
     }

@@ -26,21 +26,7 @@ impl PhysicsObject {
             has_computed_euler_angles: false,
             has_computed_rot_mtx: false
         }
-        // Default::default()
     }
-
-    // pub fn clone(&self) -> Self {
-    //     PhysicsObject {
-    //         position: self.position.clone(),
-    //         quaternion: self.quaternion.clone(),
-    //         linear_velocity: self.linear_velocity.clone(),
-    //         angular_velocity: self.angular_velocity.clone(),
-    //         euler_angles: self.euler_angles.clone(),
-    //         rotation_mtx: self.rotation_mtx.clone(),
-    //         has_computed_euler_angles: self.has_computed_euler_angles.clone(),
-    //         has_computed_rot_mtx: self.has_computed_rot_mtx.clone()
-    //     }
-    // }
 
     pub fn decode_car_data(&mut self, car_data: Vec<f64>) {
         self.position = car_data[..3].to_vec();

@@ -16,28 +16,21 @@ pub fn clip(mut vec: Vec<f64>, high: f64, low: f64) -> Vec<f64> {
     return vec
 }
 
-pub fn trace(arr: Array2<f64>) -> f64 {
+pub fn trace(arr: &Array2<f64>) -> f64 {
     let diag = arr.diag();
     diag.into_iter().sum()
 }
 
 pub fn vec_div_variable(a: &Vec<f64>, b: &f64) -> Vec<f64> {
     let ret: Vec<f64> = a.iter().map(|x| *x as f64 / *b as f64).collect();
-    let ret = ret.iter().map(|x| *x as f64).collect();
     return ret
 }
 
 /// multiply elementwise vec a * vec b
 pub fn element_mult_vec(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
     assert!(a.len() == b.len(), "length of a did not match length of b");
-    let mut z: Vec<f64> = Vec::new();
 
-    for i in 0..a.len() {
-        let x = a[i] as f64;
-        let y = b[i] as f64;
-
-        z.push((x * y) as f64);
-    }
+    let z = std::iter::zip(a, b).map(|(x, y)| x * y).collect();
 
     return z;
 }
@@ -45,14 +38,8 @@ pub fn element_mult_vec(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
 /// divide elementwise vec a / vec b
 pub fn element_div_vec(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
     assert!(a.len() == b.len(), "length of a did not match length of b");
-    let mut z: Vec<f64> = Vec::new();
 
-    for i in 0..a.len() {
-        let x = a[i] as f64;
-        let y = b[i] as f64;
-
-        z.push((x / y) as f64);
-    }
+    let z = std::iter::zip(a, b).map(|(x, y)| x / y).collect();
 
     return z;
 }
@@ -60,14 +47,8 @@ pub fn element_div_vec(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
 /// subtract elementwise vec b from vec a
 pub fn element_sub_vec(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
     assert!(a.len() == b.len(), "length of a did not match length of b");
-    let mut z: Vec<f64> = Vec::new();
 
-    for i in 0..a.len() {
-        let x = a[i] as f64;
-        let y = b[i] as f64;
-
-        z.push((x - y) as f64);
-    }
+    let z = std::iter::zip(a, b).map(|(x, y)| x - y).collect();
 
     return z
 }
@@ -75,14 +56,8 @@ pub fn element_sub_vec(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
 /// add elementwise vec a + vec b
 pub fn element_add_vec(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
     assert!(a.len() == b.len(), "length of a did not match length of b");
-    let mut z: Vec<f64> = Vec::new();
 
-    for i in 0..a.len() {
-        let x = a[i] as f64;
-        let y = b[i] as f64;
-
-        z.push((x + y) as f64);
-    }
+    let z = std::iter::zip(a, b).map(|(x, y)| x + y).collect();
 
     return z;
 }
@@ -95,32 +70,33 @@ pub fn get_dist(a: &Vec<f64>, b: &Vec<f64>) -> Vec<f64> {
 /// vector projection of two vecs and an optional mag_squared
 pub fn vector_projection(vec: Vec<f64>, dest_vec: Vec<f64>, mag_squared: Option<f64>) -> Vec<f64> {
     assert!(vec.len() == dest_vec.len(), "length of a did not match length of b");
-    let mut _mag_squared: f64 = 0.;
-    if mag_squared.is_some() {
-        if mag_squared.unwrap() == 0. {
-            return dest_vec;
-        }
-        else {
-            _mag_squared = mag_squared.unwrap();
-        }
-    }
-    else {
-        let norm = norm_func(&vec);
-        if norm == 0. {
-            return dest_vec;
-        }
-        _mag_squared = norm * norm;
-    }
+    let mut _mag_squared: f64;
 
-    let dot = element_mult_vec(&vec, &dest_vec);
-    let dot_prod = dot.iter().sum::<f64>();
+    _mag_squared = match mag_squared {
+        Some(mag_squared) => {
+            if mag_squared == 0. {
+                return dest_vec;
+            } else {
+                mag_squared
+            }
+        }
+        None => {
+            let norm = norm_func(&vec);
+            if norm == 0. {
+                return dest_vec;
+            } else {
+                norm * norm
+            }
+        }
+    };
 
-    let part = (dot_prod/_mag_squared) as f64;
+    let dot_prod = element_mult_vec(&vec, &dest_vec).iter().sum::<f64>();
+
+    let part = dot_prod/_mag_squared;
     let projection = dest_vec.clone()
                                         .into_iter()
                                         .map(|x| (x as f64)*part)
-                                        .collect::<Vec<f64>>();
-    let projection = projection.iter().map(|x| *x as f64).collect();
+                                        .collect();
 
     return projection;
 }
@@ -130,20 +106,17 @@ pub fn norm_func(nums: &Vec<f64>) -> f64 {
     let norm_val: f64 = nums.clone()
                             .into_iter()
                             .map(|x| x.powi(2))
-                            // .collect::<Vec<f64>>()
-                            // .iter()
                             .sum::<f64>()
                             .sqrt();
     norm_val
 }
 
 pub fn scalar_projection(vec: &Vec<f64>, dest_vec: &Vec<f64>) -> f64 {
-    let norm = norm_func(&dest_vec.clone());
+    let norm = norm_func(&dest_vec);
     if norm == 0. {
         return 0.;
     }
-    return (element_mult_vec(&vec, &dest_vec).iter()
-                                                                        .sum::<f64>())/norm;
+    return (element_mult_vec(&vec, &dest_vec).iter().sum::<f64>())/norm;
 }
 
 pub fn squared_vecmag(vec: &Vec<f64>) -> f64 {
@@ -156,10 +129,7 @@ pub fn vecmag(vec: &Vec<f64>) -> f64 {
 
 pub fn unitvec(vec: &Vec<f64>) -> Vec<f64> {
     let vecm: f64 = norm_func(&vec);
-    let mut res: Vec<f64> = Vec::new();
-    for i in vec {
-        res.push(i/vecm);
-    }
+    let res = vec_div_variable(&vec, &vecm);
     return res;
 }
 
@@ -167,27 +137,32 @@ pub fn cosine_simularity(a: Vec<f64>, b: Vec<f64>) -> f64 {
     let a_norm = norm_func(&a).sqrt();
     let b_norm = norm_func(&b).sqrt();
     
-    let mut a_vec: Vec<f64> = Vec::new();
-    for i in a {
-        a_vec.push(i/a_norm);
-    }
+    // let mut a_vec: Vec<f64> = Vec::new();
+    // for i in a {
+    //     a_vec.push(i/a_norm);
+    // }
 
-    let mut b_vec: Vec<f64> = Vec::new();
-    for i in b {
-        b_vec.push(i/b_norm);
-    }
+    // let mut b_vec: Vec<f64> = Vec::new();
+    // for i in b {
+    //     b_vec.push(i/b_norm);
+    // }
+    let a_vec = vec_div_variable(&a, &a_norm);
+    let b_vec = vec_div_variable(&b, &b_norm);
 
     let mut res: Vec<f64> = Vec::new();
-    // this can be used for other stuff too?
-    for (a, b) in a_vec.iter_mut().zip(b_vec.iter()) {
-        res.push(*a**b);
+
+    // for (a, b) in a_vec.iter_mut().zip(b_vec.iter()) {
+    //     res.push(*a**b);
+    // }
+    for (a, b) in std::iter::zip(a_vec, b_vec) {
+        res.push(a*b);
     }
 
     return res.iter().sum();
 }
 
 pub fn quat_to_euler(quat: &Vec<f64>) -> Vec<f64> {
-    assert!(quat.len() == 4, "nums is not the correct shape");
+    assert!(quat.len() == 4, "quat is not the correct shape");
 
     let w: f64 = quat[0];
     let x: f64 = quat[1];
@@ -254,7 +229,7 @@ pub fn quat_to_rot_mtx(nums: &Vec<f64>) -> Array2<f64> {
 }
 
 pub fn rotation_to_quaternion(m: Array2<f64>) -> Array1<f64> {
-    let trace = trace(m.clone());
+    let trace = trace(&m);
     let mut q: Array1<f64> = Array1::<f64>::zeros(4);
 
     if trace > 0. {

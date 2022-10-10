@@ -152,7 +152,7 @@ impl Gym {
         self._prev_state = state.clone();
         let reward = self._game_match.get_rewards(&state, done);
         let mut info = HashMap::<String,f64>::new();
-        info.insert("result".to_string(), self._game_match.get_result(state) as f64);
+        info.insert("result".to_string(), self._game_match.get_result(&state) as f64);
         return (obs, reward, done, info)
     }
 
