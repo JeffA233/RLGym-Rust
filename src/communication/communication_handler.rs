@@ -7,13 +7,13 @@ use std::ffi::{CString, c_void};
 // use std::sync;
 
 use windows::Win32::Foundation::{HANDLE, BOOL, CloseHandle, HWND, GetLastError};
-use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile, PIPE_ACCESS_DUPLEX, FILE_FLAG_OVERLAPPED, WriteFileEx};
+use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile, PIPE_ACCESS_DUPLEX};
 // use windows::Win32::System::IO::OVERLAPPED;
-use windows::Win32::System::Pipes::{PeekNamedPipe, CreateNamedPipeA, CreateNamedPipeW, PIPE_TYPE_MESSAGE, PIPE_READMODE_MESSAGE, PIPE_WAIT, ConnectNamedPipe};
+use windows::Win32::System::Pipes::{PeekNamedPipe, CreateNamedPipeA, PIPE_TYPE_MESSAGE, PIPE_READMODE_MESSAGE, PIPE_WAIT, ConnectNamedPipe};
 use windows::Win32::UI::WindowsAndMessaging::{FindWindowA, IsWindowVisible, DestroyWindow};
 use windows::s;
 use windows::Win32::Foundation::WIN32_ERROR;
-use windows::core::{PCSTR, PCWSTR};
+use windows::core::{PCSTR};
 use crate::communication::message::Message;
 use crate::communication::message::{RLGYM_NULL_MESSAGE_HEADER, RLGYM_NULL_MESSAGE_BODY};
 
@@ -95,8 +95,8 @@ impl CommunicationHandler {
                     let out: BOOL;
                     let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
                     let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
-                    out = PeekNamedPipe(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, None, None, None);
-                    if buffer[0] == 0 {
+                    out = PeekNamedPipe(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_read)), None, None);
+                    if bytes_read == 0 {
                         break
                     }
                 }

@@ -13,11 +13,11 @@ pub struct GameMatch {
     pub _team_size: usize,
     pub _spawn_opponents: bool,
     pub _tick_skip: usize,
-    pub _reward_fn: Box<dyn RewardFn>,
-    pub _terminal_condition: Box<dyn TerminalCondition>,
-    pub _obs_builder: Box<dyn ObsBuilder>,
-    pub _action_parser: Box<dyn ActionParser>,
-    pub _state_setter: Box<dyn StateSetter>,
+    pub _reward_fn: Box<dyn RewardFn + Send>,
+    pub _terminal_condition: Box<dyn TerminalCondition + Send>,
+    pub _obs_builder: Box<dyn ObsBuilder + Send>,
+    pub _action_parser: Box<dyn ActionParser + Send>,
+    pub _state_setter: Box<dyn StateSetter + Send>,
     pub agents: usize,
     pub observation_space: Vec<usize>,
     pub action_space: Vec<usize>,
@@ -41,11 +41,11 @@ pub struct GameMatch {
 
 impl GameMatch {
     pub fn new(
-        reward_function: Box<dyn RewardFn>, 
-        terminal_condition: Box<dyn TerminalCondition>, 
-        obs_builder: Box<dyn ObsBuilder>, 
-        action_parser: Box<dyn ActionParser>, 
-        state_setter: Box<dyn StateSetter>, 
+        reward_function: Box<dyn RewardFn + Send>, 
+        terminal_condition: Box<dyn TerminalCondition + Send>, 
+        obs_builder: Box<dyn ObsBuilder + Send>, 
+        action_parser: Box<dyn ActionParser + Send>, 
+        state_setter: Box<dyn StateSetter + Send>, 
         team_size: Option<usize>, 
         tick_skip: Option<usize>, 
         game_speed: Option<f64>, 
@@ -124,7 +124,7 @@ impl GameMatch {
         self._obs_builder.pre_step(&state);
 
         for (i, player) in state.players.iter().enumerate() {
-            observations.push(self._obs_builder.build_obs(player, &state, self._prev_actions[i].clone()));
+            observations.push(self._obs_builder.build_obs(player, &state, &self._prev_actions[i]));
         }
 
         // if observations.len() == 1 {
@@ -142,9 +142,9 @@ impl GameMatch {
 
         for (i, player) in state.players.iter().enumerate() {
             if done {
-                rewards.push(self._reward_fn.get_final_reward(player, &state, self._prev_actions[i].clone()));
+                rewards.push(self._reward_fn.get_final_reward(player, &state, &self._prev_actions[i]));
             } else {
-                rewards.push(self._reward_fn.get_reward(player, &state, self._prev_actions[i].clone()));
+                rewards.push(self._reward_fn.get_reward(player, &state, &self._prev_actions[i]));
             }
         }
 

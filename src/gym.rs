@@ -78,6 +78,7 @@ impl Gym {
             thread::sleep(Duration::new(3, 0));
             run_injector();
         }
+        // let proc_pid = proc.pid().unwrap();
         comm_handler.open_pipe(Some(&pipe_name), None);
         comm_handler.send_message(None, Some(RLGYM_CONFIG_MESSAGE_HEADER.to_vec()), Some(game_match.get_config()));
         // TODO thread that minimizes the game
@@ -87,7 +88,7 @@ impl Gym {
         // }
         let observation_space = game_match.observation_space.clone();
         let action_space = game_match.action_space.clone(); 
-        let mut gym =Gym {
+        let mut gym = Gym {
             _game_match: game_match,
             observation_space,
             action_space,

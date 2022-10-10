@@ -41,8 +41,11 @@ use std::io::{BufWriter, Write, stdin};
 // math.norm_func();
 
 fn main() {
-    let v = vec![93.0];
-    let bytes = f32vec_as_u8_slice(&v);
+    // let v = vec![93.0];
+    // let bytes = f32vec_as_u8_slice(&v);
+    let obs = vec![vec![93, 93, 93], vec![92, 93, 93], vec![91, 93, 93]];
+    let mut vec = Vec::<Vec<i32>>::new();
+    vec.extend(obs);
     // let term_cond = Box::new(CombinedTerminalConditions::new(1));
     let term_cond = Box::new(TimeoutCondition::new(225));
     let reward_fn = get_custom_reward_func();

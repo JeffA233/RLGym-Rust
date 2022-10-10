@@ -119,7 +119,7 @@ impl ObsBuilder for AdvancedObsPadderStacker {
         vec![276]
     }
 
-    fn build_obs(&mut self, player: &PlayerData, state: &GameState, previous_action: Vec<f64>) -> Vec<f64> {
+    fn build_obs(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> Vec<f64> {
         let inverted: bool;
         let ball: &PhysicsObject;
         let mut pads: Vec<f64>;
