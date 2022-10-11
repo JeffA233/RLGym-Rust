@@ -76,7 +76,7 @@ impl AdvancedObsPadderStacker {
         obs.extend([0.; 31]);
     }
 
-    fn _add_player_to_obs(&self, obs: &mut Vec<f64>, car: &PlayerData, ball: &PhysicsObject, inverted: bool, player: Option<PhysicsObject>) -> PhysicsObject {
+    fn _add_player_to_obs(&self, obs: &mut Vec<f64>, car: &PlayerData, ball: &PhysicsObject, inverted: bool, player: Option<&PhysicsObject>) -> PhysicsObject {
         let mut player_car: PhysicsObject;
         if inverted {
             player_car = car.inverted_car_data.clone();
@@ -122,15 +122,15 @@ impl ObsBuilder for AdvancedObsPadderStacker {
     fn build_obs(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> Vec<f64> {
         let inverted: bool;
         let ball: &PhysicsObject;
-        let mut pads: Vec<f64>;
+        let pads: [f64; 34];
         if player.team_num == common_values::ORANGE_TEAM {
            inverted = true;
            ball = &state.inverted_ball;
-           pads = state.inverted_boost_pads.clone(); 
+           pads = state.inverted_boost_pads; 
         } else {
             inverted = false;
             ball = &state.ball;
-            pads = state.inverted_boost_pads.clone();
+            pads = state.inverted_boost_pads;
         }
 
         let pos = &ball.position;
@@ -143,22 +143,22 @@ impl ObsBuilder for AdvancedObsPadderStacker {
 
         let mut obs = Vec::<f64>::new();
 
-        obs.append(&mut pos_std.clone());
-        obs.append(&mut lin_std.clone());
-        obs.append(&mut ang_std.clone());
-        obs.append(&mut previous_action.clone());
-        obs.append(&mut pads);
+        obs.extend(pos_std.iter());
+        obs.extend(lin_std.iter());
+        obs.extend(ang_std.iter());
+        obs.extend(previous_action.iter());
+        obs.extend(pads.iter());
 
         // self.add_ball_to_stack(pos_std, lin_std, ang_std, player.car_id as usize);
 
         let ball_stack = &self.ball_stack[player.car_id as usize];
         for ball_vec in ball_stack {
-            let mut pos_std = ball_vec[0].clone();
-            let mut lin_std = ball_vec[1].clone();
-            let mut ang_std = ball_vec[2].clone();
-            obs.append(&mut ang_std);
-            obs.append(&mut lin_std);
-            obs.append(&mut pos_std);
+            let pos_std = &ball_vec[0];
+            let lin_std = &ball_vec[1];
+            let ang_std = &ball_vec[2];
+            obs.extend(ang_std.iter());
+            obs.extend(lin_std.iter());
+            obs.extend(pos_std.iter());
         }
 
         self.add_ball_to_stack(pos_std, lin_std, ang_std, player.car_id as usize);
@@ -185,7 +185,7 @@ impl ObsBuilder for AdvancedObsPadderStacker {
                 }
             }
 
-            self._add_player_to_obs(&mut obs, &other, ball, inverted, Some(player_car.clone()));
+            self._add_player_to_obs(&mut obs, &other, ball, inverted, Some(&player_car));
         }
 
         while ally_count < self.team_size - 1 {

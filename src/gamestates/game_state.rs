@@ -14,8 +14,8 @@ pub struct GameState {
     pub players: Vec<PlayerData>,
     pub ball: PhysicsObject,
     pub inverted_ball: PhysicsObject,
-    pub boost_pads: Vec<f64>,
-    pub inverted_boost_pads: Vec<f64>
+    pub boost_pads: [f64; 34],
+    pub inverted_boost_pads: [f64; 34]
 }
 
 const BOOST_PAD_LENGTH: usize = 34;
@@ -36,8 +36,8 @@ impl GameState {
                     players: Vec::<PlayerData>::new(),
                     ball: PhysicsObject::new(),
                     inverted_ball: PhysicsObject::new(),
-                    boost_pads: Vec::<f64>::new(),
-                    inverted_boost_pads: Vec::<f64>::new()
+                    boost_pads: [0.; 34],
+                    inverted_boost_pads: [0.; 34]
                 };
                 game_st.decode(state_floats);
                 return game_st
@@ -51,8 +51,8 @@ impl GameState {
                     players: Vec::<PlayerData>::new(),
                     ball: PhysicsObject::new(),
                     inverted_ball: PhysicsObject::new(),
-                    boost_pads: Vec::<f64>::new(),
-                    inverted_boost_pads: Vec::<f64>::new()
+                    boost_pads: [0.; 34],
+                    inverted_boost_pads: [0.; 34]
                 }
             }
         };
@@ -81,7 +81,7 @@ impl GameState {
         self.blue_score = state_vals[1] as i32;
         self.orange_score = state_vals[2] as i32;
 
-        self.boost_pads = state_vals[start..start+BOOST_PAD_LENGTH].to_vec();
+        self.boost_pads = state_vals[start..start+BOOST_PAD_LENGTH].try_into().unwrap();
         self.inverted_boost_pads = self.boost_pads.clone();
         self.inverted_boost_pads.reverse();
         start = start + BOOST_PAD_LENGTH;
@@ -206,8 +206,8 @@ impl GameState {
             ],
             ball: ball,
             inverted_ball: PhysicsObject::new(),
-            boost_pads: vec![0.; 34],
-            inverted_boost_pads: vec![0.; 34]
+            boost_pads: [0.; 34],
+            inverted_boost_pads: [0.; 34]
         }
     }
 
