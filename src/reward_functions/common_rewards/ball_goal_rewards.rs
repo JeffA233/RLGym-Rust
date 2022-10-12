@@ -44,10 +44,14 @@ impl RewardFn for VelocityBallToGoalReward {
             // return scalar_projection(&state.ball.linear_velocity, &pos_diff)
             return state.ball.linear_velocity.scalar_projection(&pos_diff);
         } else {
-            let pos_diff_normed = norm_func(&pos_diff);
-            let norm_pos_diff = vec_div_variable(&pos_diff, &pos_diff_normed);
-            let norm_vel = vec_div_variable(&state.ball.linear_velocity, &BALL_MAX_SPEED);
-            return element_mult_vec(&norm_pos_diff, &norm_vel).iter().sum()
+            // let pos_diff_normed = norm_func(&pos_diff);
+            let pos_diff_norm = pos_diff.norm();
+            // let norm_pos_diff = vec_div_variable(&pos_diff, &pos_diff_normed);
+            let norm_pos_diff = pos_diff.divide_by_var(pos_diff_norm);
+            // let norm_vel = vec_div_variable(&state.ball.linear_velocity, &BALL_MAX_SPEED);
+            let norm_vel = state.ball.linear_velocity.divide_by_var(BALL_MAX_SPEED);
+            // return element_mult_vec(&norm_pos_diff, &norm_vel).iter().sum()
+            return norm_pos_diff.multiply_by_vel(&norm_vel).into_array().iter().sum()
         }
     }
 

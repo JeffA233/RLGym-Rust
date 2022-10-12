@@ -1,11 +1,11 @@
-use crate::gamestates::physics_object::PhysicsObject;
+use crate::gamestates::physics_object::{PhysicsObject, Position, Velocity};
 
 
 
 pub struct PhysicsWrapper {
-    position: Vec<f64>,
-    linear_velocity: Vec<f64>,
-    angular_velocity: Vec<f64>
+    position: Position,
+    linear_velocity: Velocity,
+    angular_velocity: Velocity
 }
 
 impl PhysicsWrapper {
@@ -13,9 +13,10 @@ impl PhysicsWrapper {
         let wrapper = match phys_obj {
             Some(phys_obj) => PhysicsWrapper::_read_from_physics_object(phys_obj),
             None => PhysicsWrapper {
-                position: vec![0., 0., 91.25],
-                linear_velocity: vec![0.; 3],
-                angular_velocity: vec![0.; 3]
+                // position: vec![0., 0., 91.25],
+                position: Position { x: 0., y: 0., z: 91.25 },
+                linear_velocity: Velocity { x: 0., y: 0., z: 0. },
+                angular_velocity: Velocity { x: 0., y: 0., z: 0. }
             }
         };
         return wrapper
@@ -31,45 +32,45 @@ impl PhysicsWrapper {
 
     pub fn set_pos(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
-            Some(x) => self.position[0] = x,
+            Some(x) => self.position.x = x,
             None => ()
         };
         match y {
-            Some(y) => self.position[1] = y,
+            Some(y) => self.position.y = y,
             None => ()
         };
         match z {
-            Some(z) => self.position[2] = z,
+            Some(z) => self.position.z = z,
             None => ()
         };
     }
 
     pub fn set_lin_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
-            Some(x) => self.linear_velocity[0] = x,
+            Some(x) => self.linear_velocity.x = x,
             None => ()
         };
         match y {
-            Some(y) => self.linear_velocity[1] = y,
+            Some(y) => self.linear_velocity.y = y,
             None => ()
         };
         match z {
-            Some(z) => self.linear_velocity[2] = z,
+            Some(z) => self.linear_velocity.z = z,
             None => ()
         };
     }
 
     pub fn set_ang_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
-            Some(x) => self.angular_velocity[0] = x,
+            Some(x) => self.angular_velocity.x = x,
             None => ()
         };
         match y {
-            Some(y) => self.angular_velocity[1] = y,
+            Some(y) => self.angular_velocity.y = y,
             None => ()
         };
         match z {
-            Some(z) => self.angular_velocity[2] = z,
+            Some(z) => self.angular_velocity.z = z,
             None => ()
         };
     }
@@ -77,9 +78,9 @@ impl PhysicsWrapper {
     pub fn encode(&self) -> Vec<f64> {
         let mut vec = Vec::<f64>::new();
 
-        vec.append(&mut self.position.clone());
-        vec.append(&mut self.linear_velocity.clone());
-        vec.append(&mut self.angular_velocity.clone());
+        vec.extend(self.position.into_array().iter());
+        vec.extend(self.linear_velocity.into_array().iter());
+        vec.extend(self.angular_velocity.into_array().iter());
 
         // let vec_str: Vec<String>;
 

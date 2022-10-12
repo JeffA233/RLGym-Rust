@@ -1,6 +1,5 @@
 use std::f64::consts::PI;
 
-// use numpy::*;
 use ndarray::*;
 
 
@@ -29,25 +28,39 @@ impl Position {
         }
     }
 
-    pub fn iter(&self) -> std::slice::Iter<f64> {
-        return [self.x, self.y, self.z].iter()
+    pub fn into_array(&self) -> [f64; 3] {
+        return [self.x, self.y, self.z]
     }
 
     pub fn to_vec(&self) -> Vec<f64> {
         return vec![self.x, self.y, self.z]
     }
 
-    pub fn subtract(&self, other_vel: &Position) -> Position {
-        let x = self.x - other_vel.x;
-        let y = self.y - other_vel.y;
-        let z = self.z - other_vel.z;
+    pub fn subtract(&self, other_pos: &Position) -> Position {
+        let x = self.x - other_pos.x;
+        let y = self.y - other_pos.y;
+        let z = self.z - other_pos.z;
         return Position { x, y, z }
     }
 
-    pub fn add(&self, other_vel: &Position) -> Position {
-        let x = self.x + other_vel.x;
-        let y = self.y + other_vel.y;
-        let z = self.z + other_vel.z;
+    pub fn add(&self, other_pos: &Position) -> Position {
+        let x = self.x + other_pos.x;
+        let y = self.y + other_pos.y;
+        let z = self.z + other_pos.z;
+        return Position { x, y, z }
+    }
+
+    pub fn multiply(&self, other_pos: &Position) -> Position {
+        let x = self.x * other_pos.x;
+        let y = self.y * other_pos.y;
+        let z = self.z * other_pos.z;
+        return Position { x, y, z }
+    }
+
+    pub fn multiply_by_vel(&self, other_vel: &Velocity) -> Position {
+        let x = self.x * other_vel.x;
+        let y = self.y * other_vel.y;
+        let z = self.z * other_vel.z;
         return Position { x, y, z }
     }
 
@@ -59,7 +72,7 @@ impl Position {
     }
 
     pub fn norm(&self) -> f64 {
-        let running_val = 0.;
+        let mut running_val = 0.;
         running_val += self.x.powi(2);
         running_val += self.y.powi(2);
         running_val += self.z.powi(2);
@@ -90,8 +103,8 @@ impl Velocity {
         }
     }
 
-    pub fn iter(&self) -> std::slice::Iter<f64> {
-        return [self.x, self.y, self.z].iter()
+    pub fn into_array(&self) -> [f64; 3] {
+        return [self.x, self.y, self.z]
     }
 
     pub fn to_vec(&self) -> Vec<f64> {
@@ -134,7 +147,7 @@ impl Velocity {
     }
 
     pub fn norm(&self) -> f64 {
-        let running_val = 0.;
+        let mut running_val = 0.;
         running_val += self.x.powi(2);
         running_val += self.y.powi(2);
         running_val += self.z.powi(2);
@@ -142,13 +155,11 @@ impl Velocity {
     }
 
     pub fn scalar_projection(&self, dest_vec: &Position) -> f64 {
-        // let norm = norm_func(&dest_vec);
         let norm = dest_vec.norm();
         if norm == 0. {
             return 0.;
         }
-        return (self.multiply_by_pos(dest_vec).iter().sum::<f64>())/norm
-        // return (element_mult_vec(&vec, &dest_vec).iter().sum::<f64>())/norm;
+        return (self.multiply_by_pos(dest_vec).into_array().iter().sum::<f64>())/norm
     }
 }
 
@@ -181,7 +192,7 @@ impl Quaternion {
     }
     
     pub fn norm(&self) -> f64 {
-        let running_val = 0.;
+        let mut running_val = 0.;
         running_val += self.w.powi(2);
         running_val += self.x.powi(2);
         running_val += self.y.powi(2);
@@ -192,15 +203,6 @@ impl Quaternion {
     /// quat Vec to rotation matrix Array2
     pub fn quat_to_rot_mtx(&self) -> Array2<f64> {
         let mut theta = Array2::<f64>::zeros((3, 3));
-        
-        // assert!(nums.len() == 4, "nums is not the correct shape");
-
-        // let norm: f64 = nums.clone()
-        //                     .into_iter()
-        //                     .map(|x: f64| x.powf(2.))
-        //                     // .collect::<Vec<f64>>()
-        //                     // .iter()
-        //                     .sum();
 
         let norm = self.norm();
 
@@ -253,39 +255,39 @@ impl Quaternion {
     
         let yaw: f64 = siny_cosp.atan2(cosy_cosp);
 
-        EulerAngle { x: -pitch, y: yaw, z: -roll }
+        EulerAngle { pitch: -pitch, yaw: yaw, roll: -roll }
     }
 
-    pub fn iter(&self) -> std::slice::Iter<f64> {
-        return [self.w, self.x, self.y, self.z].iter()
+    pub fn into_array(&self) -> [f64; 4] {
+        return [self.w, self.x, self.y, self.z]
     }
 }
 
 #[derive(Clone, Copy, Default)]
 pub struct EulerAngle {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64
+    pub pitch: f64,
+    pub yaw: f64,
+    pub roll: f64
 }
 
 impl EulerAngle {
-    pub fn set_vals(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
-        match x {
-            Some(val) => self.x = val,
+    pub fn set_vals(&mut self, pitch: Option<f64>, yaw: Option<f64>, roll: Option<f64>) {
+        match pitch {
+            Some(val) => self.pitch = val,
             None => ()
         }
-        match y {
-            Some(val) => self.y = val,
+        match yaw {
+            Some(val) => self.yaw = val,
             None => ()
         }
-        match z {
-            Some(val) => self.z = val,
+        match roll {
+            Some(val) => self.roll = val,
             None => ()
         }
     }
 
-    pub fn iter(&self) -> std::slice::Iter<f64> {
-        return [self.x, self.y, self.z].iter()
+    pub fn into_array(&self) -> [f64; 3] {
+        return [self.pitch, self.yaw, self.roll]
     }
 }
 
@@ -306,18 +308,6 @@ pub struct PhysicsObject {
 }
 
 impl PhysicsObject {
-    // pub fn new() -> Self {
-    //     PhysicsObject {
-    //         position: vec![0.; 3],
-    //         quaternion: vec![0.; 4],
-    //         linear_velocity: vec![0.; 3],
-    //         angular_velocity: vec![0.; 3],
-    //         euler_angles: vec![0.; 3],
-    //         rotation_mtx: Array2::<f64>::zeros((3, 3)),
-    //         has_computed_euler_angles: false,
-    //         has_computed_rot_mtx: false
-    //     }
-    // }
     pub fn new() -> Self {
         PhysicsObject {
             position: Position::default(),
@@ -332,10 +322,6 @@ impl PhysicsObject {
     }
 
     pub fn decode_car_data(&mut self, car_data: Vec<f64>) {
-        // self.position = car_data[..3].to_vec();
-        // self.quaternion = car_data[3..7].to_vec();
-        // self.linear_velocity = car_data[7..10].to_vec();
-        // self.angular_velocity = car_data[10..].to_vec();
         self.position.set_vals(Some(car_data[0]), Some(car_data[1]), Some(car_data[2]));
         self.quaternion.set_vals(Some(car_data[3]), Some(car_data[4]), Some(car_data[5]), Some(car_data[6]));
         self.linear_velocity.set_vals(Some(car_data[7]), Some(car_data[8]), Some(car_data[9]));
@@ -343,9 +329,6 @@ impl PhysicsObject {
     }
 
     pub fn decode_ball_data(&mut self, ball_data: Vec<f64>) {
-        // self.position = ball_data[..3].to_vec();
-        // self.linear_velocity = ball_data[3..6].to_vec();
-        // self.angular_velocity = ball_data[6..9].to_vec();
         self.position.set_vals(Some(ball_data[0]), Some(ball_data[1]), Some(ball_data[2]));
         self.linear_velocity.set_vals(Some(ball_data[3]), Some(ball_data[4]), Some(ball_data[5]));
         self.angular_velocity.set_vals(Some(ball_data[6]), Some(ball_data[7]), Some(ball_data[8]));
@@ -354,8 +337,6 @@ impl PhysicsObject {
     pub fn forward(&mut self) -> Vec<f64> {
         let arr = &self.rotation_mtx();
         let partial_arr = arr.column(0);
-        // [:, 0]
-        // let ret_arr = partial_arr.to_owned();
         return partial_arr.to_owned().to_vec()
     }
 
@@ -379,15 +360,15 @@ impl PhysicsObject {
     }
 
     pub fn pitch(&mut self) -> f64 {
-        self.euler_angles().x
+        self.euler_angles().pitch
     }
 
     pub fn yaw(&mut self) -> f64 {
-        self.euler_angles().y
+        self.euler_angles().yaw
     }
 
     pub fn roll(&mut self) -> f64 {
-        self.euler_angles().z
+        self.euler_angles().roll
     }
 
     pub fn euler_angles(&mut self) -> EulerAngle {
@@ -409,11 +390,11 @@ impl PhysicsObject {
     pub fn serialize(&self) -> Vec<f64> {
         let mut repr = Vec::<f64>::new();
 
-        repr.extend(self.position.iter());
-        repr.extend(self.quaternion.iter());
-        repr.extend(self.linear_velocity.iter());
-        repr.extend(self.angular_velocity.iter());
-        repr.extend(self.euler_angles.iter());
+        repr.extend(self.position.into_array().iter());
+        repr.extend(self.quaternion.into_array().iter());
+        repr.extend(self.linear_velocity.into_array().iter());
+        repr.extend(self.angular_velocity.into_array().iter());
+        repr.extend(self.euler_angles.into_array().iter());
         
         let mut row_vec = Vec::<f64>::new();
         for i in self.rotation_mtx.clone() {

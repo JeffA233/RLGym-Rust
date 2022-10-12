@@ -24,15 +24,15 @@ impl RewardFn for VelocityPlayerToBallReward {
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
         let vel = &player.car_data.linear_velocity;
 
-        let pos_diff = element_sub_vec(&state.ball.position, &player.car_data.position);
+        let pos_diff = state.ball.position.subtract(&player.car_data.position);
 
         if self.use_scalar_projection {
-            return scalar_projection(&vel, &pos_diff)
+            return vel.scalar_projection(&pos_diff);
         } else {
-            let partial = norm_func(&pos_diff);
-            let norm_pos_diff = vec_div_variable(&pos_diff, &partial);
-            let norm_vel = vec_div_variable(&vel, &CAR_MAX_SPEED);
-            return element_mult_vec(&norm_pos_diff, &norm_vel).iter().sum()
+            let partial = pos_diff.norm();
+            let norm_pos_diff = pos_diff.divide_by_var(partial);
+            let norm_vel = vel.divide_by_var(CAR_MAX_SPEED);
+            return norm_pos_diff.multiply_by_vel(&norm_vel).into_array().iter().sum()
         }
     }
 

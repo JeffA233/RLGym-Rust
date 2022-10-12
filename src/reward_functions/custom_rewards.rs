@@ -120,7 +120,7 @@ impl RewardFn for LeftKickoffReward {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
-        if state.ball.position[0] == 0. && state.ball.position[1] == 0. {
+        if state.ball.position.x == 0. && state.ball.position.y == 0. {
             if self.kickoff_id_blue == -1 || self.kickoff_id_orange == -1 {
                 let mut blue_car: PlayerData = state.players[0].clone();
                 let mut orange_car: PlayerData = state.players[1].clone();
@@ -137,14 +137,14 @@ impl RewardFn for LeftKickoffReward {
 
                 for car in &state.players {
                     if car.team_num == blue_car.team_num {
-                        if car.car_data.position[1] >= blue_car.car_data.position[1] &&
-                        car.car_data.position[0] > blue_car.car_data.position[0] {
+                        if car.car_data.position.y >= blue_car.car_data.position.y &&
+                        car.car_data.position.x > blue_car.car_data.position.x {
                             blue_car = car.clone();
                         }
                     }
                     if car.team_num == orange_car.team_num {
-                        if car.inverted_car_data.position[1] >= orange_car.inverted_car_data.position[1] &&
-                        car.inverted_car_data.position[0] > orange_car.inverted_car_data.position[0] {
+                        if car.inverted_car_data.position.y >= orange_car.inverted_car_data.position.y &&
+                        car.inverted_car_data.position.x > orange_car.inverted_car_data.position.x {
                             orange_car = car.clone();
                         }
                     }
@@ -207,8 +207,8 @@ impl RewardFn for JumpTouchReward {
     fn reset(&mut self, _initial_state: &GameState) {}
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, _previous_action: &Vec<f64>) -> f64 {
-        if player.ball_touched && !player.on_ground && state.ball.position[2] >= self.min_height {
-            return (state.ball.position[2] - 92.).powf(self.exp)-1.
+        if player.ball_touched && !player.on_ground && state.ball.position.z >= self.min_height {
+            return (state.ball.position.z - 92.).powf(self.exp)-1.
         } else {
             return 0.
         }

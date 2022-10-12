@@ -4,7 +4,7 @@ use crate::common_values::BLUE_TEAM;
 use crate::gamestates::player_data::PlayerData;
 use crate::gamestates::physics_object::PhysicsObject;
 
-use super::physics_object::Position;
+use super::physics_object::{Position, Velocity};
 
 // #[derive(Default)]
 #[derive(Clone)]
@@ -16,8 +16,8 @@ pub struct GameState {
     pub players: Vec<PlayerData>,
     pub ball: PhysicsObject,
     pub inverted_ball: PhysicsObject,
-    pub boost_pads: Vec<f64>,
-    pub inverted_boost_pads: Vec<f64>
+    pub boost_pads: [f64; 34],
+    pub inverted_boost_pads: [f64; 34]
 }
 
 const BOOST_PAD_LENGTH: usize = 34;
@@ -38,8 +38,8 @@ impl GameState {
                     players: Vec::<PlayerData>::new(),
                     ball: PhysicsObject::new(),
                     inverted_ball: PhysicsObject::new(),
-                    boost_pads: Vec::<f64>::new(),
-                    inverted_boost_pads: Vec::<f64>::new()
+                    boost_pads: [0.; 34],
+                    inverted_boost_pads: [0.; 34]
                 };
                 game_st.decode(state_floats);
                 return game_st
@@ -53,8 +53,8 @@ impl GameState {
                     players: Vec::<PlayerData>::new(),
                     ball: PhysicsObject::new(),
                     inverted_ball: PhysicsObject::new(),
-                    boost_pads: Vec::<f64>::new(),
-                    inverted_boost_pads: Vec::<f64>::new()
+                    boost_pads: [0.; 34],
+                    inverted_boost_pads: [0.; 34]
                 }
             }
         };
@@ -83,7 +83,7 @@ impl GameState {
         self.blue_score = state_vals[1] as i32;
         self.orange_score = state_vals[2] as i32;
 
-        self.boost_pads = state_vals[start..start+BOOST_PAD_LENGTH].to_vec();
+        self.boost_pads = state_vals[start..start+BOOST_PAD_LENGTH].try_into().unwrap();
         self.inverted_boost_pads = self.boost_pads.clone();
         self.inverted_boost_pads.reverse();
         start = start + BOOST_PAD_LENGTH;
@@ -154,18 +154,17 @@ impl GameState {
 impl GameState {
     pub fn new_test() -> Self {    
         let mut ball = PhysicsObject::new();
-        // ball.position = vec![300., 300., 92.75];
-        ball.position = Position { x: 300., y: 300., z: 92.75};
-        ball.linear_velocity = vec![100., 5., 10.];
-        ball.angular_velocity = vec![75., -2., 5.];
+        ball.position = Position {x: 300., y: 300., z: 92.75};
+        ball.linear_velocity = Velocity {x: 100., y: 5., z: 10.};
+        ball.angular_velocity = Velocity {x: 75., y: -2., z: 5.};
         let mut car = PhysicsObject::new();
-        car.position = vec![0., 0., 17.0];
-        car.linear_velocity = vec![-5., -3., 0.];
-        car.angular_velocity = vec![-3., -1., 0.1];
+        car.position = Position {x: 0., y: 0., z: 17.};
+        car.linear_velocity = Velocity {x: -5., y: -3., z: 0.};
+        car.angular_velocity = Velocity {x: -3., y: -1., z: 0.1};
         let mut car2 = PhysicsObject::new();
-        car2.position = vec![50., 0., 17.0];
-        car2.linear_velocity = vec![-5., -3., 0.];
-        car2.angular_velocity = vec![-3., -1., 0.1];
+        car2.position = Position {x: 50., y: 0., z: 17.};
+        car2.linear_velocity = Velocity {x: -5., y: -3., z: 0.};
+        car2.angular_velocity = Velocity {x: -3., y: -1., z: 0.1};
         GameState {
             game_type: 0,
             blue_score: 0,
@@ -209,8 +208,8 @@ impl GameState {
             ],
             ball: ball,
             inverted_ball: PhysicsObject::new(),
-            boost_pads: vec![0.; 34],
-            inverted_boost_pads: vec![0.; 34]
+            boost_pads: [0.; 34],
+            inverted_boost_pads: [0.; 34]
         }
     }
 

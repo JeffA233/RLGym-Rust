@@ -95,7 +95,7 @@ impl DefaultStateTester {
 
 impl StateSetter for DefaultStateTester {
     fn reset(&mut self, state_wrapper: &mut StateWrapper) {
-        let mut spawn_inds = vec![0, 1, 2, 3, 4];
+        let spawn_inds = vec![0, 1, 2, 3, 4];
         // let mut rng = rand::thread_rng();
         // spawn_inds.sort_by_key(|x| rng.gen::<usize>());
 
