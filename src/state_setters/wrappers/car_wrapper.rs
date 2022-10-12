@@ -1,14 +1,14 @@
-use crate::gamestates::{player_data::PlayerData};
+use crate::gamestates::{player_data::PlayerData, physics_object::{EulerAngle, Position, Velocity}};
 
 
 pub struct CarWrapper {
-    rotation: Vec<f64>,
+    rotation: EulerAngle,
     pub team_num: i32,
     id: i32,
     pub boost: f64,
-    position: Vec<f64>,
-    linear_velocity: Vec<f64>,
-    angular_velocity: Vec<f64>
+    position: Position,
+    linear_velocity: Velocity,
+    angular_velocity: Velocity
 }
 
 impl CarWrapper {
@@ -24,13 +24,13 @@ impl CarWrapper {
         let wrapper = match player_data {
             Some(player_data) => CarWrapper::_read_from_player_data(player_data),
             None => CarWrapper {
-                rotation: vec![0.; 3],
+                rotation: EulerAngle { pitch: 0., yaw: 0., roll: 0. },
                 team_num: team_num,
                 id: id,
                 boost: 0.,
-                position: vec![0.; 3],
-                linear_velocity: vec![0.; 3],
-                angular_velocity: vec![0.; 3]
+                position: Position { x: 0., y: 0., z: 0. },
+                linear_velocity: Velocity { x: 0., y: 0., z: 0. },
+                angular_velocity: Velocity { x: 0., y: 0., z: 0. }
             }
         };
         return wrapper
@@ -42,68 +42,68 @@ impl CarWrapper {
             team_num: player_data.team_num,
             id: player_data.car_id,
             boost: player_data.boost_amount,
-            position: player_data.car_data.position.clone(),
-            linear_velocity: player_data.car_data.linear_velocity.clone(),
-            angular_velocity: player_data.car_data.angular_velocity.clone()
+            position: player_data.car_data.position,
+            linear_velocity: player_data.car_data.linear_velocity,
+            angular_velocity: player_data.car_data.angular_velocity
         }
     }
 
     pub fn set_rot(&mut self, pitch: Option<f64>, yaw: Option<f64>, roll: Option<f64>) {
         match pitch {
-            Some(pitch) => self.rotation[0] = pitch,
+            Some(pitch) => self.rotation.pitch = pitch,
             None => ()
         };
         match yaw {
-            Some(yaw) => self.rotation[1] = yaw,
+            Some(yaw) => self.rotation.yaw = yaw,
             None => ()
         };
         match roll {
-            Some(roll) => self.rotation[2] = roll,
+            Some(roll) => self.rotation.roll = roll,
             None => ()
         };
     }
 
     pub fn set_pos(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
-            Some(x) => self.position[0] = x,
+            Some(x) => self.position.x = x,
             None => ()
         };
         match y {
-            Some(y) => self.position[1] = y,
+            Some(y) => self.position.y = y,
             None => ()
         };
         match z {
-            Some(z) => self.position[2] = z,
+            Some(z) => self.position.z = z,
             None => ()
         };
     }
 
     pub fn set_lin_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
-            Some(x) => self.linear_velocity[0] = x,
+            Some(x) => self.linear_velocity.x = x,
             None => ()
         };
         match y {
-            Some(y) => self.linear_velocity[1] = y,
+            Some(y) => self.linear_velocity.y = y,
             None => ()
         };
         match z {
-            Some(z) => self.linear_velocity[2] = z,
+            Some(z) => self.linear_velocity.z = z,
             None => ()
         };
     }
 
     pub fn set_ang_vel(&mut self, x: Option<f64>, y: Option<f64>, z: Option<f64>) {
         match x {
-            Some(x) => self.angular_velocity[0] = x,
+            Some(x) => self.angular_velocity.x = x,
             None => ()
         };
         match y {
-            Some(y) => self.angular_velocity[1] = y,
+            Some(y) => self.angular_velocity.y = y,
             None => ()
         };
         match z {
-            Some(z) => self.angular_velocity[2] = z,
+            Some(z) => self.angular_velocity.z = z,
             None => ()
         };
     }
@@ -111,15 +111,12 @@ impl CarWrapper {
     pub fn encode(&self) -> Vec<f64> {
         let mut vec = Vec::<f64>::new();
 
-        vec.push(self.id.clone() as f64);
-        vec.append(&mut self.position.clone());
-        vec.append(&mut self.linear_velocity.clone());
-        vec.append(&mut self.angular_velocity.clone());
-        vec.append(&mut self.rotation.clone());
-        vec.push(self.boost.clone());
-        let id = self.id;
-        let boost = self.boost;
-
+        vec.push(self.id as f64);
+        vec.extend(self.position.into_array().iter());
+        vec.extend(self.linear_velocity.into_array().iter());
+        vec.extend(self.angular_velocity.into_array().iter());
+        vec.extend(self.rotation.into_array().iter());
+        vec.push(self.boost);
 
         // let vec_str: Vec<String>;
 

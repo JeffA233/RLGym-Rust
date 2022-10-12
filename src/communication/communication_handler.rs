@@ -96,6 +96,19 @@ impl CommunicationHandler {
                     let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
                     let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
                     out = PeekNamedPipe(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_read)), None, None);
+                    let succeeded = out.0;
+                    if succeeded == 0 {
+                        println!("PeekNamedPipe was unsuccessful");
+                        let err;
+                        err = GetLastError().0;
+                        let win_err = WIN32_ERROR {
+                            0: err
+                        };
+                        let h_result = win_err.to_hresult();
+                        let err_message = h_result.message();
+                        println!("PeekNamedPipe error: {err_message}");
+                        continue
+                    }
                     if bytes_read == 0 {
                         break
                     }
