@@ -12,14 +12,14 @@ use std::{fs::File, io::BufReader};
 use serde_json::from_reader;
 
 
-pub fn custom_state_setters(team_size: i32) -> WeightedSampleSetter {
+pub fn custom_state_setters(team_size: i32, seed: Option<u64>) -> WeightedSampleSetter {
     let replay_setter_str = if team_size == 1 {"replay_folder/ssl_1v1.zip".to_owned()} else if team_size == 2 {"replay_folder/ssl_2v2.zip".to_owned()} else {"replay_folder/ssl_3v3.zip".to_owned()};
     let state_setters: Vec<Box<dyn StateSetter + Send>> = vec![
-        Box::new(DefaultState::new()),
-        Box::new(RandomState::new(None, None, Some(false))),
+        Box::new(DefaultState::new(seed)),
+        Box::new(RandomState::new(None, None, Some(false), seed)),
         Box::new(ReplaySetter::new(replay_setter_str))
     ];
-    WeightedSampleSetter::new(state_setters, vec![1.0, 0.15, 0.5])
+    WeightedSampleSetter::new(state_setters, vec![1.0, 0.15, 0.5], seed)
 }
 
 pub struct WeightedSampleSetter {
@@ -29,10 +29,13 @@ pub struct WeightedSampleSetter {
 }
 
 impl WeightedSampleSetter {
-    pub fn new(state_setters: Vec<Box<dyn StateSetter + Send>>, weights: Vec<f64>) -> Self {
+    pub fn new(state_setters: Vec<Box<dyn StateSetter + Send>>, weights: Vec<f64>, seed: Option<u64>) -> Self {
         assert!(state_setters.len() == weights.len(), "WeightedSampleSetter requires the argument lengths match");
         let distribution =  WeightedIndex::new(&weights).unwrap();
-        let seed = thread_rng().gen_range(0..10000);
+        let seed = match seed {
+            Some(seed) => seed,
+            None => thread_rng().gen_range(0..10000)
+        };
         let rng = StdRng::seed_from_u64(seed);
         WeightedSampleSetter {
             state_setters,
@@ -46,6 +49,13 @@ impl StateSetter for WeightedSampleSetter {
     fn reset(&mut self, state_wrapper: &mut StateWrapper) {
         let choice = self.distribution.sample(&mut self.rng);
         self.state_setters[choice].reset(state_wrapper);
+    }
+
+    fn set_seed(&mut self, seed: u64) {
+        self.rng = StdRng::seed_from_u64(seed);
+        for state_setter in &mut self.state_setters {
+            state_setter.set_seed(seed);
+        }
     }
 }
 

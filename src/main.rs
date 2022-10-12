@@ -96,7 +96,7 @@ fn main() {
     // let rew_f32: f32 = rew.iter().sum();
     // println!("{rew_f32}");
     // --END--
-    gym.reset(None);
+    gym.reset(None, None);
     // gym.step(actions.clone());
 
     let mut rew_val: f64 = 0.;
@@ -104,7 +104,7 @@ fn main() {
     for _i in 0..(120 * 360) {
         let (_obs, reward, done, _info) = gym.step(actions.clone());
         if done {
-            gym.reset(None);
+            gym.reset(None, None);
         }
         rew_val += reward[0];
     }

@@ -6,4 +6,5 @@ pub trait StateSetter {
         StateWrapper::new(Some(max_team_size), if spawn_opponents {Some(max_team_size)} else {Some(0)}, None)
     }
     fn reset(&mut self, state_wrapper: &mut StateWrapper);
+    fn set_seed(&mut self, seed: u64) {}
 }

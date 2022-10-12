@@ -195,6 +195,10 @@ impl GameMatch {
         return new_state.format_state()
     }
 
+    pub fn set_seeds(&mut self, seed: u64) {
+        self._state_setter.set_seed(seed);
+    }
+
     pub fn get_config(&self) -> Vec<f64> {
         let spawn_opponents_bool = if self._spawn_opponents {1} else {0};
         return vec![self._team_size as f64, 

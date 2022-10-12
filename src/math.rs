@@ -7,7 +7,7 @@ use std::f64::consts::PI;
 
 // use numpy::*;
 use ndarray::*;
-use rand::*;
+use rand::{*, rngs::StdRng};
 
 use crate::gamestates::physics_object::Quaternion;
 
@@ -367,8 +367,7 @@ pub fn rand_uvec3() -> Vec<f64> {
     return vec;
 }
 
-pub fn rand_vec3(max_norm: f64) -> Vec<f64> {
-    let mut rng = thread_rng();
+pub fn rand_vec3(max_norm: f64, rng: &mut StdRng) -> Vec<f64> {
     let mut res: Vec<f64> = Vec::new();
     for i in res.iter_mut() {
         let rand_num = rng.gen::<f64>();

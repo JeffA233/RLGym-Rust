@@ -105,7 +105,7 @@ impl Gym {
             _auto_minimize: auto_minimize,
             _prev_state: GameState::new(None),
         };
-        gym.reset(None);
+        gym.reset(None, None);
         if gym._auto_minimize {
             gym._minimize_game();
         }
@@ -118,11 +118,15 @@ impl Gym {
         self._minimized = true;
     }
 
-    pub fn reset(&mut self, _return_info: Option<bool>) -> Vec<Vec<f64>> {
+    pub fn reset(&mut self, _return_info: Option<bool>, seed: Option<u64>) -> Vec<Vec<f64>> {
         // let _return_info = match _return_info {
         //     Some(return_info) => return_info,
         //     None => false
         // };
+        match seed {
+            Some(seed) => self._game_match.set_seeds(seed),
+            None => ()
+        }
 
         let state_str = self._game_match.get_reset_state();
 

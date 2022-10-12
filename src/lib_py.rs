@@ -55,12 +55,12 @@ pub struct GymWrapper {
 impl GymWrapper {
     #[new]
     /// create the gym wrapper to be used (team_size: i32, tick_skip: usize)
-    pub fn new(team_size: i32, tick_skip: usize) -> Self {
+    pub fn new(team_size: i32, tick_skip: usize, seed: Option<u64>) -> Self {
     let term_cond = Box::new(CombinedTerminalConditions::new(tick_skip));
     let reward_fn = get_custom_reward_func();
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
     let act_parse = Box::new(NectoAction::new());
-    let state_set = Box::new(custom_state_setters(team_size));
+    let state_set = Box::new(custom_state_setters(team_size, seed));
     let gym = make::make(Some(100000.), 
         Some(tick_skip), 
         Some(true), 
@@ -81,8 +81,8 @@ impl GymWrapper {
         GymWrapper { gym: gym }
     }
 
-    pub fn reset(&mut self) -> PyResult<Vec<Vec<f64>>> {
-        let obs = self.gym.reset(Some(false));
+    pub fn reset(&mut self, seed: Option<u64>) -> PyResult<Vec<Vec<f64>>> {
+        let obs = self.gym.reset(Some(false), seed);
         Ok(obs)
     }
 
@@ -115,7 +115,7 @@ impl GymWrapperRust {
     let reward_fn = get_custom_reward_func_mult_inst(sender);
     let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
     let act_parse = Box::new(NectoAction::new());
-    let state_set = Box::new(custom_state_setters(team_size));
+    let state_set = Box::new(custom_state_setters(team_size, None));
     let gym = make::make(Some(100000.), 
         Some(tick_skip), 
         Some(true), 
@@ -137,7 +137,7 @@ impl GymWrapperRust {
     }
 
     pub fn reset(&mut self) -> Vec<Vec<f64>> {
-        let obs = self.gym.reset(Some(false));
+        let obs = self.gym.reset(Some(false), None);
         return obs;
     }
 
@@ -175,8 +175,6 @@ pub enum ManagerPacket {
     Step {actions: Vec<Vec<f64>>},
     Reset,
     Close
-    // StepRet {obs: Vec<Vec<f64>>, reward: Vec<f64>, done: bool, info: HashMap<String, f64>},
-    // ResetRet {obs: Vec<Vec<f64>>}
 }
 
 /// packet that comes from the worker
