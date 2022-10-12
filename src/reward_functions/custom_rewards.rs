@@ -139,13 +139,13 @@ impl RewardFn for LeftKickoffReward {
                     if car.team_num == blue_car.team_num {
                         if car.car_data.position.y >= blue_car.car_data.position.y &&
                         car.car_data.position.x > blue_car.car_data.position.x {
-                            blue_car = car.clone();
+                            blue_car = car;
                         }
                     }
                     if car.team_num == orange_car.team_num {
                         if car.inverted_car_data.position.y >= orange_car.inverted_car_data.position.y &&
                         car.inverted_car_data.position.x > orange_car.inverted_car_data.position.x {
-                            orange_car = car.clone();
+                            orange_car = car;
                         }
                     }
                 }
