@@ -37,7 +37,8 @@ impl RewardFn for VelocityBallToGoalReward {
             objective = BLUE_GOAL_BACK.to_vec();
         }
 
-        let pos_diff = element_sub_vec(&objective, &state.ball.position);
+        // let pos_diff = element_sub_vec(&objective, &state.ball.position);
+        let pos_dif = 
 
         if self.use_scalar_projection {
             return scalar_projection(&state.ball.linear_velocity, &pos_diff)
