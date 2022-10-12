@@ -1,14 +1,20 @@
+use crate::gamestates::physics_object::Position;
+
 pub const SIDE_WALL_X: f64 = 4096.;
 pub const BACK_WALL_Y: f64 = 5120.;
 pub const CEILING_Z: f64 = 2044.;
 pub const BACK_NET_Y: f64 = 6000.;
 pub const GOAL_HEIGHT: f64 = 642.775;
 
-pub const ORANGE_GOAL_CENTER: [f64; 3] = [0., BACK_WALL_Y, GOAL_HEIGHT / 2.];
-pub const BLUE_GOAL_CENTER: [f64; 3] = [0., -BACK_WALL_Y, GOAL_HEIGHT / 2.];
+// pub const ORANGE_GOAL_CENTER: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
+// pub const BLUE_GOAL_CENTER: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
+pub const ORANGE_GOAL_CENTER: Position = Position {x: 0., y: BACK_WALL_Y, z: GOAL_HEIGHT / 2.};
+pub const BLUE_GOAL_CENTER: Position = Position {x: 0., y: -BACK_WALL_Y, z: GOAL_HEIGHT / 2.};
 
-pub const ORANGE_GOAL_BACK: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
-pub const BLUE_GOAL_BACK: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
+// pub const ORANGE_GOAL_BACK: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
+// pub const BLUE_GOAL_BACK: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
+pub const ORANGE_GOAL_BACK: Position = Position {x: 0., y: BACK_NET_Y, z: GOAL_HEIGHT / 2.};
+pub const BLUE_GOAL_BACK: Position = Position {x: 0., y: -BACK_NET_Y, z: GOAL_HEIGHT / 2.};
 
 pub const BALL_RADIUS: f64 = 92.75;
 pub const BALL_MAX_SPEED: f64 = 6000.0;

@@ -9,6 +9,8 @@ use std::f64::consts::PI;
 use ndarray::*;
 use rand::*;
 
+use crate::gamestates::physics_object::Quaternion;
+
 
 pub fn clip(mut vec: Vec<f64>, high: f64, low: f64) -> Vec<f64> {
     // this can't be right? 
@@ -227,6 +229,47 @@ pub fn quat_to_rot_mtx(nums: &Vec<f64>) -> Array2<f64> {
 
     return theta;
 }
+
+// /// quat Vec to rotation matrix Array2
+// pub fn quat_to_rot_mtx_struct(nums: &Quaternion) -> Array2<f64> {
+//     let mut theta = Array2::<f64>::zeros((3, 3));
+    
+//     // assert!(nums.len() == 4, "nums is not the correct shape");
+
+//     // let norm: f64 = nums.clone()
+//     //                     .into_iter()
+//     //                     .map(|x: f64| x.powf(2.))
+//     //                     // .collect::<Vec<f64>>()
+//     //                     // .iter()
+//     //                     .sum();
+
+//     let norm = nums.norm();
+
+//     let w = -&nums.w;
+//     let x = -&nums.x;
+//     let y = -&nums.y;
+//     let z = -&nums.z;
+
+//     let s: f64 = 1.0 / norm;
+
+//     if norm != 0. {
+//         theta[[0, 0]] = 1. - 2. * s * (y * y + z * z);
+//         theta[[1, 0]] = 2. * s * (x * y + z * w);
+//         theta[[2, 0]] = 2. * s * (x * z - y * w);
+
+//         // left direction
+//         theta[[0, 1]] = 2. * s * (x * y - z * w);
+//         theta[[1, 1]] = 1. - 2. * s * (x * x + z * z);
+//         theta[[2, 1]] = 2. * s * (y * z + x * w);
+
+//         // up direction
+//         theta[[0, 2]] = 2. * s * (x * z + y * w);
+//         theta[[1, 2]] = 2. * s * (y * z - x * w);
+//         theta[[2, 2]] = 1. - 2. * s * (x * x + y * y);
+//     }
+
+//     return theta;
+// }
 
 pub fn rotation_to_quaternion(m: Array2<f64>) -> Array1<f64> {
     let trace = trace(&m);
