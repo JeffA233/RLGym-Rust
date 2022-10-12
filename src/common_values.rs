@@ -14,6 +14,7 @@ pub const BLUE_GOAL_CENTER: Position = Position {x: 0., y: -BACK_WALL_Y, z: GOAL
 // pub const ORANGE_GOAL_BACK: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
 // pub const BLUE_GOAL_BACK: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
 pub const ORANGE_GOAL_BACK: Position = Position {x: 0., y: BACK_NET_Y, z: GOAL_HEIGHT / 2.};
+pub const BLUE_GOAL_BACK: Position = Position {x: 0., y: -BACK_NET_Y, z: GOAL_HEIGHT / 2.};
 
 pub const BALL_RADIUS: f64 = 92.75;
 pub const BALL_MAX_SPEED: f64 = 6000.0;

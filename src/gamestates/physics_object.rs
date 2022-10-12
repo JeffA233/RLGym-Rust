@@ -57,6 +57,14 @@ impl Position {
         let z = self.z / var;
         return Position { x, y, z }
     }
+
+    pub fn norm(&self) -> f64 {
+        let running_val = 0.;
+        running_val += self.x.powi(2);
+        running_val += self.y.powi(2);
+        running_val += self.z.powi(2);
+        return running_val.sqrt()
+    }
 }
 
 #[derive(Clone, Copy, Default)]
@@ -104,11 +112,43 @@ impl Velocity {
         return Velocity { x, y, z }
     }
 
+    pub fn multiply(&self, other_vel: &Velocity) -> Velocity {
+        let x = self.x * other_vel.x;
+        let y = self.y * other_vel.y;
+        let z = self.z * other_vel.z;
+        return Velocity { x, y, z }
+    }
+
+    pub fn multiply_by_pos(&self, other_pos: &Position) -> Velocity {
+        let x = self.x * other_pos.x;
+        let y = self.y * other_pos.y;
+        let z = self.z * other_pos.z;
+        return Velocity { x, y, z }
+    }
+
     pub fn divide_by_var(&self, var: f64) -> Velocity {
         let x = self.x / var;
         let y = self.y / var;
         let z = self.z / var;
         return Velocity { x, y, z }
+    }
+
+    pub fn norm(&self) -> f64 {
+        let running_val = 0.;
+        running_val += self.x.powi(2);
+        running_val += self.y.powi(2);
+        running_val += self.z.powi(2);
+        return running_val.sqrt()
+    }
+
+    pub fn scalar_projection(&self, dest_vec: &Position) -> f64 {
+        // let norm = norm_func(&dest_vec);
+        let norm = dest_vec.norm();
+        if norm == 0. {
+            return 0.;
+        }
+        return (self.multiply_by_pos(dest_vec).iter().sum::<f64>())/norm
+        // return (element_mult_vec(&vec, &dest_vec).iter().sum::<f64>())/norm;
     }
 }
 

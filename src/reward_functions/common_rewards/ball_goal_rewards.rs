@@ -1,4 +1,4 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, common_values::{BLUE_TEAM, ORANGE_TEAM, ORANGE_GOAL_BACK, BLUE_GOAL_BACK, BALL_MAX_SPEED}, math::element_sub_vec, reward_functions::default_reward::RewardFn};
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData, physics_object::Position}, common_values::{BLUE_TEAM, ORANGE_TEAM, ORANGE_GOAL_BACK, BLUE_GOAL_BACK, BALL_MAX_SPEED}, math::element_sub_vec, reward_functions::default_reward::RewardFn};
 use crate::math::*;
 
 
@@ -30,18 +30,19 @@ impl RewardFn for VelocityBallToGoalReward {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
-        let objective: Vec<f64>;
+        let objective: Position;
         if (player.team_num == BLUE_TEAM && !self.own_goal) || (player.team_num == ORANGE_TEAM && self.own_goal) {
-            objective = ORANGE_GOAL_BACK.to_vec();
+            objective = ORANGE_GOAL_BACK;
         } else {
-            objective = BLUE_GOAL_BACK.to_vec();
+            objective = BLUE_GOAL_BACK;
         }
 
         // let pos_diff = element_sub_vec(&objective, &state.ball.position);
-        let pos_dif = 
+        let pos_diff = objective.subtract(&state.ball.position);
 
         if self.use_scalar_projection {
-            return scalar_projection(&state.ball.linear_velocity, &pos_diff)
+            // return scalar_projection(&state.ball.linear_velocity, &pos_diff)
+            return state.ball.linear_velocity.scalar_projection(&pos_diff);
         } else {
             let pos_diff_normed = norm_func(&pos_diff);
             let norm_pos_diff = vec_div_variable(&pos_diff, &pos_diff_normed);
