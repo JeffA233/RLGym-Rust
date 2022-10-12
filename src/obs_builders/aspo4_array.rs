@@ -6,7 +6,6 @@ use crate::common_values;
 use crate::gamestates::game_state::GameState;
 use crate::gamestates::physics_object::PhysicsObject;
 use crate::gamestates::player_data::PlayerData;
-use crate::math::*;
 
 use super::obs_builder::ObsBuilder;
 
@@ -84,24 +83,24 @@ impl AdvancedObsPadderStacker {
             player_car = car.car_data.clone();
         }
 
-        let mut rel_pos = element_sub_vec(&ball.position, &player_car.position);
-        rel_pos = vec_div_variable(&rel_pos, &self.pos_std);
-        let mut rel_vel = element_sub_vec(&ball.linear_velocity, &player_car.linear_velocity);
-        rel_vel = vec_div_variable(&rel_vel, &self.pos_std);
+        let mut rel_pos = ball.position.subtract(&player_car.position);
+        rel_pos = rel_pos.divide_by_var(self.pos_std);
+        let mut rel_vel = ball.linear_velocity.subtract(&player_car.linear_velocity);
+        rel_vel = rel_vel.divide_by_var(self.pos_std);
         
-        obs.append(&mut rel_pos);
-        obs.append(&mut rel_vel);
-        obs.append(&mut vec_div_variable(&player_car.position, &self.pos_std));
-        obs.append(&mut player_car.forward());
-        obs.append(&mut player_car.up());
-        obs.append(&mut vec_div_variable(&player_car.linear_velocity, &self.pos_std));
-        obs.append(&mut vec_div_variable(&player_car.angular_velocity, &self.ang_std));
-        obs.append(&mut vec![car.boost_amount, car.on_ground as i32 as f64, car.has_flip as i32 as f64, car.is_demoed as i32 as f64]);
+        obs.extend(rel_pos.iter());
+        obs.extend(rel_vel.iter());
+        obs.extend(player_car.position.divide_by_var(self.pos_std).iter());
+        obs.extend(player_car.forward().iter());
+        obs.extend(player_car.up().iter());
+        obs.extend(player_car.linear_velocity.divide_by_var(self.pos_std).iter());
+        obs.extend(player_car.angular_velocity.divide_by_var(self.ang_std).iter());
+        obs.extend(vec![car.boost_amount, car.on_ground as i32 as f64, car.has_flip as i32 as f64, car.is_demoed as i32 as f64]);
 
         match player {
             Some(player) => {
-                obs.append(&mut vec_div_variable(&element_sub_vec(&player_car.position, &player.position), &self.pos_std));
-                obs.append(&mut vec_div_variable(&element_sub_vec(&player_car.linear_velocity, &player.linear_velocity), &self.pos_std));
+                obs.extend(player_car.position.subtract(&player.position).divide_by_var(self.pos_std).iter());
+                obs.extend(player_car.linear_velocity.subtract(&player.linear_velocity).divide_by_var(self.pos_std).iter());
             }
             None => ()
         };
@@ -137,15 +136,18 @@ impl ObsBuilder for AdvancedObsPadderStacker {
         let lin = &ball.linear_velocity;
         let ang = &ball.angular_velocity;
 
-        let pos_std = vec_div_variable(pos, &self.pos_std);
-        let lin_std = vec_div_variable(lin, &self.pos_std);
-        let ang_std = vec_div_variable(ang, &self.ang_std);
+        // let pos_std = vec_div_variable(pos, &self.pos_std);
+        // let lin_std = vec_div_variable(lin, &self.pos_std);
+        // let ang_std = vec_div_variable(ang, &self.ang_std);
+        let pos_std = pos.divide_by_var(self.pos_std);
+        let lin_std = lin.divide_by_var(self.pos_std);
+        let ang_std = ang.divide_by_var(self.ang_std);
 
         let mut obs = Vec::<f64>::new();
 
-        obs.append(&mut pos_std.clone());
-        obs.append(&mut lin_std.clone());
-        obs.append(&mut ang_std.clone());
+        obs.extend(pos_std.iter());
+        obs.extend(lin_std.iter());
+        obs.extend(ang_std.iter());
         obs.append(&mut previous_action.clone());
         obs.append(&mut pads);
 
@@ -161,7 +163,8 @@ impl ObsBuilder for AdvancedObsPadderStacker {
             obs.append(&mut pos_std);
         }
 
-        self.add_ball_to_stack(pos_std, lin_std, ang_std, player.car_id as usize);
+        // need to do this better later, this is inefficient
+        self.add_ball_to_stack(pos_std.to_vec(), lin_std.to_vec(), ang_std.to_vec(), player.car_id as usize);
 
         let player_car = self._add_player_to_obs(&mut obs, &player, &ball, inverted, None);
 

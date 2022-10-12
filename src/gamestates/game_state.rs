@@ -4,6 +4,8 @@ use crate::common_values::BLUE_TEAM;
 use crate::gamestates::player_data::PlayerData;
 use crate::gamestates::physics_object::PhysicsObject;
 
+use super::physics_object::Position;
+
 // #[derive(Default)]
 #[derive(Clone)]
 pub struct GameState {
@@ -152,7 +154,8 @@ impl GameState {
 impl GameState {
     pub fn new_test() -> Self {    
         let mut ball = PhysicsObject::new();
-        ball.position = vec![300., 300., 92.75];
+        // ball.position = vec![300., 300., 92.75];
+        ball.position = Position { x: 300., y: 300., z: 92.75};
         ball.linear_velocity = vec![100., 5., 10.];
         ball.angular_velocity = vec![75., -2., 5.];
         let mut car = PhysicsObject::new();
