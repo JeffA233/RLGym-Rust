@@ -4,8 +4,8 @@ pub const CEILING_Z: f64 = 2044.;
 pub const BACK_NET_Y: f64 = 6000.;
 pub const GOAL_HEIGHT: f64 = 642.775;
 
-pub const ORANGE_GOAL_CENTER: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
-pub const BLUE_GOAL_CENTER: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
+pub const ORANGE_GOAL_CENTER: [f64; 3] = [0., BACK_WALL_Y, GOAL_HEIGHT / 2.];
+pub const BLUE_GOAL_CENTER: [f64; 3] = [0., -BACK_WALL_Y, GOAL_HEIGHT / 2.];
 
 pub const ORANGE_GOAL_BACK: [f64; 3] = [0., BACK_NET_Y as f64, GOAL_HEIGHT as f64 / 2.];
 pub const BLUE_GOAL_BACK: [f64; 3] = [0., -(BACK_NET_Y as f64), GOAL_HEIGHT as f64 / 2.];
