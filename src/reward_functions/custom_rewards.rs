@@ -122,16 +122,16 @@ impl RewardFn for LeftKickoffReward {
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
         if state.ball.position.x == 0. && state.ball.position.y == 0. {
             if self.kickoff_id_blue == -1 || self.kickoff_id_orange == -1 {
-                let mut blue_car: PlayerData = state.players[0].clone();
-                let mut orange_car: PlayerData = state.players[1].clone();
+                let mut blue_car = &state.players[0];
+                let mut orange_car = &state.players[1];
                 self.kickoff_id_blue = -1;
                 self.kickoff_id_orange = -1;
 
                 for car in &state.players {
                     if car.team_num == BLUE_TEAM {
-                        blue_car = car.clone();
+                        blue_car = car;
                     } else {
-                        orange_car = car.clone();
+                        orange_car = car;
                     }
                 }
 
