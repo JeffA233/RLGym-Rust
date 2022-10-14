@@ -44,7 +44,7 @@ impl StateSetter for DefaultState {
     fn reset(&mut self, state_wrapper: &mut StateWrapper) {
         let mut spawn_inds = vec![0, 1, 2, 3, 4];
         // let mut rng = rand::thread_rng();
-        spawn_inds.sort_unstable_by_key(|x| self.rng.gen::<usize>());
+        spawn_inds.sort_by_cached_key(|x| self.rng.gen::<usize>());
 
         let mut blue_count = 0;
         let mut orange_count = 0;

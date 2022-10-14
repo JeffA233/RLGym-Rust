@@ -42,7 +42,7 @@ impl AdvancedObsPadderStacker {
             // expanding: expanding,
             default_ball: vec![vec![0.; 3]; 3],
             stack_size: stack_size,
-            ball_stack: Vec::<VecDeque<Vec<Vec<f64>>>>::new()
+            ball_stack: Vec::<VecDeque<Vec<Vec<f64>>>>::with_capacity(8)
         };
         for _i in 0..8 {
             advobsps.blank_stack()
@@ -51,7 +51,7 @@ impl AdvancedObsPadderStacker {
     }
 
     fn blank_stack(&mut self) {
-        let mut default_deque = VecDeque::new();
+        let mut default_deque = VecDeque::with_capacity(self.stack_size+1);
         for _i in 0..self.stack_size {
             default_deque.push_front(self.default_ball.clone());
         }
@@ -143,7 +143,7 @@ impl ObsBuilder for AdvancedObsPadderStacker {
         let lin_std = lin.divide_by_var(self.pos_std);
         let ang_std = ang.divide_by_var(self.ang_std);
 
-        let mut obs = Vec::<f64>::new();
+        let mut obs = Vec::<f64>::with_capacity(276);
 
         obs.extend(pos_std.into_array().iter());
         obs.extend(lin_std.into_array().iter());

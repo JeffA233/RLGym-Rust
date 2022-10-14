@@ -1,4 +1,4 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::{element_add_vec, element_mult_vec}, common_values::BLUE_TEAM};
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::{element_add_vec, element_mult_vec}, common_values::{BLUE_TEAM}};
 
 use super::{common_rewards::{player_ball_rewards::VelocityPlayerToBallReward, ball_goal_rewards::VelocityBallToGoalReward, misc_rewards::{SaveBoostReward, VelocityReward, EventReward}}, default_reward::RewardFn};
 
@@ -53,19 +53,16 @@ pub fn get_custom_reward_func_mult_inst(reward_send_chan: Sender<Vec<f64>>) -> B
     reward_fn_vec.push(Box::new(GatherBoostReward::new()));
     reward_fn_vec.push(Box::new(SaveBoostReward::new()));
     reward_fn_vec.push(Box::new(LeftKickoffReward::new()));
-    reward_fn_vec.push(Box::new(JumpTouchReward::new(Some(100.), None)));
+    reward_fn_vec.push(Box::new(JumpTouchReward::new(Some(150.), None)));
     reward_fn_vec.push(Box::new(VelocityReward::new(None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, None, None, Some(5.), Some(45.), Some(25.), None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, Some(100.), None, None, None, None, None, None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, Some(-100.), None, None, None, None, None)));
     reward_fn_vec.push(Box::new(JumpReward::new()));
-    // SB3CombinedLogReward {
-    //     reward_file: "combinedlogfiles-v2".to_string(),
-    //     final_mult: 0.1,
-    //     returns: Vec::<f64>::new()
-    // }
+    reward_fn_vec.push(Box::new(DribbleAirTouchReward::new(Some(180.), None, None, Some(1.))));
 
-    let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
+    // let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
+    let weights = vec![0.03, 0.2, 10.0, 0.04, 0.7, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
     assert!(weights.len() == reward_fn_vec.len());
 
     Box::new(SB3CombinedLogRewardMultInst::new(
@@ -208,7 +205,7 @@ impl RewardFn for JumpTouchReward {
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, _previous_action: &Vec<f64>) -> f64 {
         if player.ball_touched && !player.on_ground && state.ball.position.z >= self.min_height {
-            return (state.ball.position.z - 92.).powf(self.exp)-1.
+            return (state.ball.position.z - self.min_height).powf(self.exp)-1.
         } else {
             return 0.
         }
@@ -219,6 +216,71 @@ impl RewardFn for JumpTouchReward {
     }
 }
 
+pub struct DribbleAirTouchReward {
+    min_height: f64,
+    exp: f64,
+    max_touches: i64,
+    max_rew_val: f64,
+    curr_touch_vals: HashMap<i32, i64>
+}
+
+impl DribbleAirTouchReward {
+    fn new(min_height_op: Option<f64>, exp_op: Option<f64>, max_touch_op: Option<i64>, max_rew_val_op: Option<f64>) -> Self {
+        let min_height = match min_height_op {
+            Some(min_height) => min_height,
+            None => 93.
+        };
+        let exp = match exp_op {
+            Some(exp) => exp,
+            None => 0.2
+        };
+        let max_touch = match max_touch_op {
+            Some(val) => val,
+            None => 20
+        };
+        let max_rew_val = match max_rew_val_op {
+            Some(val) => val,
+            None => 1.0
+        };
+        let mut curr_touch_vals = HashMap::new();
+        for i in 0..6 {
+            curr_touch_vals.insert(i, 0);
+        }
+
+        DribbleAirTouchReward {
+            min_height: min_height,
+            exp: exp,
+            max_touches: max_touch,
+            max_rew_val: max_rew_val,
+            curr_touch_vals: curr_touch_vals
+        }
+    }
+}
+
+impl RewardFn for DribbleAirTouchReward {
+    fn reset(&mut self, _initial_state: &GameState) {}
+
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, _previous_action: &Vec<f64>) -> f64 {
+        if player.ball_touched && !player.on_ground && state.ball.position.z >= self.min_height {
+            let curr_touch_val = self.curr_touch_vals.get(&player.car_id).unwrap() + 1;
+            if curr_touch_val > self.max_touches {
+                return self.max_rew_val;
+            } else {
+                self.curr_touch_vals.insert(player.car_id, curr_touch_val);
+
+                let mult = self.max_touches as f64 / curr_touch_val as f64;
+                return (self.max_rew_val * mult).powf(self.exp);
+            }
+        } else {
+            self.curr_touch_vals.insert(player.car_id, 0);
+            return 0.
+        }
+    }
+
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
+        self.get_reward(player, state, previous_action)
+    }
+}
 
 pub struct GatherBoostReward {
     last_boost: HashMap<i32, f64>
@@ -237,19 +299,19 @@ impl GatherBoostReward{
 impl RewardFn for GatherBoostReward {
     fn reset(&mut self,  _initial_state: &GameState) {
         for player in &_initial_state.players {
+            // I know 34. is not correct (it should be 0.34) but it assures that the boost amount 
+            // the agent is set with is above the starting amount so as to not reward resets
             self.last_boost.insert(player.car_id, 34.);
         }
     }
 
     fn get_reward(&mut self, player: &PlayerData, _state: &GameState, _previous_action: &Vec<f64>) -> f64 {
-        let last_boost = self.last_boost.insert(player.car_id, player.boost_amount).unwrap().clone();
+        let last_boost = self.last_boost.insert(player.car_id, player.boost_amount).unwrap();
         let boost_differential: f64;
         if player.boost_amount > last_boost {
             boost_differential = player.boost_amount - last_boost;
-            // self.last_boost.insert(player.car_id, player.boost_amount);
         } else {
             boost_differential = 0.;
-            // self.last_boost.insert(player.car_id, player.boost_amount);
         }
         return boost_differential
     }
@@ -261,7 +323,7 @@ impl RewardFn for GatherBoostReward {
 
 
 pub struct SB3CombinedLogRewardMultInst {
-    reward_file_path: PathBuf,
+    // reward_file_path: PathBuf,
     // reward_file: String,
     // lockfile: String,
     reward_sender: Sender<Vec<f64>>,
@@ -318,7 +380,7 @@ impl SB3CombinedLogRewardMultInst {
         }
 
         SB3CombinedLogRewardMultInst {
-            reward_file_path: reward_file_path.to_owned(),
+            // reward_file_path: reward_file_path.to_owned(),
             // reward_file: reward_file,
             // lockfile: lockfile,
             reward_sender: sender,

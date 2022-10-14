@@ -388,7 +388,7 @@ impl PhysicsObject {
     }
 
     pub fn serialize(&self) -> Vec<f64> {
-        let mut repr = Vec::<f64>::new();
+        let mut repr = Vec::<f64>::with_capacity(25);
 
         repr.extend(self.position.into_array().iter());
         repr.extend(self.quaternion.into_array().iter());
@@ -396,7 +396,7 @@ impl PhysicsObject {
         repr.extend(self.angular_velocity.into_array().iter());
         repr.extend(self.euler_angles.into_array().iter());
         
-        let mut row_vec = Vec::<f64>::new();
+        let mut row_vec = Vec::<f64>::with_capacity(9);
         for i in self.rotation_mtx.clone() {
             row_vec.push(i)
         }

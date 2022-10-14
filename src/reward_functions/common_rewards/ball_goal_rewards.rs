@@ -1,5 +1,4 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData, physics_object::Position}, common_values::{BLUE_TEAM, ORANGE_TEAM, ORANGE_GOAL_BACK, BLUE_GOAL_BACK, BALL_MAX_SPEED}, math::element_sub_vec, reward_functions::default_reward::RewardFn};
-use crate::math::*;
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData, physics_object::Position}, common_values::{BLUE_TEAM, ORANGE_TEAM, ORANGE_GOAL_BACK, BLUE_GOAL_BACK, BALL_MAX_SPEED}, reward_functions::default_reward::RewardFn};
 
 
 pub struct VelocityBallToGoalReward {

@@ -167,7 +167,8 @@ pub struct GymManager {
     // threads: Vec<JoinHandle<()>>,
     sends: Vec<Sender<ManagerPacket>>,
     recvs: Vec<Receiver<WorkerPacket>>,
-    n_agents_per_env: Vec<i32>
+    n_agents_per_env: Vec<i32>,
+    total_agents: usize
 }
 
 /// packet that comes from the manager
@@ -198,7 +199,8 @@ impl GymManager {
         let reward_file_loc = r"F:\Users\Jeffrey\AppData\Local\Temp";
         let reward_file_name = format!(r"{}\rewards.txt", reward_file_loc);
         let reward_path = Path::new(&reward_file_name).to_owned();
-        let reward_thrd = thread::spawn(move || file_put_worker(reward_recv, reward_path));
+        // let reward_thrd = thread::spawn(move || file_put_worker(reward_recv, reward_path));
+        thread::spawn(move || file_put_worker(reward_recv, reward_path));
 
         for match_num in match_nums.clone() {
             let mut retry_loop = true;
@@ -238,7 +240,8 @@ impl GymManager {
             // threads: thrd_vec,
             sends: send_vec,
             recvs: recv_vec,
-            n_agents_per_env: match_nums
+            n_agents_per_env: match_nums.clone(),
+            total_agents: match_nums.iter().sum::<i32>() as usize
         }
     }
     
@@ -274,11 +277,11 @@ impl GymManager {
     }
 
     pub fn step_wait(&mut self) -> PyResult<(Vec<Vec<f64>>, Vec<f64>, Vec<bool>, Vec<HashMap<String, f64>>, Vec<Option<Vec<Vec<f64>>>>)> {
-        let mut flat_obs = Vec::<Vec<f64>>::new();
-        let mut flat_rewards = Vec::<f64>::new();
-        let mut flat_dones = Vec::<bool>::new();
-        let mut flat_infos = Vec::<HashMap<String,f64>>::new();
-        let mut flat_term_obs = Vec::<Option<Vec<Vec<f64>>>>::new();
+        let mut flat_obs = Vec::<Vec<f64>>::with_capacity(self.total_agents);
+        let mut flat_rewards = Vec::<f64>::with_capacity(self.total_agents);
+        let mut flat_dones = Vec::<bool>::with_capacity(self.total_agents);
+        let mut flat_infos = Vec::<HashMap<String,f64>>::with_capacity(self.total_agents);
+        let mut flat_term_obs = Vec::<Option<Vec<Vec<f64>>>>::with_capacity(self.total_agents);
 
         for (receiver, n_agents) in zip(&self.recvs, &self.n_agents_per_env) {
             let data = receiver.recv().unwrap();

@@ -9,7 +9,7 @@ use std::f64::consts::PI;
 use ndarray::*;
 use rand::{*, rngs::StdRng};
 
-use crate::gamestates::physics_object::Quaternion;
+// use crate::gamestates::physics_object::Quaternion;
 
 
 pub fn clip(mut vec: Vec<f64>, high: f64, low: f64) -> Vec<f64> {

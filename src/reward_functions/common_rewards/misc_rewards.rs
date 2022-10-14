@@ -77,38 +77,14 @@ impl RewardFn for EventReward {
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
         let id = player.car_id;
-        // let is_empty = self.last_registered_values.is_empty();
-        // let weights: Vec<String> = self.weights.iter().map(|x| x.to_string()).collect();
-        // let weights_str = weights.join(" ");
-        // println!("weights: {weights_str}");
-        // self.weights[0] = 0.5;
-        // println!("EventReward HashMap is_empty: {is_empty}");
-        // let old_values = self.last_registered_values.get(&id);
-        // let values;
-        // let old_values = match old_values {
-        //     Some(old_values) => old_values,
-        //     None => {
-        //         // this always goes to the None branch for some reason??
-        //         println!("car_id value not found for EventReward, setting new value for car_id: {id}");
-        //         // panic!("could not get values for event reward hashmap")
-        //         values = EventReward::_extract_values(&player, &state);
-        //         self.last_registered_values.insert(id, values);
-        //         self.last_registered_values.get(&id).unwrap()
-        //     }
-        // };
         let new_values = EventReward::_extract_values(&player, &state);
         let old_values = self.last_registered_values.insert(id, new_values.clone());
         let old_values = match old_values {
             Some(old_values) => old_values,
-            None => {
-                // println!("car_id value not found for EventReward, setting new value for car_id: {id}");
-                // panic!("could not get values for event reward hashmap")
-                EventReward::_extract_values(&player, &state)
-            }
+            None => new_values.clone()
         };
         let diff_values = element_sub_vec(&new_values, &old_values);
 
-        self.last_registered_values.insert(id, new_values);
         let is_value_positive: Vec<f64> = diff_values.iter().map(|x| if *x > 0. {*x} else {0.}).collect();
         let ret = element_mult_vec(&is_value_positive, &self.weights).iter().sum();
         return ret 
