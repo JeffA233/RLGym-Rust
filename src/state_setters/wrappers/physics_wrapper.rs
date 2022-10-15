@@ -1,7 +1,7 @@
 use crate::gamestates::physics_object::{PhysicsObject, Position, Velocity};
 
 
-
+/// Physics wrapper that allows for easy modification of a PhysicsObject
 pub struct PhysicsWrapper {
     position: Position,
     linear_velocity: Velocity,

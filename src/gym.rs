@@ -25,6 +25,7 @@ use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
 
+/// Base Gym struct for RLGym-Rust
 pub struct Gym {
     pub _game_match: GameMatch,
     pub observation_space: Vec<usize>,
@@ -44,6 +45,7 @@ pub struct Gym {
 }
 
 impl Gym {
+    /// Creates a new instance of a gym and launches + connects to Rocket League instance
     pub fn new(game_match: GameMatch, pipe_id: Option<usize>, launch_preference: Option<String>, use_injector: Option<bool>, force_paging: Option<bool>, raise_on_crash: Option<bool>, auto_minimize: Option<bool>) -> Self {
         let pipe_id = match pipe_id {
             Some(pipe_id) => pipe_id,

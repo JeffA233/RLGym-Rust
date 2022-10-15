@@ -6,6 +6,7 @@ use crate::{obs_builders::{obs_builder::ObsBuilder}, action_parsers::{action_par
 
 use crate::gamestates::{game_state::GameState};
 
+/// Struct that wraps the game structs (basically) and provides an interface to the observation builders, state setters, etc.
 pub struct GameMatch {
     pub _game_speed: f64,
     pub _gravity: f64,

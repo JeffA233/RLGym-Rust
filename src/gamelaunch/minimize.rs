@@ -2,6 +2,7 @@ use windows::Win32::Foundation::{HWND, LPARAM, BOOL};
 use windows::Win32::UI::WindowsAndMessaging::{GetWindowTextW, EnumWindows, WNDENUMPROC, IsWindowVisible, ShowWindow, SW_FORCEMINIMIZE};
 
 
+/// Minimizes each instance that it finds is open
 pub fn toggle_rl_windows(minimize: bool) {
     if minimize {
         unsafe extern "system" fn win_enum_handler(hwnd: HWND, param1: LPARAM)  -> BOOL {

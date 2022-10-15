@@ -3,7 +3,7 @@ use crate::gamestates::game_state::GameState;
 use super::terminal_condition::TerminalCondition;
 
 
-
+/// Returns a terminal signal when max_steps has been hit
 pub struct TimeoutCondition {
     steps: i64,
     max_steps: i64
@@ -28,6 +28,7 @@ impl TerminalCondition for TimeoutCondition {
     }
 }
 
+/// Returns a terminal signal when there have been no ball touches in max_steps
 pub struct NoTouchTimeoutCondition {
     steps: i64,
     max_steps: i64
@@ -58,6 +59,7 @@ impl TerminalCondition for NoTouchTimeoutCondition {
     }
 }
 
+/// Returns a terminal signal when the ball has been scored
 pub struct GoalScoredCondition {
     blue_score: i32,
     orange_score: i32

@@ -24,6 +24,7 @@ pub const RLGYM_GLOBAL_PIPE_NAME: &str = r"\\.\pipe\RLGYM_GLOBAL_COMM_PIPE";
 pub const RLGYM_DEFAULT_PIPE_SIZE: usize = 1400;
 pub const RLGYM_DEFAULT_TIMEOUT: usize = 4000;
 
+/// communication handler, takes Messages and returns Messages basically
 #[derive(Default)]
 #[derive(Clone)]
 pub struct CommunicationHandler {
@@ -56,7 +57,7 @@ impl CommunicationHandler {
         // let received_message = self.message;
         let mut received_message = self.message.clone();
         
-        // this doesn't need to be a loop but for now will keep
+        // this doesn't need to be a loop but for now "it works"
         for i in 0..10 {
             let mut buffer = vec![0 as u8; RLGYM_DEFAULT_PIPE_SIZE];
             let buffer_ptr: *mut c_void = &mut *buffer as *mut _ as *mut c_void;
@@ -66,6 +67,8 @@ impl CommunicationHandler {
                 out = ReadFile(self._pipe, Some(buffer_ptr), RLGYM_DEFAULT_PIPE_SIZE as u32, Some(&mut (bytes_read)), None);
             }
             let succeeded = out.0;
+            
+            // in case there is an error stuff
             if succeeded == 0 {
                 println!("ReadFile was unsuccessful");
                 let err;
@@ -80,6 +83,7 @@ impl CommunicationHandler {
                 }
                 continue
             }
+
             // let bytes = out.0 as u32;
             // let decode_str =
             // let msg_floats = Vec::<f64>::new();
@@ -89,6 +93,7 @@ impl CommunicationHandler {
             // println!("ReadFile msg_floats string: {msg_floats_str}; bytes read: {bytes_read}");
             let deserialized_header = deserialize_header(&msg_floats);
 
+            // we check the pipe to make sure there are no other messages stacked inside to keep up with the plugin's last message
             if header.len() == 0 || header == deserialized_header {
                 received_message.deserialize(msg_floats);
                 unsafe {
@@ -137,14 +142,15 @@ impl CommunicationHandler {
         };
         message.set_body_header_vals(header, body);
         let serialized = message.serialize();
-        let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+        // let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
         // println!("message being sent: {printable}");
         // format!("{:02x}", 8 as u8);
-        let serialized: Vec<f32> = serialized.iter().map(|x| *x as f32).collect();
-        let mut u8_serialized = f32vec_as_u8_slice(&serialized);
+        let serialized_f32: Vec<f32> = serialized.iter().map(|x| *x as f32).collect();
+        let mut u8_serialized = f32vec_as_u8_slice(&serialized_f32);
         let u8_ser_len = u8_serialized.len();
         let buffer_ptr: *mut c_void = &mut *u8_serialized as *mut _ as *mut c_void;
-        let printable = u8_serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+        // let printable = u8_serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+        let u8_serialized_for_err = u8_serialized.clone();
         // println!("message being sent in bytes: {:x?}", printable);
         let out: BOOL;
         let mut bytes_written = 0 as u32;
@@ -161,6 +167,8 @@ impl CommunicationHandler {
         // unsafe {
         //     err = GetLastError().0;
         // }
+
+        // if there was an error, show debug info
         if !res_bool {
             let err;
             unsafe {
@@ -170,6 +178,8 @@ impl CommunicationHandler {
                     0: err_int
                 };
             }
+            let printable = u8_serialized_for_err.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
+            let message_printable = serialized.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ");
             let err = err.to_hresult();
             let err = err.message();
             println!("WriteFile error: {err}");
@@ -240,14 +250,6 @@ impl CommunicationHandler {
                        None);
             // pcstr_str = pcstr.display();
         }
-        // let pipe_name_joinedstr: String = pipe_name_u16.join(" ");
-        // println!("");
-        // println!("{pcstr_str}");
-        // match pcstr_str {
-        //     Ok(some) => println!("to_string -> {some}"),
-        //     Err(some) => println!("to_string error: {some}")
-        // }
-
 
         match out {
             Ok(out) => self._pipe = out,
@@ -305,73 +307,26 @@ pub fn format_pipe_id(pipe_id: usize) -> String {
     return r"\\.\pipe\rlgym_!".replace("!", &pipe_id.to_string())
 }
 
+/// converts bytes from the pipe into a Vec<f32>
 pub fn bytes_to_f32(bytes: &[u8], bytes_read: &u32) -> Vec<f32> {
-    // let bytes_len = bytes.len();
     let mut float_vec = Vec::<f32>::new();
-    // let bytes_vec = bytes.to_vec();
+
     for i in (0..*bytes_read as usize).step_by(4) {
-        // let mut slice = [0 as u8; 4];
         let slice = bytes[i..i+4].try_into().unwrap();
         let val = f32::from_le_bytes(slice) as f32;
-        // if val == 0. {
-        //     break
-        // }
         float_vec.push(val);
-        // if val == 83774. {
-        //     break
-        // }
     }
+
     return float_vec
 }
 
-// pub fn f32_to_bytes(f32_vec: &Vec<f32>) -> Vec<u8> {
-//     // let mut ret_bytes = [0 as u8; 0];
-//     // let mut bytes_arr = f32_vec.as_slice();
-//     // for num in bytes_arr {
-//     //     ret_bytes.
-//     // }
-//     let u8_vec: Vec<u8> = f32_vec.iter().map(|x| *x as u8).collect();
-//     return u8_vec
-// }
-
+/// converts a Vec<f32> into bytes for the pipe
 pub fn f32vec_as_u8_slice(v: &[f32]) -> Vec<u8> {
     let mut u8_vec = Vec::<u8>::new();
+
     for val in v {
         u8_vec.extend_from_slice(&mut val.to_ne_bytes())
     }
-    u8_vec
+
+    return u8_vec
 }
-
-// pub fn f32vec_as_u8_slice(v: &[f32]) -> &[u8] {
-//     unsafe {
-//         std::slice::from_raw_parts(
-//             v.as_ptr() as *const u8,
-//             v.len() * std::mem::size_of::<f32>(),
-//         )
-//     }
-// }
-
-// pub fn f32_vec_as_u8_slice(v: &[f32]) -> &[u8] {
-//     let res = Vec::<u8>::new();
-
-//     for f in v {
-//         let bits = f.to_ne_bytes();
-
-//     }
-// }
-
-// pub fn handle_diemwin_potential(connected: &sync::Mutex<bool>) {
-//     while !*connected.lock().unwrap() {
-//         let win_handle: HWND;
-//         let is_visible: BOOL;
-//         unsafe{
-//             win_handle = FindWindowA(None, s!("DIEmWin"));
-//             is_visible = IsWindowVisible(win_handle);
-//             if is_visible.as_bool() {
-//                 DestroyWindow(win_handle);
-//             }
-//         }
-//         println!("DIEmWin detector successfully closed window");
-//     }
-
-// }

@@ -13,6 +13,7 @@ pub const RLGYM_REQUEST_LAST_BOT_INPUT_MESSAGE_HEADER: [f64; 3] = [83781., 83781
 pub const RLGYM_LAST_BOT_INPUT_MESSAGE_HEADER: [f64; 3] = [11781., 83782., 83983.];
 pub const RLGYM_RESET_TO_SPECIFIC_GAME_STATE_MESSAGE_HEADER: [f64; 3] = [12782., 83783., 80784.];
 
+/// Struct that formats the data from the pipe and to the pipe
 #[derive(Default)]
 #[derive(Clone)]
 pub struct Message {

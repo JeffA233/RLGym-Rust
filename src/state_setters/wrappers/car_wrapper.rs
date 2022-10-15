@@ -1,6 +1,6 @@
 use crate::gamestates::{player_data::PlayerData, physics_object::{EulerAngle, Position, Velocity}};
 
-
+/// Car wrapper that allows for easy modification of all of the units in a car (PlayerData, PhysicsObject)
 pub struct CarWrapper {
     rotation: EulerAngle,
     pub team_num: i32,

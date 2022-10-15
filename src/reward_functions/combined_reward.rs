@@ -3,7 +3,7 @@ use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::
 use super::{default_reward::RewardFn};
 
 
-
+/// Basic combined reward function that takes a set of reward functions and returns a single float from all of the reward functions' outputs combined
 pub struct CombinedReward {
     reward_structs: Vec<Box<dyn RewardFn>>,
     reward_weights: Vec<f64>

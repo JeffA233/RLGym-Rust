@@ -350,6 +350,7 @@ impl EulerAngle {
 // -------------------------------------------------------------------------------------------
 // start of PhysicsObject struct
 
+/// Struct that holds any kind of physics data for car/ball
 #[derive(Default, Clone)]
 pub struct PhysicsObject {
     pub position: Position,

@@ -13,6 +13,7 @@ const PITCH_MAX: f64 = PI/2.;
 const YAW_MAX: f64 = PI;
 const ROLL_MAX: f64 = PI;
 
+/// Random state setter that makes random position/velocity/rotation values for each car and for the ball (within reason, eg. below max speeds)
 pub struct RandomState {
     ball_rand_speed: bool,
     cars_rand_speed: bool,

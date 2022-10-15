@@ -1,7 +1,7 @@
 use crate::{conditionals::terminal_condition::TerminalCondition, reward_functions::default_reward::RewardFn, obs_builders::obs_builder::ObsBuilder, action_parsers::action_parser::ActionParser, state_setters::state_setter::StateSetter, envs::game_match::GameMatch, gym::Gym, gamelaunch::launch::LaunchPreference};
 use std::process::id;
 
-
+/// General generator function for the gym
 pub fn make(
     game_speed: Option<f64>,
     tick_skip: Option<usize>,

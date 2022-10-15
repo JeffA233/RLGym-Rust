@@ -14,6 +14,7 @@ use std::thread;
 use std::path::Path;
 
 
+/// returns configured custom rewards for Matrix usage, this part is meant only for the non-Rust multi-instance configuration
 pub fn get_custom_reward_func() -> Box<dyn RewardFn + Send> {
     let mut reward_fn_vec = Vec::<Box<dyn RewardFn + Send>>::new();
 
@@ -22,19 +23,16 @@ pub fn get_custom_reward_func() -> Box<dyn RewardFn + Send> {
     reward_fn_vec.push(Box::new(GatherBoostReward::new()));
     reward_fn_vec.push(Box::new(SaveBoostReward::new()));
     reward_fn_vec.push(Box::new(LeftKickoffReward::new()));
-    reward_fn_vec.push(Box::new(JumpTouchReward::new(Some(100.), None)));
+    reward_fn_vec.push(Box::new(JumpTouchReward::new(Some(150.), None)));
     reward_fn_vec.push(Box::new(VelocityReward::new(None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, None, None, Some(5.), Some(45.), Some(25.), None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, Some(100.), None, None, None, None, None, None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, Some(-100.), None, None, None, None, None)));
     reward_fn_vec.push(Box::new(JumpReward::new()));
-    // SB3CombinedLogReward {
-    //     reward_file: "combinedlogfiles-v2".to_string(),
-    //     final_mult: 0.1,
-    //     returns: Vec::<f64>::new()
-    // }
+    reward_fn_vec.push(Box::new(DribbleAirTouchReward::new(Some(180.), None, None, Some(0.8))));
 
-    let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
+    // let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
+    let weights = vec![0.03, 0.2, 10.0, 0.06, 0.7, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
     assert!(weights.len() == reward_fn_vec.len());
 
     Box::new(SB3CombinedLogReward::new(
@@ -45,6 +43,7 @@ pub fn get_custom_reward_func() -> Box<dyn RewardFn + Send> {
     ))
 }
 
+/// returns configured custom rewards for Matrix usage, built for Rust multi-instance 
 pub fn get_custom_reward_func_mult_inst(reward_send_chan: Sender<Vec<f64>>) -> Box<dyn RewardFn + Send> {
     let mut reward_fn_vec = Vec::<Box<dyn RewardFn + Send>>::new();
 
@@ -74,6 +73,7 @@ pub fn get_custom_reward_func_mult_inst(reward_send_chan: Sender<Vec<f64>>) -> B
     ))
 }
 
+/// reward for having jump available for use
 pub struct JumpReward {}
 
 impl JumpReward {
@@ -94,7 +94,7 @@ impl RewardFn for JumpReward {
     }
 }
 
-
+/// reward only for the agent that is on the left of their respective side (meant to try to be the normal "left goes for kickoff" rule)
 pub struct LeftKickoffReward {
     vel_dir_reward: VelocityPlayerToBallReward,
     kickoff_id_orange: i32,
@@ -176,7 +176,7 @@ impl RewardFn for LeftKickoffReward {
     }
 }
 
-
+/// reward for touching the ball in the air above the specified min_height, then taken to the exponent
 pub struct JumpTouchReward {
     min_height: f64,
     exp: f64
@@ -216,6 +216,7 @@ impl RewardFn for JumpTouchReward {
     }
 }
 
+/// trial at consecutive air-touch reward, hopefully should encourage air dribbling but may require more complexity
 pub struct DribbleAirTouchReward {
     min_height: f64,
     exp: f64,
@@ -282,6 +283,7 @@ impl RewardFn for DribbleAirTouchReward {
     }
 }
 
+/// reward for gathering boost, based on boost amount instead of collecting pads
 pub struct GatherBoostReward {
     last_boost: HashMap<i32, f64>
 }
@@ -321,7 +323,9 @@ impl RewardFn for GatherBoostReward {
     }
 }
 
-
+/// "Wrapper" that collects a set of boxed reward functions and iterates through them to get a single float. 
+/// Has other functionality including reward logging that sends info to a separate singular thread which writes for all instances
+/// instead of each instance having its own writer
 pub struct SB3CombinedLogRewardMultInst {
     // reward_file_path: PathBuf,
     // reward_file: String,
@@ -340,44 +344,44 @@ impl SB3CombinedLogRewardMultInst {
             None => "./combinedlogfiles".to_owned()
         };
 
-        let reward_file = format!("{}/rewards.txt", file_location);
-        let reward_file_path = Path::new(&reward_file);
+        // let reward_file = format!("{}/rewards.txt", file_location);
+        // let reward_file_path = Path::new(&reward_file);
         // let lockfile = format!("{}/reward_lock", file_location);
         
         let final_mult = match final_mult {
             Some(final_mult) => final_mult,
             None => 1.
         };
-        let exists = Path::new(&file_location).exists();
-        if !exists {
-            let res = create_dir(&file_location);
-            match res {
-                Err(error) => {if error.kind() == AlreadyExists {} else {panic!("{error}")}}
-                Ok(out) => out
-            }
-        }
-        for i in 0..100 {
-            if i == 99 {
-                panic!("too many attempts taken to lock the file in new")
-            }
+        // let exists = Path::new(&file_location).exists();
+        // if !exists {
+        //     let res = create_dir(&file_location);
+        //     match res {
+        //         Err(error) => {if error.kind() == AlreadyExists {} else {panic!("{error}")}}
+        //         Ok(out) => out
+        //     }
+        // }
+        // for i in 0..100 {
+        //     if i == 99 {
+        //         panic!("too many attempts taken to lock the file in new")
+        //     }
 
-            let out = OpenOptions::new().create(true).write(true).truncate(true).open(&reward_file_path);
+        //     let out = OpenOptions::new().create(true).write(true).truncate(true).open(&reward_file_path);
 
-            let file = match out {
-                Err(out) => {if out.kind() == PermissionDenied {continue} else {println!("{out}");continue}},
-                Ok(_file) => _file
-            };
+        //     let file = match out {
+        //         Err(out) => {if out.kind() == PermissionDenied {continue} else {println!("{out}");continue}},
+        //         Ok(_file) => _file
+        //     };
 
-            let out = file.lock_exclusive();
+        //     let out = file.lock_exclusive();
 
-            match out {
-                Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
-                Ok(_file) => _file
-            };
+        //     match out {
+        //         Err(out) => {if out.kind() == PermissionDenied {continue} else {continue}},
+        //         Ok(_file) => _file
+        //     };
 
-            file.unlock().unwrap();
-            break
-        }
+        //     file.unlock().unwrap();
+        //     break
+        // }
 
         SB3CombinedLogRewardMultInst {
             // reward_file_path: reward_file_path.to_owned(),
@@ -519,6 +523,8 @@ impl RewardFn for SB3CombinedLogRewardMultInst {
 //     }
 // }
 
+/// "Wrapper" that collects a set of boxed reward functions and iterates through them to get a single float. 
+/// Has other functionality including reward logging. Unlike the mult-instance version, it writes on its own new thread.
 pub struct SB3CombinedLogReward {
     reward_file_path: PathBuf,
     // reward_file: String,

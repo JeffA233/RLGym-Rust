@@ -11,7 +11,7 @@ use zip::read::ZipArchive;
 use std::{fs::File, io::BufReader};
 use serde_json::from_reader;
 
-
+/// return the configured state setters for use with Matrix
 pub fn custom_state_setters(team_size: i32, seed: Option<u64>) -> WeightedSampleSetter {
     let replay_setter_str = if team_size == 1 {"replay_folder/ssl_1v1.zip".to_owned()} else if team_size == 2 {"replay_folder/ssl_2v2.zip".to_owned()} else {"replay_folder/ssl_3v3.zip".to_owned()};
     let state_setters: Vec<Box<dyn StateSetter + Send>> = vec![
@@ -22,6 +22,7 @@ pub fn custom_state_setters(team_size: i32, seed: Option<u64>) -> WeightedSample
     WeightedSampleSetter::new(state_setters, vec![1.0, 0.15, 0.5], seed)
 }
 
+/// weighted state setter that uses a rand distribution to poll for a choice
 pub struct WeightedSampleSetter {
     state_setters: Vec<Box<dyn StateSetter + Send>>,
     distribution: WeightedIndex<f64>,
@@ -59,6 +60,7 @@ impl StateSetter for WeightedSampleSetter {
     }
 }
 
+/// uses a cached (loaded from disk) set of replay states to later set the bot states to
 pub struct ReplaySetter {
     states: Vec<Vec<f64>>,
     rng: StdRng

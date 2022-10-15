@@ -3,7 +3,7 @@ use crate::gamestates::game_state::GameState;
 use super::{common_conditions::{TimeoutCondition, GoalScoredCondition, NoTouchTimeoutCondition}, terminal_condition::TerminalCondition};
 
 
-
+/// Terminal conditions for Matrix
 pub struct CombinedTerminalConditions {
     timeout_condition: TimeoutCondition,
     no_touch_timeout_condition: NoTouchTimeoutCondition,
@@ -21,6 +21,7 @@ impl CombinedTerminalConditions {
         }
     }
 }
+
 impl TerminalCondition for CombinedTerminalConditions {
     fn reset(&mut self, _initial_state: &GameState) {
         self.timeout_condition.reset(_initial_state);
@@ -38,6 +39,7 @@ impl TerminalCondition for CombinedTerminalConditions {
     }
 }
 
+/// Returns a terminal signal when the ball is at x: 0, y: 0 after the specified steps
 pub struct NoTouchKickoffTimeoutCondition {
     steps: i64,
     max_steps: i64

@@ -11,18 +11,19 @@ use rand::{*, rngs::StdRng};
 
 // use crate::gamestates::physics_object::Quaternion;
 
-
+/// clips all of the values in a vec to the range between high and low
 pub fn clip(mut vec: Vec<f64>, high: f64, low: f64) -> Vec<f64> {
-    // this can't be right? 
     vec = vec.into_iter().map(|x: f64| if x > high {high} else if x < low {low} else {x}).collect::<Vec<f64>>();
     return vec
 }
 
+/// Numpy-like trace function
 pub fn trace(arr: &Array2<f64>) -> f64 {
     let diag = arr.diag();
     diag.into_iter().sum()
 }
 
+/// divide a vec by a given variable
 pub fn vec_div_variable(a: &Vec<f64>, b: &f64) -> Vec<f64> {
     let ret: Vec<f64> = a.iter().map(|x| *x as f64 / *b as f64).collect();
     return ret
@@ -230,47 +231,6 @@ pub fn quat_to_rot_mtx(nums: &Vec<f64>) -> Array2<f64> {
     return theta;
 }
 
-// /// quat Vec to rotation matrix Array2
-// pub fn quat_to_rot_mtx_struct(nums: &Quaternion) -> Array2<f64> {
-//     let mut theta = Array2::<f64>::zeros((3, 3));
-    
-//     // assert!(nums.len() == 4, "nums is not the correct shape");
-
-//     // let norm: f64 = nums.clone()
-//     //                     .into_iter()
-//     //                     .map(|x: f64| x.powf(2.))
-//     //                     // .collect::<Vec<f64>>()
-//     //                     // .iter()
-//     //                     .sum();
-
-//     let norm = nums.norm();
-
-//     let w = -&nums.w;
-//     let x = -&nums.x;
-//     let y = -&nums.y;
-//     let z = -&nums.z;
-
-//     let s: f64 = 1.0 / norm;
-
-//     if norm != 0. {
-//         theta[[0, 0]] = 1. - 2. * s * (y * y + z * z);
-//         theta[[1, 0]] = 2. * s * (x * y + z * w);
-//         theta[[2, 0]] = 2. * s * (x * z - y * w);
-
-//         // left direction
-//         theta[[0, 1]] = 2. * s * (x * y - z * w);
-//         theta[[1, 1]] = 1. - 2. * s * (x * x + z * z);
-//         theta[[2, 1]] = 2. * s * (y * z + x * w);
-
-//         // up direction
-//         theta[[0, 2]] = 2. * s * (x * z + y * w);
-//         theta[[1, 2]] = 2. * s * (y * z - x * w);
-//         theta[[2, 2]] = 1. - 2. * s * (x * x + y * y);
-//     }
-
-//     return theta;
-// }
-
 pub fn rotation_to_quaternion(m: Array2<f64>) -> Array1<f64> {
     let trace = trace(&m);
     let mut q: Array1<f64> = Array1::<f64>::zeros(4);
@@ -353,6 +313,7 @@ pub fn euler_to_rotation(pyr: Array1<f64>) -> Array2<f64> {
     return theta;
 }
 
+/// initializes a randomized Vec<f64> of length 3
 pub fn rand_uvec3() -> Vec<f64> {
     let mut vec: Vec<f64> = Vec::new();
     let mut rng = thread_rng();
@@ -367,8 +328,9 @@ pub fn rand_uvec3() -> Vec<f64> {
     return vec;
 }
 
+/// with respect to a max_norm and the rng, randomly creates a new Vec<f64> of length 3
 pub fn rand_vec3(max_norm: f64, rng: &mut StdRng) -> Vec<f64> {
-    let mut res: Vec<f64> = Vec::new();
+    let mut res: Vec<f64> = vec![0., 0., 0.];
     for i in res.iter_mut() {
         let rand_num = rng.gen::<f64>();
         let partial = rand_num * max_norm;
@@ -376,4 +338,3 @@ pub fn rand_vec3(max_norm: f64, rng: &mut StdRng) -> Vec<f64> {
     }
     return res;
 }
-// }

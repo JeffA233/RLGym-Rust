@@ -7,6 +7,7 @@ use super::{physics_wrapper::PhysicsWrapper, car_wrapper::CarWrapper};
 const BLUE_ID1: i32 = 1;
 const ORANGE_ID1: i32 = 5;
 
+/// State wrapper that allows for easy modification of the state via itself
 pub struct StateWrapper {
     pub ball: PhysicsWrapper,
     pub cars: Vec<CarWrapper>

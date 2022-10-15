@@ -2,6 +2,7 @@ use crate::gamestates::game_state::GameState;
 
 use super::action_parser::ActionParser;
 
+/// Necto parser for Matrix
 pub struct NectoAction {
     _lookup_table: Vec<Vec<f64>>
 }

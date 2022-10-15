@@ -9,6 +9,7 @@ use crate::gamestates::player_data::PlayerData;
 
 use super::obs_builder::ObsBuilder;
 
+/// Matrix's observation builder, holds a stack of previous ball positions and shows the stack in the observation
 pub struct AdvancedObsPadderStacker {
     team_size: usize,
     pos_std: f64,
@@ -62,7 +63,7 @@ impl AdvancedObsPadderStacker {
     }
 
     fn add_ball_to_stack(&mut self, mut pos_std: Vec<f64>, mut lin_std: Vec<f64>, mut ang_std: Vec<f64>, index: usize) {
-        // to match Python functionality unfortunately (using extendleft from deque)
+        // to match Python functionality unfortunately (using extendleft from deque), this whole part needs to be redone for clarity
         pos_std.reverse();
         lin_std.reverse();
         ang_std.reverse();

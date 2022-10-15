@@ -6,7 +6,7 @@ use crate::gamestates::physics_object::PhysicsObject;
 
 use super::physics_object::{Position, Velocity};
 
-// #[derive(Default)]
+/// Struct that describes the current state of the game using objects like PhysicsObject and PlayerData
 #[derive(Clone)]
 pub struct GameState {
     pub game_type: i32,

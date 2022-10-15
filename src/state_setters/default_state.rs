@@ -3,6 +3,7 @@ use rand::{rngs::StdRng, SeedableRng, thread_rng, Rng};
 
 use super::{state_setter::StateSetter, wrappers::state_wrapper::StateWrapper};
 
+/// State setter that creates a default Rocket League state
 pub struct DefaultState {
     spawn_blue_pos: Vec<Vec<f64>>,
     spawn_blue_yaw: Vec<f64>,
@@ -44,6 +45,8 @@ impl StateSetter for DefaultState {
     fn reset(&mut self, state_wrapper: &mut StateWrapper) {
         let mut spawn_inds = vec![0, 1, 2, 3, 4];
         // let mut rng = rand::thread_rng();
+        
+        // this is to try to rearrange the order in a randomized way
         spawn_inds.sort_by_cached_key(|x| self.rng.gen::<usize>());
 
         let mut blue_count = 0;
@@ -73,7 +76,7 @@ impl StateSetter for DefaultState {
     }
 }
 
-// this has no randomization for testing
+// this has no randomization in the spawn indices for testing purposes
 pub struct DefaultStateTester {
     spawn_blue_pos: Vec<Vec<f64>>,
     spawn_blue_yaw: Vec<f64>,
