@@ -24,7 +24,7 @@ impl RewardFn for VelocityPlayerToBallReward {
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
         let vel = &player.car_data.linear_velocity;
 
-        let pos_diff = state.ball.position.subtract(&player.car_data.position);
+        let pos_diff = state.ball.position - player.car_data.position;
 
         if self.use_scalar_projection {
             return vel.scalar_projection(&pos_diff);

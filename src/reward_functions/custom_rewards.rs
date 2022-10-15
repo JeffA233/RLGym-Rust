@@ -59,10 +59,10 @@ pub fn get_custom_reward_func_mult_inst(reward_send_chan: Sender<Vec<f64>>) -> B
     reward_fn_vec.push(Box::new(EventReward::new(None, Some(100.), None, None, None, None, None, None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, Some(-100.), None, None, None, None, None)));
     reward_fn_vec.push(Box::new(JumpReward::new()));
-    reward_fn_vec.push(Box::new(DribbleAirTouchReward::new(Some(180.), None, None, Some(1.))));
+    reward_fn_vec.push(Box::new(DribbleAirTouchReward::new(Some(180.), None, None, Some(0.8))));
 
     // let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
-    let weights = vec![0.03, 0.2, 10.0, 0.04, 0.7, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
+    let weights = vec![0.03, 0.2, 10.0, 0.06, 0.7, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
     assert!(weights.len() == reward_fn_vec.len());
 
     Box::new(SB3CombinedLogRewardMultInst::new(

@@ -83,9 +83,9 @@ impl AdvancedObsPadderStacker {
             player_car = car.car_data.clone();
         }
 
-        let mut rel_pos = ball.position.subtract(&player_car.position);
+        let mut rel_pos = ball.position - player_car.position;
         rel_pos = rel_pos.divide_by_var(self.pos_std);
-        let mut rel_vel = ball.linear_velocity.subtract(&player_car.linear_velocity);
+        let mut rel_vel = ball.linear_velocity - player_car.linear_velocity;
         rel_vel = rel_vel.divide_by_var(self.pos_std);
         
         obs.extend(rel_pos.into_array().iter());
@@ -99,8 +99,8 @@ impl AdvancedObsPadderStacker {
 
         match player {
             Some(player) => {
-                obs.extend(player_car.position.subtract(&player.position).divide_by_var(self.pos_std).into_array().iter());
-                obs.extend(player_car.linear_velocity.subtract(&player.linear_velocity).divide_by_var(self.pos_std).into_array().iter());
+                obs.extend((player_car.position - player.position).divide_by_var(self.pos_std).into_array().iter());
+                obs.extend((player_car.linear_velocity - player.linear_velocity).divide_by_var(self.pos_std).into_array().iter());
             }
             None => ()
         };
