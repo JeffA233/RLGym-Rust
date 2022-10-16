@@ -377,14 +377,14 @@ impl PhysicsObject {
         }
     }
 
-    pub fn decode_car_data(&mut self, car_data: Vec<f64>) {
+    pub fn decode_car_data(&mut self, car_data: &[f64]) {
         self.position.set_vals(Some(car_data[0]), Some(car_data[1]), Some(car_data[2]));
         self.quaternion.set_vals(Some(car_data[3]), Some(car_data[4]), Some(car_data[5]), Some(car_data[6]));
         self.linear_velocity.set_vals(Some(car_data[7]), Some(car_data[8]), Some(car_data[9]));
         self.angular_velocity.set_vals(Some(car_data[10]), Some(car_data[11]), Some(car_data[12]));
     }
 
-    pub fn decode_ball_data(&mut self, ball_data: Vec<f64>) {
+    pub fn decode_ball_data(&mut self, ball_data: &[f64]) {
         self.position.set_vals(Some(ball_data[0]), Some(ball_data[1]), Some(ball_data[2]));
         self.linear_velocity.set_vals(Some(ball_data[3]), Some(ball_data[4]), Some(ball_data[5]));
         self.angular_velocity.set_vals(Some(ball_data[6]), Some(ball_data[7]), Some(ball_data[8]));

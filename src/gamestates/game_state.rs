@@ -88,14 +88,14 @@ impl GameState {
         self.inverted_boost_pads.reverse();
         start = start + BOOST_PAD_LENGTH;
 
-        self.ball.decode_ball_data(state_vals[start..start+BALL_STATE_LENGTH].to_vec());
+        self.ball.decode_ball_data(&state_vals[start..start+BALL_STATE_LENGTH]);
         start = start + (BALL_STATE_LENGTH / 2);
 
-        self.inverted_ball.decode_ball_data(state_vals[start..start+BALL_STATE_LENGTH].to_vec());
+        self.inverted_ball.decode_ball_data(&state_vals[start..start+BALL_STATE_LENGTH]);
         start = start + (BALL_STATE_LENGTH / 2);
 
         for _ in 0..num_player_packets {
-            let player = self.decode_player(state_vals[start..start+PLAYER_INFO_LENGTH].to_vec());
+            let player = self.decode_player(&state_vals[start..start+PLAYER_INFO_LENGTH]);
             if player.ball_touched {
                 self.last_touch = player.car_id.clone();
             }
@@ -106,15 +106,15 @@ impl GameState {
         self.players.sort_unstable_by_key(|p| p.car_id);
     }
 
-    fn decode_player(&self, full_player_data: Vec<f64>) -> PlayerData {
+    fn decode_player(&self, full_player_data: &[f64]) -> PlayerData {
         let mut player_data = PlayerData::new();
 
         let mut start: usize = 2;
 
-        player_data.car_data.decode_car_data(full_player_data[start..start+PLAYER_CAR_STATE_LENGTH].to_vec());
+        player_data.car_data.decode_car_data(&full_player_data[start..start+PLAYER_CAR_STATE_LENGTH]);
         start = start + PLAYER_CAR_STATE_LENGTH;
 
-        player_data.inverted_car_data.decode_car_data(full_player_data[start..start+PLAYER_CAR_STATE_LENGTH].to_vec());
+        player_data.inverted_car_data.decode_car_data(&full_player_data[start..start+PLAYER_CAR_STATE_LENGTH]);
         start = start + PLAYER_CAR_STATE_LENGTH;
 
         let tertiary_data = &full_player_data[start..start+PLAYER_TERTIARY_INFO_LENGTH];

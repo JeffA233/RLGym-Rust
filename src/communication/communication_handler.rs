@@ -25,8 +25,7 @@ pub const RLGYM_DEFAULT_PIPE_SIZE: usize = 1400;
 pub const RLGYM_DEFAULT_TIMEOUT: usize = 4000;
 
 /// communication handler, takes Messages and returns Messages basically
-#[derive(Default)]
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct CommunicationHandler {
     _current_pipe_name: String,
     pub _pipe: HANDLE,
@@ -309,7 +308,7 @@ pub fn format_pipe_id(pipe_id: usize) -> String {
 
 /// converts bytes from the pipe into a Vec<f32>
 pub fn bytes_to_f32(bytes: &[u8], bytes_read: &u32) -> Vec<f32> {
-    let mut float_vec = Vec::<f32>::new();
+    let mut float_vec = Vec::<f32>::with_capacity((bytes_read/4) as usize);
 
     for i in (0..*bytes_read as usize).step_by(4) {
         let slice = bytes[i..i+4].try_into().unwrap();
@@ -322,7 +321,7 @@ pub fn bytes_to_f32(bytes: &[u8], bytes_read: &u32) -> Vec<f32> {
 
 /// converts a Vec<f32> into bytes for the pipe
 pub fn f32vec_as_u8_slice(v: &[f32]) -> Vec<u8> {
-    let mut u8_vec = Vec::<u8>::new();
+    let mut u8_vec = Vec::<u8>::with_capacity(v.len()*4);
 
     for val in v {
         u8_vec.extend_from_slice(&mut val.to_ne_bytes())
