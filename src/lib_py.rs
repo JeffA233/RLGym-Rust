@@ -222,7 +222,7 @@ impl GymManager {
                 match out {
                     Ok(packet) => packet,
                     Err(err) => {
-                        println!("recv timed out in new func: {err}");
+                        println!("recv timed out in new func in GymManager: {err}");
                         continue;
                     }
                 };

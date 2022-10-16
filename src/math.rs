@@ -273,7 +273,7 @@ pub fn rotation_to_quaternion(m: Array2<f64>) -> Array1<f64> {
 }
 
 pub fn euler_to_rotation(pyr: Array1<f64>) -> Array2<f64> {
-    // this probably needs a revisit for ownership purposes
+    // this probably needs a revisit
     let mut pyr_cos = pyr.clone();
     let mut pyr_sin = pyr.clone();
 

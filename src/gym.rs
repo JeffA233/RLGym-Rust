@@ -1,27 +1,18 @@
-// use crate::action_parsers;
-// use crate::common_values;
-// use crate::communication;
 use crate::communication::communication_handler::{CommunicationHandler, format_pipe_id};
 use crate::communication::message::{RLGYM_CONFIG_MESSAGE_HEADER, RLGYM_RESET_GAME_STATE_MESSAGE_HEADER, RLGYM_STATE_MESSAGE_HEADER, RLGYM_AGENT_ACTION_IMMEDIATE_RESPONSE_MESSAGE_HEADER};
-// use crate::conditionals;
-// use crate::envs;
-// use crate::gamelaunch;
+
 use crate::gamelaunch::launch::run_injector;
 use crate::gamelaunch::launch::{LaunchPreference, launch_rocket_league};
 use crate::gamelaunch::minimize::toggle_rl_windows;
-// use crate::gamestates;
+
 use crate::gamestates::game_state::GameState;
-// use crate::math;
-// use crate::obs_builders;
-// use crate::reward_functions;
-// use crate::state_setters;
+
 use crate::envs::game_match::GameMatch;
-// use ndarray::*;
+
 use subprocess::Popen;
-// use subprocess::Result;
+
 use std::collections::HashMap;
-// use std::thread::JoinHandle;
-// use std::thread::Thread;
+
 use std::thread;
 use std::time::Duration;
 
@@ -83,8 +74,6 @@ impl Gym {
         // let proc_pid = proc.pid().unwrap();
         comm_handler.open_pipe(Some(&pipe_name), None);
         comm_handler.send_message(None, Some(RLGYM_CONFIG_MESSAGE_HEADER.to_vec()), Some(game_match.get_config()));
-        // TODO thread that minimizes the game
-        // let handle = thread::spawn(||println!("placeholder for minimizer"));
         // if force_paging {
         //     page_rocket_league()
         // }
@@ -116,7 +105,7 @@ impl Gym {
 
     fn _minimize_game(&mut self) {
         thread::spawn(|| toggle_rl_windows(true));
-        toggle_rl_windows(true);
+        // toggle_rl_windows(true);
         self._minimized = true;
     }
 

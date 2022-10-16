@@ -1,9 +1,6 @@
 // use std::{thread::{spawn, current}, any::Any, iter::Enumerate};
 use crate::{obs_builders::{obs_builder::ObsBuilder}, action_parsers::{action_parser::ActionParser}, conditionals::{terminal_condition::TerminalCondition}, reward_functions::default_reward::RewardFn, state_setters::state_setter::StateSetter};
 
-// use ndarray::*;
-// use numpy::*;
-
 use crate::gamestates::{game_state::GameState};
 
 /// Struct that wraps the game structs (basically) and provides an interface to the observation builders, state setters, etc.
@@ -114,7 +111,7 @@ impl GameMatch {
     }
 
     pub fn build_observations(&mut self, mut state: &mut GameState) -> Vec<Vec<f64>> {
-        let mut observations = Vec::<Vec<f64>>::new();
+        let mut observations = Vec::<Vec<f64>>::with_capacity(self.agents);
 
         if state.last_touch == -1 {
             state.last_touch = self.last_touch.clone();
@@ -137,7 +134,7 @@ impl GameMatch {
     }
 
     pub fn get_rewards(&mut self, state: &GameState, done: bool) -> Vec<f64> {
-        let mut rewards = Vec::<f64>::new();
+        let mut rewards = Vec::<f64>::with_capacity(self.agents);
 
         self._reward_fn.pre_step(&state);
 
