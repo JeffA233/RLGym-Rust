@@ -84,7 +84,7 @@ impl GameState {
         self.orange_score = state_vals[2] as i32;
 
         self.boost_pads = state_vals[start..start+BOOST_PAD_LENGTH].try_into().unwrap();
-        self.inverted_boost_pads = self.boost_pads.clone();
+        self.inverted_boost_pads = self.boost_pads;
         self.inverted_boost_pads.reverse();
         start = start + BOOST_PAD_LENGTH;
 
@@ -94,10 +94,12 @@ impl GameState {
         self.inverted_ball.decode_ball_data(&state_vals[start..start+BALL_STATE_LENGTH]);
         start = start + (BALL_STATE_LENGTH / 2);
 
+        self.players.reserve(num_player_packets as usize);
+
         for _ in 0..num_player_packets {
             let player = self.decode_player(&state_vals[start..start+PLAYER_INFO_LENGTH]);
             if player.ball_touched {
-                self.last_touch = player.car_id.clone();
+                self.last_touch = player.car_id;
             }
             self.players.push(player);
             start = start + PLAYER_INFO_LENGTH;

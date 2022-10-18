@@ -24,9 +24,9 @@ impl PhysicsWrapper {
 
     fn _read_from_physics_object(phys_obj: &PhysicsObject) -> PhysicsWrapper {
         PhysicsWrapper {
-            position: phys_obj.position.clone(),
-            linear_velocity: phys_obj.linear_velocity.clone(),
-            angular_velocity: phys_obj.angular_velocity.clone()
+            position: phys_obj.position,
+            linear_velocity: phys_obj.linear_velocity,
+            angular_velocity: phys_obj.angular_velocity
         }
     }
 

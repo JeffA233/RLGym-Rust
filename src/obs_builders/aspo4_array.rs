@@ -73,15 +73,15 @@ impl AdvancedObsPadderStacker {
     }
 
     fn _add_dummy(obs: &mut Vec<f64>) {
-        obs.extend([0.; 31]);
+        obs.extend([0.; 31].iter());
     }
 
     fn _add_player_to_obs(&self, obs: &mut Vec<f64>, car: &PlayerData, ball: &PhysicsObject, inverted: bool, player: Option<&PhysicsObject>) -> PhysicsObject {
         let mut player_car: PhysicsObject;
         if inverted {
-            player_car = car.inverted_car_data.clone();
+            player_car = car.inverted_car_data;
         } else {
-            player_car = car.car_data.clone();
+            player_car = car.car_data;
         }
 
         let mut rel_pos = ball.position - player_car.position;

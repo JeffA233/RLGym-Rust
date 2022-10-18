@@ -1,7 +1,7 @@
 use crate::gamestates::physics_object::PhysicsObject;
 
 /// Struct which holds extra data for agents/players aside from just the PhysicsObjects
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct PlayerData {
     pub car_id: i32,
     pub team_num: i32,

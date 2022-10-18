@@ -4,7 +4,7 @@ use super::action_parser::ActionParser;
 
 /// Necto parser for Matrix
 pub struct NectoAction {
-    _lookup_table: Vec<Vec<f64>>
+    _lookup_table: Vec<[f64; 8]>
 }
 
 impl NectoAction {
@@ -14,8 +14,8 @@ impl NectoAction {
         }
     }
 
-    fn make_lookup_table() -> Vec<Vec<f64>> {
-        let mut actions = Vec::<Vec<f64>>::new();
+    fn make_lookup_table() -> Vec<[f64; 8]> {
+        let mut actions = Vec::<[f64; 8]>::with_capacity(90);
         for throttle in [-1., 0., 1.] {
             for steer in [-1., 0., 1. as f64] {
                 for boost in [0., 1. as f64] {
@@ -24,7 +24,7 @@ impl NectoAction {
                             continue
                         }
                         let part: f64 = if throttle != 0. {throttle} else if boost != 0. {boost} else {0.};
-                        actions.push(vec![part, steer, 0., steer, 0., 0., boost, handbrake]);
+                        actions.push([part, steer, 0., steer, 0., 0., boost, handbrake]);
                     }
                 }
             }
@@ -41,7 +41,7 @@ impl NectoAction {
                                 continue
                             }
                             let handbrake = if jump == 1. && (pitch != 0. || yaw != 0. || roll != 0.) {1.} else {0.};
-                            actions.push(vec![boost, yaw, pitch, yaw, roll, jump, boost, handbrake]);
+                            actions.push([boost, yaw, pitch, yaw, roll, jump, boost, handbrake]);
                         }
                     }
                 }
@@ -62,7 +62,7 @@ impl ActionParser for NectoAction {
         let mut parsed_actions = Vec::<Vec<f64>>::new();
         for action_vec in actions {
             for action in action_vec {
-                parsed_actions.push(self._lookup_table[action as usize].clone());
+                parsed_actions.push(self._lookup_table[action as usize].to_vec());
             }
         }
         return parsed_actions

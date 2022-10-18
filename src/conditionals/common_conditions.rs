@@ -49,7 +49,7 @@ impl TerminalCondition for NoTouchTimeoutCondition {
     }
 
     fn is_terminal(&mut self, current_state: &GameState) -> bool {
-        if current_state.players.clone().into_iter().any(|x| x.ball_touched == true) {
+        if current_state.players.iter().any(|x| x.ball_touched == true) {
             self.steps = 0;
             return false
         } else {

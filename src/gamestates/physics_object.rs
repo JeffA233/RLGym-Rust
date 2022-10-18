@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use std::ops;
 
-use ndarray::*;
+// use ndarray::*;
 
 
 // start of helper structs
@@ -256,8 +256,8 @@ impl Quaternion {
     }
 
     /// quat Vec to rotation matrix Array2
-    pub fn quat_to_rot_mtx(&self) -> Array2<f64> {
-        let mut theta = Array2::<f64>::zeros((3, 3));
+    pub fn quat_to_rot_mtx(&self) -> RotationMatrix {
+        let mut theta = RotationMatrix::zeros();
 
         let norm = self.norm();
 
@@ -269,19 +269,19 @@ impl Quaternion {
         let s: f64 = 1.0 / norm;
 
         if norm != 0. {
-            theta[[0, 0]] = 1. - 2. * s * (y * y + z * z);
-            theta[[1, 0]] = 2. * s * (x * y + z * w);
-            theta[[2, 0]] = 2. * s * (x * z - y * w);
+            theta.array[0][0] = 1. - 2. * s * (y * y + z * z);
+            theta.array[1][0] = 2. * s * (x * y + z * w);
+            theta.array[2][0] = 2. * s * (x * z - y * w);
 
             // left direction
-            theta[[0, 1]] = 2. * s * (x * y - z * w);
-            theta[[1, 1]] = 1. - 2. * s * (x * x + z * z);
-            theta[[2, 1]] = 2. * s * (y * z + x * w);
+            theta.array[0][1] = 2. * s * (x * y - z * w);
+            theta.array[1][1] = 1. - 2. * s * (x * x + z * z);
+            theta.array[2][1] = 2. * s * (y * z + x * w);
 
             // up direction
-            theta[[0, 2]] = 2. * s * (x * z + y * w);
-            theta[[1, 2]] = 2. * s * (y * z - x * w);
-            theta[[2, 2]] = 1. - 2. * s * (x * x + y * y);
+            theta.array[0][2] = 2. * s * (x * z + y * w);
+            theta.array[1][2] = 2. * s * (y * z - x * w);
+            theta.array[2][2] = 1. - 2. * s * (x * x + y * y);
         }
 
         return theta;
@@ -346,19 +346,66 @@ impl EulerAngle {
     }
 }
 
+#[derive(Default, Clone, Copy)]
+pub struct RotationMatrix {
+    pub array: [[f64; 3]; 3]
+}
+
+impl RotationMatrix {
+    // pub fn get_val(&self, row: usize, col: usize) -> f64 {
+    //     self.array[row][col]
+    // }
+
+    pub fn column(&self, col: usize) -> [f64; 3] {
+        let val1 = self.array[0][col];
+        let val2 = self.array[1][col];
+        let val3 = self.array[2][col];
+        return [val1, val2, val3];
+    }
+
+    pub fn row(&self, row: usize) -> [f64; 3] {
+        let val1 = self.array[row][0];
+        let val2 = self.array[row][1];
+        let val3 = self.array[row][2];
+        return [val1, val2, val3];
+    }
+
+    pub fn zeros() -> RotationMatrix {
+        RotationMatrix {
+            array: [[0.; 3]; 3]
+        }
+    }
+
+    pub fn into_array(&self) -> [[f64; 3]; 3] {
+        return self.array
+    }
+
+    pub fn into_flat_array(&self) -> [f64; 9] {
+        let mut row_vec = [0.; 9];
+        let mut i = 0;
+        for col in self.array {
+            for row_val in col {
+                row_vec[i] = row_val;
+                i += 1;
+            }
+        }
+        return row_vec
+    }
+}
+
 // end of helper structs
 // -------------------------------------------------------------------------------------------
 // start of PhysicsObject struct
 
 /// Struct that holds any kind of physics data for car/ball
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Copy)]
 pub struct PhysicsObject {
     pub position: Position,
     pub quaternion: Quaternion,
     pub linear_velocity: Velocity,
     pub angular_velocity: Velocity,
     pub euler_angles: EulerAngle,
-    pub rotation_mtx: Array2<f64>,
+    pub rotation_mtx: RotationMatrix,
     pub has_computed_rot_mtx: bool,
     pub has_computed_euler_angles: bool
 }
@@ -371,7 +418,7 @@ impl PhysicsObject {
             linear_velocity: Velocity::default(),
             angular_velocity: Velocity::default(),
             euler_angles: EulerAngle::default(),
-            rotation_mtx: Array2::<f64>::zeros((3, 3)),
+            rotation_mtx: RotationMatrix::zeros(),
             has_computed_euler_angles: false,
             has_computed_rot_mtx: false
         }
@@ -390,29 +437,31 @@ impl PhysicsObject {
         self.angular_velocity.set_vals(Some(ball_data[6]), Some(ball_data[7]), Some(ball_data[8]));
     }
 
-    pub fn forward(&mut self) -> Vec<f64> {
+    pub fn forward(&mut self) -> [f64; 3] {
         let arr = &self.rotation_mtx();
         let partial_arr = arr.column(0);
-        return partial_arr.to_owned().to_vec()
+        return partial_arr
     }
 
-    pub fn right(&mut self) -> Vec<f64> {
+    pub fn right(&mut self) -> [f64; 3] {
         let arr = self.rotation_mtx();
         let partial_arr = arr.column(1);
-        return partial_arr.to_owned().to_vec()
+        return partial_arr
     }
 
-    pub fn left(&mut self) -> Vec<f64> {
+    pub fn left(&mut self) -> [f64; 3] {
         let arr = self.rotation_mtx();
-        let partial_arr = arr.column(1);
-        let res_arr = partial_arr.to_owned() * -1.;
-        return res_arr.to_vec()
+        let mut partial_arr = arr.column(1);
+        for val in partial_arr.iter_mut() {
+            *val = *val*-1.;
+        }
+        return partial_arr
     }
 
-    pub fn up(&mut self) -> Vec<f64> {
+    pub fn up(&mut self) -> [f64; 3] {
         let arr = self.rotation_mtx();
         let partial_arr = arr.column(2);
-        return partial_arr.to_owned().to_vec()
+        return partial_arr
     }
 
     pub fn pitch(&mut self) -> f64 {
@@ -435,15 +484,15 @@ impl PhysicsObject {
         return self.euler_angles
     }
     
-    pub fn rotation_mtx(&mut self) -> Array2<f64> {
+    pub fn rotation_mtx(&mut self) -> RotationMatrix {
         if !self.has_computed_rot_mtx {
             self.rotation_mtx = self.quaternion.quat_to_rot_mtx();
             self.has_computed_rot_mtx = true;
         }
-        return self.rotation_mtx.clone()
+        return self.rotation_mtx
     }
 
-    pub fn serialize(&self) -> Vec<f64> {
+    pub fn serialize(&mut self) -> Vec<f64> {
         let mut repr = Vec::<f64>::with_capacity(25);
 
         repr.extend(self.position.into_array().iter());
@@ -452,11 +501,9 @@ impl PhysicsObject {
         repr.extend(self.angular_velocity.into_array().iter());
         repr.extend(self.euler_angles.into_array().iter());
         
-        let mut row_vec = Vec::<f64>::with_capacity(9);
-        for i in self.rotation_mtx.clone() {
-            row_vec.push(i)
-        }
-        repr.append(&mut row_vec);
+        // let mut row_vec = Vec::<f64>::with_capacity(9);
+        let row_vec = self.rotation_mtx().into_flat_array();
+        repr.extend(row_vec.iter());
 
         return repr
     }

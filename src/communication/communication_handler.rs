@@ -30,7 +30,7 @@ pub struct CommunicationHandler {
     _current_pipe_name: String,
     pub _pipe: HANDLE,
     _connected: bool,
-    message: Message,
+    // message: Message,
     // overlapped_struct: OVERLAPPED
 }
 
@@ -38,7 +38,7 @@ impl CommunicationHandler {
     pub fn new() -> Self {
         CommunicationHandler {
             _current_pipe_name: RLGYM_GLOBAL_PIPE_NAME.to_string(),
-            message: Message::new(),
+            // message: Message::new(),
             _connected: false,
             // overlapped_struct: OVERLAPPED::default(),
             ..Default::default()
@@ -53,8 +53,8 @@ impl CommunicationHandler {
             Some(header) => header,
             None => Vec::<f64>::new()
         };
-        // let received_message = self.message;
-        let mut received_message = self.message.clone();
+
+        let mut received_message = Message::new();
         
         // this doesn't need to be a loop but for now "it works"
         for i in 0..10 {
