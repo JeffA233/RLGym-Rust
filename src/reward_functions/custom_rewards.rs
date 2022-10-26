@@ -339,10 +339,10 @@ pub struct SB3CombinedLogRewardMultInst {
 
 impl SB3CombinedLogRewardMultInst {
     fn new(reward_structs: Vec<Box<dyn RewardFn + Send>>, reward_weights: Vec<f64>, file_location: Option<String>, final_mult: Option<f64>, sender: Sender<Vec<f64>>) -> Self {
-        let file_location = match file_location {
-            Some(file_location) => file_location,
-            None => "./combinedlogfiles".to_owned()
-        };
+        // let file_location = match file_location {
+        //     Some(file_location) => file_location,
+        //     None => "./combinedlogfiles".to_owned()
+        // };
 
         // let reward_file = format!("{}/rewards.txt", file_location);
         // let reward_file_path = Path::new(&reward_file);
@@ -440,32 +440,43 @@ impl RewardFn for SB3CombinedLogRewardMultInst {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
-        let mut rewards = Vec::<f64>::new();
+        let mut final_val = 0.;
 
-        for func in &mut self.combined_reward_fns {
+        for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
             let val = func.get_reward(player, state, previous_action);
-            rewards.push(val);
+            let reward = val * self.combined_reward_weights[i];
+            self.returns[i] += reward;
+            final_val += reward;
         }
         
-        let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
-        self.returns = element_add_vec(&self.returns, &vals);
-        let sum = vals.clone().iter().sum::<f64>();
-        let final_val = sum * self.final_mult; 
+        // let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
+        // self.returns = element_add_vec(&self.returns, &vals);
+        // let sum = vals.clone().iter().sum::<f64>();
+        // let final_val = sum * self.final_mult; 
 
-        return final_val;
+        return final_val * self.final_mult;
     }
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
-        let mut rewards = Vec::<f64>::new();
+        // let mut rewards = Vec::<f64>::new();
+        let mut final_val = 0.;
 
-        for func in &mut self.combined_reward_fns {
-            let val = func.get_final_reward(player, state, previous_action);
-            rewards.push(val);        
+        // for func in &mut self.combined_reward_fns {
+        //     let val = func.get_final_reward(player, state, previous_action);
+        //     rewards.push(val);        
+        // }
+
+        for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
+            let val = func.get_reward(player, state, previous_action);
+            let reward = val * self.combined_reward_weights[i];
+            self.returns[i] += reward;
+            final_val += reward;
         }
         
-        let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
+        // let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
         // self.returns = element_add_vec(&self.returns, &vals);
-        let local_ret = element_add_vec(&self.returns, &vals);
+        // let local_ret = element_add_vec(&self.returns, &vals);
+        let local_ret = self.returns.clone();
         
         // let local_ret = self.returns.clone();
         self.returns.fill(0.);
@@ -474,10 +485,10 @@ impl RewardFn for SB3CombinedLogRewardMultInst {
         // thread::spawn(move || file_put(local_ret, reward_file.as_path()));
         self.reward_sender.send(local_ret).unwrap();
 
-        let sum = vals.clone().iter().sum::<f64>();
-        let final_val = sum * self.final_mult; 
+        // let sum = vals.clone().iter().sum::<f64>();
+        // let final_val = sum * self.final_mult; 
 
-        return final_val;    
+        return final_val * self.final_mult;    
     }
 }
 

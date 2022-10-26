@@ -140,9 +140,9 @@ impl Gym {
         let actions = self._game_match.parse_actions(actions, &self._prev_state);
         self._send_actions(actions);
 
-        let mut state = self._receive_state();
+        let state = self._receive_state();
 
-        let obs = self._game_match.build_observations(&mut state);
+        let obs = self._game_match.build_observations(&state);
         let done = self._game_match.is_done(&state);
         self._prev_state = state.clone();
         let reward = self._game_match.get_rewards(&state, done);

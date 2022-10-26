@@ -15,9 +15,9 @@ pub struct AdvancedObsPadderStacker {
     pos_std: f64,
     ang_std: f64,
     // expanding: bool,
-    default_ball: Vec<Vec<f64>>,
+    default_ball: [[f64; 3]; 3],
     stack_size: usize,
-    ball_stack: Vec<VecDeque<Vec<Vec<f64>>>>
+    ball_stack: Vec<VecDeque<[[f64; 3]; 3]>>
 }
 
 impl AdvancedObsPadderStacker {
@@ -41,9 +41,9 @@ impl AdvancedObsPadderStacker {
             pos_std: 2300.,
             ang_std: PI,
             // expanding: expanding,
-            default_ball: vec![vec![0.; 3]; 3],
+            default_ball: [[0.; 3]; 3],
             stack_size: stack_size,
-            ball_stack: Vec::<VecDeque<Vec<Vec<f64>>>>::with_capacity(8)
+            ball_stack: Vec::<VecDeque<[[f64; 3]; 3]>>::with_capacity(8)
         };
         for _i in 0..8 {
             advobsps.blank_stack()
@@ -62,13 +62,13 @@ impl AdvancedObsPadderStacker {
         // }
     }
 
-    fn add_ball_to_stack(&mut self, mut pos_std: Vec<f64>, mut lin_std: Vec<f64>, mut ang_std: Vec<f64>, index: usize) {
+    fn add_ball_to_stack(&mut self, mut pos_std: [f64; 3], mut lin_std: [f64; 3], mut ang_std: [f64; 3], index: usize) {
         // to match Python functionality unfortunately (using extendleft from deque), this whole part needs to be redone for clarity
         pos_std.reverse();
         lin_std.reverse();
         ang_std.reverse();
 
-        self.ball_stack[index].push_front(vec![pos_std, lin_std, ang_std]);
+        self.ball_stack[index].push_front([pos_std, lin_std, ang_std]);
         self.ball_stack[index].truncate(self.stack_size);
     }
 
@@ -156,16 +156,16 @@ impl ObsBuilder for AdvancedObsPadderStacker {
 
         let ball_stack = &self.ball_stack[player.car_id as usize];
         for ball_vec in ball_stack {
-            let pos_std = &ball_vec[0];
-            let lin_std = &ball_vec[1];
-            let ang_std = &ball_vec[2];
-            obs.extend(ang_std.iter());
-            obs.extend(lin_std.iter());
-            obs.extend(pos_std.iter());
+            let pos_std_stack = &ball_vec[0];
+            let lin_std_stack = &ball_vec[1];
+            let ang_std_stack = &ball_vec[2];
+            obs.extend(ang_std_stack.iter());
+            obs.extend(lin_std_stack.iter());
+            obs.extend(pos_std_stack.iter());
         }
 
         // need to do this better later, this is inefficient
-        self.add_ball_to_stack(pos_std.to_vec(), lin_std.to_vec(), ang_std.to_vec(), player.car_id as usize);
+        self.add_ball_to_stack(pos_std.into_array(), lin_std.into_array(), ang_std.into_array(), player.car_id as usize);
 
         let player_car = self._add_player_to_obs(&mut obs, &player, &ball, inverted, None);
 

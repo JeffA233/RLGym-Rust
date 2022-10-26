@@ -21,7 +21,7 @@ pub struct GameMatch {
     pub action_space: Vec<usize>,
     pub _prev_actions: Vec<Vec<f64>>,
     pub _spectator_ids: Vec<i32>,
-    pub last_touch: i32,
+    // pub last_touch: i32,
     pub _initial_score: i32
 }
 
@@ -95,7 +95,7 @@ impl GameMatch {
             // _prev_actions: Array2::<f64>::zeros((num_agents, 8)),
             _prev_actions: vec![vec![0.; 8]; num_agents],
             _spectator_ids: vec![0; 6],
-            last_touch: -1,
+            // last_touch: -1,
             _initial_score: 0,
         }
     }
@@ -106,18 +106,18 @@ impl GameMatch {
         self._terminal_condition.reset(&initial_state);
         self._reward_fn.reset(&initial_state);
         self._obs_builder.reset(&initial_state);
-        self.last_touch = -1;
+        // self.last_touch = -1;
         self._initial_score = initial_state.blue_score - initial_state.orange_score;
     }
 
-    pub fn build_observations(&mut self, mut state: &mut GameState) -> Vec<Vec<f64>> {
+    pub fn build_observations(&mut self, state: &GameState) -> Vec<Vec<f64>> {
         let mut observations = Vec::<Vec<f64>>::with_capacity(self.agents);
 
-        if state.last_touch == -1 {
-            state.last_touch = self.last_touch.clone();
-        } else {
-            self.last_touch = state.last_touch.clone();
-        }
+        // if state.last_touch == -1 {
+        //     state.last_touch = self.last_touch.clone();
+        // } else {
+        //     self.last_touch = state.last_touch.clone();
+        // }
 
         self._obs_builder.pre_step(&state);
 
@@ -225,4 +225,48 @@ impl GameMatch {
     fn _auto_detech_obs_space(&mut self) {
         self.observation_space = self._obs_builder.get_obs_space();
     }
+}
+
+pub fn async_build_observations(mut _obs_builder: &mut (dyn ObsBuilder + Send), state: &GameState, agents: usize, _prev_actions: &Vec<Vec<f64>>) -> Vec<Vec<f64>> {
+    let mut observations = Vec::<Vec<f64>>::with_capacity(agents);
+
+    // if state.last_touch == -1 {
+    //     state.last_touch = self.last_touch.clone();
+    // } else {
+    //     self.last_touch = state.last_touch.clone();
+    // }
+
+    _obs_builder.pre_step(&state);
+
+    for (i, player) in state.players.iter().enumerate() {
+        observations.push(_obs_builder.build_obs(player, &state, &_prev_actions[i]));
+    }
+
+    // if observations.len() == 1 {
+    //     return observations
+    // } else {
+    //     return observations
+    // }
+    return observations
+}
+
+pub fn async_get_rewards(mut _reward_fn: &mut (dyn RewardFn + Send), state: &GameState, done: bool, agents: usize, _prev_actions: &Vec<Vec<f64>>) -> Vec<f64> {
+    let mut rewards = Vec::<f64>::with_capacity(agents);
+
+    _reward_fn.pre_step(&state);
+
+    for (i, player) in state.players.iter().enumerate() {
+        if done {
+            rewards.push(_reward_fn.get_final_reward(player, &state, &_prev_actions[i]));
+        } else {
+            rewards.push(_reward_fn.get_reward(player, &state, &_prev_actions[i]));
+        }
+    }
+
+    // if rewards.len() == 1 {
+    //     return vec![rewards[0]]
+    // } else {
+    //     return rewards
+    // }
+    return rewards
 }
