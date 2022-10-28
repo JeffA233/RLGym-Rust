@@ -222,7 +222,7 @@ impl GameMatch {
         };
     }
 
-    fn _auto_detech_obs_space(&mut self) {
+    fn _auto_detect_obs_space(&mut self) {
         self.observation_space = self._obs_builder.get_obs_space();
     }
 }

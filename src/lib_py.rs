@@ -14,7 +14,9 @@ pub mod make;
 
 use std::{collections::HashMap, thread::{JoinHandle, self}, time::Duration, iter::zip, path::PathBuf};
 use crossbeam_channel::{bounded, Sender, Receiver};
+use ndarray::Dim;
 use std::path::Path;
+use numpy::PyArray;
 use std::io::{BufWriter, Write};
 use std::io::ErrorKind::PermissionDenied;
 use std::fs::OpenOptions;
@@ -222,7 +224,7 @@ impl GymManager {
                 match out {
                     Ok(packet) => packet,
                     Err(err) => {
-                        println!("recv timed out in new func in GymManager: {err}");
+                        println!("recv timed out in new func: {err}");
                         continue;
                     }
                 };
@@ -245,7 +247,7 @@ impl GymManager {
         }
     }
     
-    pub fn reset(&self) -> PyResult<Vec<Vec<f64>>> {
+    pub fn reset(&self, py: Python<'_>) -> PyResult<Py<PyArray<f64, Dim<[usize; 2]>>>> {
         for sender in &self.sends {
             sender.send(ManagerPacket::Reset).unwrap();
         }
@@ -262,7 +264,9 @@ impl GymManager {
                 flat_obs.push(internal_vec);
             }
         }
-        return Ok(flat_obs)
+        let flat_obs_numpy = PyArray::from_vec2(py, &flat_obs).unwrap().to_owned();
+        // return Ok(flat_obs)
+        return Ok(flat_obs_numpy)
     }
 
     pub fn step_async(&mut self, actions: Vec<Vec<f64>>) -> PyResult<()> {
@@ -276,7 +280,7 @@ impl GymManager {
         Ok(())
     }
 
-    pub fn step_wait(&mut self) -> PyResult<(Vec<Vec<f64>>, Vec<f64>, Vec<bool>, Vec<HashMap<String, f64>>, Vec<Option<Vec<Vec<f64>>>>)> {
+    pub fn step_wait(&mut self, py: Python<'_>) -> PyResult<(Py<PyArray<f64, Dim<[usize; 2]>>>, Vec<f64>, Vec<bool>, Vec<HashMap<String, f64>>, Vec<Option<Vec<Vec<f64>>>>)> {
         let mut flat_obs = Vec::<Vec<f64>>::with_capacity(self.total_agents);
         let mut flat_rewards = Vec::<f64>::with_capacity(self.total_agents);
         let mut flat_dones = Vec::<bool>::with_capacity(self.total_agents);
@@ -305,8 +309,9 @@ impl GymManager {
             flat_dones.extend(vec![done; *n_agents as usize]);
             flat_infos.extend(vec![info; *n_agents as usize]);
         }
+        let flat_obs_numpy = PyArray::from_vec2(py, &flat_obs).unwrap().to_owned();
         self.waiting = false;
-        return Ok((flat_obs, flat_rewards, flat_dones, flat_infos, flat_term_obs));
+        return Ok((flat_obs_numpy, flat_rewards, flat_dones, flat_infos, flat_term_obs));
     }
 
     pub fn close(&mut self) -> PyResult<()> {

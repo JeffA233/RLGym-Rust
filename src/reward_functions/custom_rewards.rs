@@ -1,4 +1,4 @@
-use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::{element_add_vec, element_mult_vec}, common_values::{BLUE_TEAM}};
+use crate::{gamestates::{game_state::GameState, player_data::PlayerData}, math::{element_add_vec, element_mult_vec}, common_values::BLUE_TEAM};
 
 use super::{common_rewards::{player_ball_rewards::VelocityPlayerToBallReward, ball_goal_rewards::VelocityBallToGoalReward, misc_rewards::{SaveBoostReward, VelocityReward, EventReward}}, default_reward::RewardFn};
 
@@ -125,10 +125,18 @@ impl RewardFn for LeftKickoffReward {
                 self.kickoff_id_orange = -1;
 
                 for car in &state.players {
-                    if car.team_num == BLUE_TEAM {
+                    // find a car on each team to compare against
+                    let mut blue_car_found = false;
+                    let mut orange_car_found = false;
+                    if car.team_num == BLUE_TEAM && !blue_car_found {
                         blue_car = car;
-                    } else {
+                        blue_car_found = true;
+                    } else if !orange_car_found {
                         orange_car = car;
+                        orange_car_found = true;
+                    }
+                    if blue_car_found && orange_car_found {
+                        break;
                     }
                 }
 
