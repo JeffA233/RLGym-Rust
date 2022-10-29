@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pyo3 = { version = "0.16.5", features = ["extension-module"] }
-numpy = { version = "0.16.2"}
+pyo3 = { version = "0.17.1", features = ["extension-module"] }
 ndarray = { version = "0.15.4"}
+numpy = { version = "0.17.2"}
 rand = { version = "0.8.5"}
 gym = { version = "2.2.1"}
 subprocess = { version = "0.2.9"}
@@ -24,6 +24,7 @@ webbrowser = { version = "0.8.0"}
 fs2 = { version = "0.4.3"}
 zip = { version = "0.6.2"}
 crossbeam-channel = { version = "0.5.6"}
+rayon = { version = "1.5.3"}
 [dependencies.windows]
 version = "0.41.0"
 features = [

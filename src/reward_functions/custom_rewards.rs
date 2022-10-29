@@ -12,6 +12,7 @@ use std::io::ErrorKind::*;
 use fs2::FileExt;
 use std::thread;
 use std::path::Path;
+use rayon::prelude::*;
 
 
 /// returns configured custom rewards for Matrix usage, this part is meant only for the non-Rust multi-instance configuration
@@ -448,14 +449,21 @@ impl RewardFn for SB3CombinedLogRewardMultInst {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
-        let mut final_val = 0.;
+        // let mut final_val = 0.;
+        let final_val: f64;
 
-        for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
+        // for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
+        //     let val = func.get_reward(player, state, previous_action);
+        //     let reward = val * self.combined_reward_weights[i];
+        //     self.returns[i] += reward;
+        //     final_val += reward;
+        // }
+        final_val = self.combined_reward_fns.par_iter_mut().zip(&mut self.returns).zip(&mut self.combined_reward_weights).map(|((func, ret), weight)| {
             let val = func.get_reward(player, state, previous_action);
-            let reward = val * self.combined_reward_weights[i];
-            self.returns[i] += reward;
-            final_val += reward;
-        }
+            let reward = val * *weight;
+            *ret += reward;
+            reward
+        }).sum();
         
         // let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
         // self.returns = element_add_vec(&self.returns, &vals);
@@ -467,19 +475,26 @@ impl RewardFn for SB3CombinedLogRewardMultInst {
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
         // let mut rewards = Vec::<f64>::new();
-        let mut final_val = 0.;
+        // let mut final_val = 0.;
+        let final_val: f64;
 
         // for func in &mut self.combined_reward_fns {
         //     let val = func.get_final_reward(player, state, previous_action);
         //     rewards.push(val);        
         // }
 
-        for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
-            let val = func.get_reward(player, state, previous_action);
-            let reward = val * self.combined_reward_weights[i];
-            self.returns[i] += reward;
-            final_val += reward;
-        }
+        // for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
+        //     let val = func.get_reward(player, state, previous_action);
+        //     let reward = val * self.combined_reward_weights[i];
+        //     self.returns[i] += reward;
+        //     final_val += reward;
+        // }
+        final_val = self.combined_reward_fns.par_iter_mut().zip(&mut self.returns).zip(&mut self.combined_reward_weights).map(|((func, ret), weight)| {
+            let val = func.get_final_reward(player, state, previous_action);
+            let reward = val * *weight;
+            *ret += reward;
+            reward
+        }).sum();
         
         // let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
         // self.returns = element_add_vec(&self.returns, &vals);

@@ -1,5 +1,7 @@
 // use core::num;
 
+use rayon::prelude::*;
+
 use crate::common_values::BLUE_TEAM;
 use crate::gamestates::player_data::PlayerData;
 use crate::gamestates::physics_object::PhysicsObject;
@@ -78,7 +80,7 @@ impl GameState {
         let num_ball_packets = 1;
         let state_val_len = state_vals.len();
 
-        let num_player_packets = (state_val_len as i32 - num_ball_packets as i32 * BALL_STATE_LENGTH as i32 - start as i32 - BOOST_PAD_LENGTH as i32) / PLAYER_INFO_LENGTH  as i32;
+        let num_player_packets = ((state_val_len as i32 - num_ball_packets as i32 * BALL_STATE_LENGTH as i32 - start as i32 - BOOST_PAD_LENGTH as i32) / PLAYER_INFO_LENGTH  as i32) as usize;
 
         self.blue_score = state_vals[1] as i32;
         self.orange_score = state_vals[2] as i32;
@@ -94,21 +96,57 @@ impl GameState {
         self.inverted_ball.decode_ball_data(&state_vals[start..start+BALL_STATE_LENGTH]);
         start = start + (BALL_STATE_LENGTH / 2);
 
-        self.players.reserve(num_player_packets as usize);
+        self.players.reserve(num_player_packets);
 
-        for _ in 0..num_player_packets {
-            let player = self.decode_player(&state_vals[start..start+PLAYER_INFO_LENGTH]);
-            if player.ball_touched {
-                self.last_touch = player.car_id;
-            }
-            self.players.push(player);
-            start = start + PLAYER_INFO_LENGTH;
-
-        }
+        // for _ in 0..num_player_packets {
+        //     let player = self.decode_player(&state_vals[start..start+PLAYER_INFO_LENGTH]);
+        //     if player.ball_touched {
+        //         self.last_touch = player.car_id;
+        //     }
+        //     self.players.push(player);
+        //     start = start + PLAYER_INFO_LENGTH;
+        // }
+        self.players = ((start..start+(PLAYER_INFO_LENGTH*num_player_packets)).step_by(PLAYER_INFO_LENGTH)).collect::<Vec<usize>>()
+            .into_par_iter()
+            .map(|start|{
+                self.decode_player_precompute(&state_vals[start..start+PLAYER_INFO_LENGTH])
+            })
+            .collect::<Vec<PlayerData>>();
+        
         self.players.sort_unstable_by_key(|p| p.car_id);
     }
 
-    fn decode_player(&self, full_player_data: &[f64]) -> PlayerData {
+    // fn decode_player(&self, full_player_data: &[f64]) -> PlayerData {
+    //     let mut player_data = PlayerData::new();
+
+    //     let mut start: usize = 2;
+
+    //     player_data.car_data.decode_car_data(&full_player_data[start..start+PLAYER_CAR_STATE_LENGTH]);
+    //     start = start + PLAYER_CAR_STATE_LENGTH;
+
+    //     player_data.inverted_car_data.decode_car_data(&full_player_data[start..start+PLAYER_CAR_STATE_LENGTH]);
+    //     start = start + PLAYER_CAR_STATE_LENGTH;
+
+    //     let tertiary_data = &full_player_data[start..start+PLAYER_TERTIARY_INFO_LENGTH];
+
+    //     player_data.match_goals = tertiary_data[0] as i64;
+    //     player_data.match_saves = tertiary_data[1] as i64;
+    //     player_data.match_shots = tertiary_data[2] as i64;
+    //     player_data.match_demolishes = tertiary_data[3] as i64;
+    //     player_data.boost_pickups = tertiary_data[4] as i64;
+    //     player_data.is_demoed = tertiary_data[5] > 0.;
+    //     player_data.on_ground = tertiary_data[6] > 0.;
+    //     player_data.ball_touched = tertiary_data[7] > 0.;
+    //     player_data.has_jump = tertiary_data[8] > 0.;
+    //     player_data.has_flip = tertiary_data[9] > 0.;
+    //     player_data.boost_amount = tertiary_data[10];
+    //     player_data.car_id = full_player_data[0] as i32;
+    //     player_data.team_num = full_player_data[1] as i32;
+        
+    //     return player_data
+    // }
+
+    fn decode_player_precompute(&self, full_player_data: &[f64]) -> PlayerData {
         let mut player_data = PlayerData::new();
 
         let mut start: usize = 2;
@@ -134,6 +172,12 @@ impl GameState {
         player_data.boost_amount = tertiary_data[10];
         player_data.car_id = full_player_data[0] as i32;
         player_data.team_num = full_player_data[1] as i32;
+
+        player_data.car_data.euler_angles();
+        player_data.inverted_car_data.euler_angles();
+
+        player_data.car_data.rotation_mtx();
+        player_data.inverted_car_data.rotation_mtx();
         
         return player_data
     }
