@@ -12,7 +12,7 @@ use std::io::ErrorKind::*;
 use fs2::FileExt;
 use std::thread;
 use std::path::Path;
-// use rayon::prelude::*;
+use rayon::prelude::*;
 
 
 /// returns configured custom rewards for Matrix usage, this part is meant only for the non-Rust multi-instance configuration
@@ -27,13 +27,13 @@ pub fn get_custom_reward_func() -> Box<dyn RewardFn + Send> {
     reward_fn_vec.push(Box::new(JumpTouchReward::new(Some(150.), None)));
     reward_fn_vec.push(Box::new(VelocityReward::new(None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, None, None, Some(5.), Some(45.), Some(25.), None)));
-    reward_fn_vec.push(Box::new(EventReward::new(None, Some(100.), None, None, None, None, None, None)));
-    reward_fn_vec.push(Box::new(EventReward::new(None, None, Some(-100.), None, None, None, None, None)));
+    reward_fn_vec.push(Box::new(EventRewardTeamGoal::new(100.)));
+    reward_fn_vec.push(Box::new(EventRewardConcede::new(-100.)));
     reward_fn_vec.push(Box::new(JumpReward::new()));
     reward_fn_vec.push(Box::new(DribbleAirTouchReward::new(Some(180.), None, None, Some(0.8))));
 
     // let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
-    let weights = vec![0.03, 0.2, 10.0, 0.06, 0.7, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
+    let weights = vec![0.01, 0.2, 15.0, 0.12, 1.0, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
     assert!(weights.len() == reward_fn_vec.len());
 
     Box::new(SB3CombinedLogReward::new(
@@ -56,13 +56,13 @@ pub fn get_custom_reward_func_mult_inst(reward_send_chan: Sender<Vec<f64>>) -> B
     reward_fn_vec.push(Box::new(JumpTouchReward::new(Some(150.), None)));
     reward_fn_vec.push(Box::new(VelocityReward::new(None)));
     reward_fn_vec.push(Box::new(EventReward::new(None, None, None, None, Some(5.), Some(45.), Some(25.), None)));
-    reward_fn_vec.push(Box::new(EventReward::new(None, Some(100.), None, None, None, None, None, None)));
-    reward_fn_vec.push(Box::new(EventReward::new(None, None, Some(-100.), None, None, None, None, None)));
+    reward_fn_vec.push(Box::new(EventRewardTeamGoal::new(100.)));
+    reward_fn_vec.push(Box::new(EventRewardConcede::new(-100.)));
     reward_fn_vec.push(Box::new(JumpReward::new()));
     reward_fn_vec.push(Box::new(DribbleAirTouchReward::new(Some(180.), None, None, Some(0.8))));
 
     // let weights = vec![0.03, 0.2, 5.0, 0.01, 0.7, 2.0, 0.02, 1.0, 1.0, 1.0, 0.006];
-    let weights = vec![0.03, 0.2, 10.0, 0.06, 0.7, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
+    let weights = vec![0.03, 0.2, 15.0, 0.06, 0.7, 3.0, 0.03, 1.0, 1.0, 1.0, 0.006, 6.0];
     assert!(weights.len() == reward_fn_vec.len());
 
     Box::new(SB3CombinedLogRewardMultInst::new(
@@ -332,6 +332,106 @@ impl RewardFn for GatherBoostReward {
     }
 }
 
+pub struct EventRewardTeamGoal {
+    weight: f64,
+    last_registered_value_blue: i32,
+    last_registered_value_orange: i32
+}
+
+impl EventRewardTeamGoal {
+    pub fn new(team_goal: f64) -> EventRewardTeamGoal {
+        EventRewardTeamGoal {
+            weight: team_goal,
+            last_registered_value_blue: 0,
+            last_registered_value_orange: 0
+        }
+    }
+
+    fn _extract_values(player: &PlayerData, state: &GameState) -> i32 {
+        let team: i32;
+        if player.team_num == BLUE_TEAM {
+            team = state.blue_score;
+        } else {
+            team = state.orange_score;
+        }
+
+        return team
+    }
+}
+
+impl RewardFn for EventRewardTeamGoal {
+    fn reset(&mut self, initial_state: &GameState) {
+        self.last_registered_value_blue = initial_state.blue_score;
+        self.last_registered_value_orange = initial_state.orange_score;
+    }
+
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
+        let ret: i32;
+        let curr_val = EventRewardTeamGoal::_extract_values(player, state);
+        if player.team_num == BLUE_TEAM {
+            ret = curr_val - self.last_registered_value_blue;
+        } else {
+            ret = curr_val - self.last_registered_value_orange;
+        }
+
+        return ret as f64 * self.weight
+    }
+
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
+        self.get_reward(player, state, previous_action)
+    }
+}
+
+pub struct EventRewardConcede {
+    weight: f64,
+    last_registered_value_blue: i32,
+    last_registered_value_orange: i32
+}
+
+impl EventRewardConcede {
+    pub fn new(team_goal: f64) -> EventRewardConcede {
+        EventRewardConcede {
+            weight: team_goal,
+            last_registered_value_blue: 0,
+            last_registered_value_orange: 0
+        }
+    }
+
+    fn _extract_values(player: &PlayerData, state: &GameState) -> i32 {
+        let opponent: i32;
+        if player.team_num == BLUE_TEAM {
+            opponent = state.orange_score;
+        } else {
+            opponent = state.blue_score;
+        }
+
+        return opponent
+    }
+}
+
+impl RewardFn for EventRewardConcede {
+    fn reset(&mut self, initial_state: &GameState) {
+        self.last_registered_value_orange = initial_state.orange_score;
+        self.last_registered_value_blue = initial_state.blue_score;
+    }
+
+    fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
+        let ret: i32;
+        let curr_val = EventRewardConcede::_extract_values(player, state);
+        if player.team_num == BLUE_TEAM {
+            ret = curr_val - self.last_registered_value_orange;
+        } else {
+            ret = curr_val - self.last_registered_value_blue;
+        }
+
+        return ret as f64 * self.weight
+    }
+
+    fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
+        self.get_reward(player, state, previous_action)
+    }
+}
+
 /// "Wrapper" that collects a set of boxed reward functions and iterates through them to get a single float. 
 /// Has other functionality including reward logging that sends info to a separate singular thread which writes for all instances
 /// instead of each instance having its own writer
@@ -449,21 +549,21 @@ impl RewardFn for SB3CombinedLogRewardMultInst {
     }
 
     fn get_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
-        let mut final_val = 0.;
-        // let final_val: f64;
+        // let mut final_val = 0.;
+        let final_val: f64;
 
-        for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
-            let val = func.get_reward(player, state, previous_action);
-            let reward = val * self.combined_reward_weights[i];
-            self.returns[i] += reward;
-            final_val += reward;
-        }
-        // final_val = self.combined_reward_fns.par_iter_mut().zip(&mut self.returns).zip(&mut self.combined_reward_weights).map(|((func, ret), weight)| {
+        // for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
         //     let val = func.get_reward(player, state, previous_action);
-        //     let reward = val * *weight;
-        //     *ret += reward;
-        //     reward
-        // }).sum();
+        //     let reward = val * self.combined_reward_weights[i];
+        //     self.returns[i] += reward;
+        //     final_val += reward;
+        // }
+        final_val = self.combined_reward_fns.par_iter_mut().zip(&mut self.returns).zip(&mut self.combined_reward_weights).map(|((func, ret), weight)| {
+            let val = func.get_reward(player, state, previous_action);
+            let reward = val * *weight;
+            *ret += reward;
+            reward
+        }).sum();
         
         // let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
         // self.returns = element_add_vec(&self.returns, &vals);
@@ -475,26 +575,26 @@ impl RewardFn for SB3CombinedLogRewardMultInst {
 
     fn get_final_reward(&mut self, player: &PlayerData, state: &GameState, previous_action: &Vec<f64>) -> f64 {
         // let mut rewards = Vec::<f64>::new();
-        let mut final_val = 0.;
-        // let final_val: f64;
+        // let mut final_val = 0.;
+        let final_val: f64;
 
         // for func in &mut self.combined_reward_fns {
         //     let val = func.get_final_reward(player, state, previous_action);
         //     rewards.push(val);        
         // }
 
-        for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
+        // for (i, func) in self.combined_reward_fns.iter_mut().enumerate() {
+        //     let val = func.get_reward(player, state, previous_action);
+        //     let reward = val * self.combined_reward_weights[i];
+        //     self.returns[i] += reward;
+        //     final_val += reward;
+        // }
+        final_val = self.combined_reward_fns.par_iter_mut().zip(&mut self.returns).zip(&mut self.combined_reward_weights).map(|((func, ret), weight)| {
             let val = func.get_final_reward(player, state, previous_action);
-            let reward = val * self.combined_reward_weights[i];
-            self.returns[i] += reward;
-            final_val += reward;
-        }
-        // final_val = self.combined_reward_fns.par_iter_mut().zip(&mut self.returns).zip(&mut self.combined_reward_weights).map(|((func, ret), weight)| {
-        //     let val = func.get_final_reward(player, state, previous_action);
-        //     let reward = val * *weight;
-        //     *ret += reward;
-        //     reward
-        // }).sum();
+            let reward = val * *weight;
+            *ret += reward;
+            reward
+        }).sum();
         
         // let vals = element_mult_vec(&rewards, &self.combined_reward_weights);
         // self.returns = element_add_vec(&self.returns, &vals);

@@ -23,6 +23,7 @@ use std::fs::OpenOptions;
 
 use crate::gym::Gym;
 use pyo3::prelude::*;
+// use rayon::prelude::*;
 
 use obs_builders::aspo4_array::AdvancedObsPadderStacker;
 use reward_functions::{custom_rewards::{get_custom_reward_func, get_custom_reward_func_mult_inst}};
@@ -251,6 +252,7 @@ impl GymManager {
         for sender in &self.sends {
             sender.send(ManagerPacket::Reset).unwrap();
         }
+        // self.sends.par_iter().for_each(|send| send.send(ManagerPacket::Reset).unwrap());
 
         // flat obs means that the obs should be of shape [num_envs, obs_size] (except this is a Vec so it's not a "shape" but the length)
         let mut flat_obs = Vec::<Vec<f64>>::new();
