@@ -1,6 +1,6 @@
 // use core::num;
 
-use rayon::prelude::*;
+// use rayon::prelude::*;
 
 use crate::common_values::BLUE_TEAM;
 use crate::gamestates::player_data::PlayerData;
@@ -107,7 +107,7 @@ impl GameState {
         //     start = start + PLAYER_INFO_LENGTH;
         // }
         self.players = ((start..start+(PLAYER_INFO_LENGTH*num_player_packets)).step_by(PLAYER_INFO_LENGTH)).collect::<Vec<usize>>()
-            .into_par_iter()
+            .into_iter()
             .map(|start|{
                 self.decode_player_precompute(&state_vals[start..start+PLAYER_INFO_LENGTH])
             })
@@ -173,8 +173,8 @@ impl GameState {
         player_data.car_id = full_player_data[0] as i32;
         player_data.team_num = full_player_data[1] as i32;
 
-        player_data.car_data.euler_angles();
-        player_data.inverted_car_data.euler_angles();
+        // player_data.car_data.euler_angles();
+        // player_data.inverted_car_data.euler_angles();
 
         player_data.car_data.rotation_mtx();
         player_data.inverted_car_data.rotation_mtx();

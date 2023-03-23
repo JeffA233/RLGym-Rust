@@ -73,7 +73,7 @@ impl Gym {
         }
         // let proc_pid = proc.pid().unwrap();
         comm_handler.open_pipe(Some(&pipe_name), None);
-        comm_handler.send_message(None, Some(RLGYM_CONFIG_MESSAGE_HEADER.to_vec()), Some(game_match.get_config()));
+        comm_handler.send_message(None, Some(RLGYM_CONFIG_MESSAGE_HEADER.to_vec()), Some(game_match.get_config().to_vec()));
         // if force_paging {
         //     page_rocket_league()
         // }
@@ -138,7 +138,12 @@ impl Gym {
 
     pub fn step(&mut self, actions: Vec<Vec<f64>>) -> (Vec<Vec<f64>>, Vec<f64>, bool, HashMap<String, f64>) {
         let actions = self._game_match.parse_actions(actions, &self._prev_state);
-        self._send_actions(actions);
+        let act_res = self._send_actions(actions);
+
+        if !act_res {
+            self.close();
+            panic!("closed gym because of action error")
+        }
 
         let state = self._receive_state();
 
@@ -152,23 +157,35 @@ impl Gym {
     }
 
     pub fn close(&mut self) {
-        self._comm_handler.close_pipe();
         self._game_process.terminate().unwrap();
+        self._comm_handler.close_pipe();
     }
 
     fn _receive_state(&mut self) -> GameState {
         let message = self._comm_handler.receive_message(Some(RLGYM_STATE_MESSAGE_HEADER.to_vec()));
+        if message.body[0] == -999999. {
+            self.close();
+            panic!("closed gym because of comm error");
+        }
         return self._game_match.parse_state(message.body)
     }
 
-    fn _send_actions(&mut self, actions: Vec<Vec<f64>>) {
+    fn _send_actions(&mut self, actions: Vec<Vec<f64>>) -> bool {
+        let mut result = true;
         for action in &actions {
-            assert!(action.len() == 8, "action was not of length 8")
+            // assert!(action.len() == 8, "action was not of length 8");
+            if action.len() != 8 {
+                let act_str = format!("{:?}", action);
+                println!("action was not of length 8, action was: {act_str}");
+                result = false;
+            }
         }
 
         let actions_formatted = self._game_match.format_actions(actions);
 
         self._comm_handler.send_message(None, Some(RLGYM_AGENT_ACTION_IMMEDIATE_RESPONSE_MESSAGE_HEADER.to_vec()), Some(actions_formatted));
+
+        return result
     }
 }
 

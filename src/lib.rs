@@ -17,6 +17,7 @@ use crossbeam_channel::{bounded, Sender, Receiver};
 use ndarray::Dim;
 use std::path::Path;
 use numpy::PyArray;
+use itertools::izip;
 use std::io::{BufWriter, Write};
 use std::io::ErrorKind::PermissionDenied;
 use std::fs::OpenOptions;
@@ -25,19 +26,14 @@ use crate::gym::Gym;
 use pyo3::prelude::*;
 // use rayon::prelude::*;
 
-use obs_builders::aspo4_array::AdvancedObsPadderStacker;
-use reward_functions::{custom_rewards::{get_custom_reward_func, get_custom_reward_func_mult_inst}};
-use action_parsers::necto_parser_2::NectoAction;
-use conditionals::{custom_conditions::CombinedTerminalConditions};
+use obs_builders::{aspo4_array_2::AdvancedObsPadderStacker2, obs_builder::ObsBuilder};
+use reward_functions::custom_rewards::{get_custom_reward_func, get_custom_reward_func_mult_inst};
+use action_parsers::{necto_parser_2::NectoAction, continous_act::ContinuousAction};
+// use action_parsers::discrete_act::DiscreteAction;
+use conditionals::custom_conditions::CombinedTerminalConditions;
 use state_setters::custom_state_setters::custom_state_setters;
-use windows::Win32::Foundation::{CloseHandle};
+use windows::Win32::Foundation::CloseHandle;
 
-
-/// Formats the sum of two numbers as string.
-// #[pyfunction]
-// fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-//     Ok((a + b).to_string())
-// }
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -61,10 +57,13 @@ impl GymWrapper {
     pub fn new(team_size: i32, tick_skip: usize, seed: Option<u64>) -> Self {
     let term_cond = Box::new(CombinedTerminalConditions::new(tick_skip));
     let reward_fn = get_custom_reward_func();
-    let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
+    let obs_build = Box::new(AdvancedObsPadderStacker2::new(None, Some(1)));
+    let mut obs_build_vec = Vec::<Box<(dyn ObsBuilder + Send + 'static)>>::new();
+    obs_build_vec.push(obs_build);
     let act_parse = Box::new(NectoAction::new());
     let state_set = Box::new(custom_state_setters(team_size, seed));
-    let gym = make::make(Some(100000.), 
+    let gym = make::make(
+        Some(100000.), 
         Some(tick_skip), 
         Some(true), 
         Some(team_size as usize), 
@@ -73,7 +72,7 @@ impl GymWrapper {
         None,  
         term_cond, 
         reward_fn, 
-        obs_build, 
+        obs_build_vec, 
         act_parse, 
         state_set, 
         None, 
@@ -113,22 +112,26 @@ pub struct GymWrapperRust {
 
 impl GymWrapperRust {
     /// create the gym wrapper to be used (team_size: i32, tick_skip: usize)
-    pub fn new(team_size: i32, tick_skip: usize, pipe_name: Option<usize>, sender: Sender<Vec<f64>>) -> Self {
+    pub fn new(team_size: i32, gravity: f64, boost: f64, self_play: bool, tick_skip: usize, pipe_name: Option<usize>, sender: Sender<Vec<f64>>) -> Self {
     let term_cond = Box::new(CombinedTerminalConditions::new(tick_skip));
     let reward_fn = get_custom_reward_func_mult_inst(sender);
-    let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
+    let mut obs_build_vec = Vec::<Box<dyn ObsBuilder + Send>>::new();
+    for i in 0..team_size*2 {
+        obs_build_vec.push(Box::new(AdvancedObsPadderStacker2::new(None, Some(1))));
+    }
+    // let obs_build = Box::new(AdvancedObsPadderStacker::new(None, Some(5)));
     let act_parse = Box::new(NectoAction::new());
     let state_set = Box::new(custom_state_setters(team_size, None));
     let gym = make::make(Some(100000.), 
         Some(tick_skip), 
-        Some(true), 
+        Some(self_play), 
         Some(team_size as usize), 
-        None, 
-        None,
+        Some(gravity), 
+        Some(boost),
         pipe_name, 
         term_cond, 
         reward_fn, 
-        obs_build, 
+        obs_build_vec, 
         act_parse, 
         state_set, 
         None, 
@@ -192,20 +195,31 @@ pub enum WorkerPacket {
 #[pymethods]
 impl GymManager {
     #[new]
-    pub fn new(match_nums: Vec<i32>, tick_skip: usize) -> Self {
+    pub fn new(match_nums: Vec<i32>, gravity_nums: Vec<f64>, boost_nums: Vec<f64>, self_plays: Vec<bool>, tick_skip: usize) -> Self {
         let mut recv_vec = Vec::<Receiver<WorkerPacket>>::new();
         let mut send_vec = Vec::<Sender<ManagerPacket>>::new();
         let mut thrd_vec = Vec::<JoinHandle<()>>::new();
         let mut curr_id = 0;
 
-        let (reward_send, reward_recv) = bounded(100);
+        let (reward_send, reward_recv) = bounded(20000);
         let reward_file_loc = r"F:\Users\Jeffrey\AppData\Local\Temp";
         let reward_file_name = format!(r"{}\rewards.txt", reward_file_loc);
         let reward_path = Path::new(&reward_file_name).to_owned();
         // let reward_thrd = thread::spawn(move || file_put_worker(reward_recv, reward_path));
         thread::spawn(move || file_put_worker(reward_recv, reward_path));
 
-        for match_num in match_nums.clone() {
+        // redo agent numbers for self-play case, need to redo to just be agents on one team instead of for whole match
+        let mut corrected_match_nums = Vec::<i32>::new();
+
+        for (match_num, self_play) in match_nums.iter().zip(self_plays.iter()) {
+            if *self_play {
+                corrected_match_nums.push(*match_num);
+            } else {
+                corrected_match_nums.push(*match_num/2);
+            }
+        }
+
+        for (match_num, gravity, boost, self_play) in izip!(match_nums.clone(), gravity_nums.clone(), boost_nums.clone(), self_plays.clone()) {
             let mut retry_loop = true;
             // try to loop until the game successfully launches
             while retry_loop {
@@ -214,9 +228,9 @@ impl GymManager {
                 let rx: Receiver<ManagerPacket>;
                 let tx: Sender<WorkerPacket>;
                 let recv_local: Receiver<WorkerPacket>;
-                (send_local, rx) = bounded(0);
-                (tx, recv_local) = bounded(0);
-                let thrd1 = thread::spawn(move || worker(match_num/2, tick_skip, tx, rx, curr_id as usize, reward_send_local));
+                (send_local, rx) = bounded(1);
+                (tx, recv_local) = bounded(1);
+                let thrd1 = thread::spawn(move || worker(match_num/2, gravity, boost, self_play, tick_skip, tx, rx, curr_id as usize, reward_send_local));
                 curr_id += 1;
 
                 // wait for worker to send back a packet or if it never does then restart loop to try again
@@ -243,8 +257,8 @@ impl GymManager {
             // threads: thrd_vec,
             sends: send_vec,
             recvs: recv_vec,
-            n_agents_per_env: match_nums.clone(),
-            total_agents: match_nums.iter().sum::<i32>() as usize
+            n_agents_per_env: corrected_match_nums.clone(),
+            total_agents: corrected_match_nums.iter().sum::<i32>() as usize
         }
     }
     
@@ -272,11 +286,11 @@ impl GymManager {
     }
 
     pub fn step_async(&mut self, actions: Vec<Vec<f64>>) -> PyResult<()> {
-        // let mut i: usize = 0;
-        for (sender, action) in zip(&self.sends, actions) {
-            let acts = vec![action];
+        let mut i: usize = 0;
+        for (sender, agent_num) in zip(&self.sends, &self.n_agents_per_env) {
+            let acts = actions[i..i+*agent_num as usize].to_vec();
             sender.send(ManagerPacket::Step { actions: acts }).unwrap();
-            // i += 1;
+            i += *agent_num as usize
         }
         self.waiting = true;
         Ok(())
@@ -324,11 +338,11 @@ impl GymManager {
     }
 }
 
-pub fn worker(team_num: i32, tick_skip: usize, send_chan: Sender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>, pipe_name: usize, reward_sender: Sender<Vec<f64>>) {
+pub fn worker(team_num: i32, gravity: f64, boost: f64, self_play: bool, tick_skip: usize, send_chan: Sender<WorkerPacket>, rec_chan: Receiver<ManagerPacket>, pipe_name: usize, reward_sender: Sender<Vec<f64>>) {
     // launches env and then sends the reset action to a new thread since receiving a message from the plugin will be blocking,
     // waits for x seconds for thread to return the env if it is a success else tries to force close the pipe and 
     // make the gym crash (which should terminate the game)
-    let mut env = GymWrapperRust::new(team_num, tick_skip, Some(pipe_name), reward_sender);
+    let mut env = GymWrapperRust::new(team_num, gravity, boost, self_play, tick_skip, Some(pipe_name), reward_sender);
     let pipe_id = env.gym._comm_handler._pipe;
     let thrd = thread::spawn(move || {env.reset(); return env;});
     let mut i = 0;
@@ -340,6 +354,7 @@ pub fn worker(team_num: i32, tick_skip: usize, send_chan: Sender<WorkerPacket>, 
         }
     }
     if i > 70 {
+        // trying to force close pipe to remove the blocking call to the pipe in the gym
         unsafe {
             CloseHandle(pipe_id);
         }
@@ -438,7 +453,7 @@ fn file_put_worker(receiver: Receiver<Vec<f64>>, reward_file: PathBuf) {
             
             i += 1;
 
-            if receiver.is_empty() || i > 3 {
+            if receiver.is_empty() || i > 1000 {
                 let out = buf.flush();
                 match out {
                     Ok(out) => out,

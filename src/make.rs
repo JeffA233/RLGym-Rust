@@ -12,7 +12,7 @@ pub fn make(
     pipe_name: Option<usize>,
     terminal_condition: Box<dyn TerminalCondition + Send>,
     reward_fn: Box<dyn RewardFn + Send>,
-    obs_builder: Box<dyn ObsBuilder + Send>,
+    obs_builder: Vec<Box<dyn ObsBuilder + Send>>,
     action_parser: Box<dyn ActionParser + Send>,
     state_setter: Box<dyn StateSetter + Send>,
     launch_preference: Option<String>,

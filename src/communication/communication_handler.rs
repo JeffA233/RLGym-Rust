@@ -10,7 +10,7 @@ use windows::Win32::Foundation::{HANDLE, BOOL, CloseHandle, HWND, GetLastError};
 use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile, PIPE_ACCESS_DUPLEX};
 // use windows::Win32::System::IO::OVERLAPPED;
 use windows::Win32::System::Pipes::{PeekNamedPipe, CreateNamedPipeA, PIPE_TYPE_MESSAGE, PIPE_READMODE_MESSAGE, PIPE_WAIT, ConnectNamedPipe};
-use windows::Win32::UI::WindowsAndMessaging::{FindWindowA, IsWindowVisible, DestroyWindow};
+use windows::Win32::UI::WindowsAndMessaging::{FindWindowA, IsWindowVisible, DestroyWindow, ShowWindow, SW_MINIMIZE};
 use windows::s;
 use windows::Win32::Foundation::WIN32_ERROR;
 use windows::core::{PCSTR};
@@ -80,7 +80,9 @@ impl CommunicationHandler {
                     let err_message = h_result.message();
                     println!("ReadFile error: {err_message}");
                 }
-                continue
+                if i < 9 {
+                    continue
+                }
             }
 
             // let bytes = out.0 as u32;
@@ -120,7 +122,10 @@ impl CommunicationHandler {
             }
             if i == 9 {
                 self.close_pipe();
-                panic!("receive message took too many attempts (probably too many stacked pipe actions?)")
+                // panic!("receive message took too many attempts (probably too many stacked pipe actions?)")
+                println!("receive message took too many attempts (probably too many stacked pipe actions?)");
+                received_message.body = vec![-999999.];
+                break
             }
         }
         return received_message
@@ -219,7 +224,8 @@ impl CommunicationHandler {
                     win_handle = FindWindowA(None, s!("DIEmWin"));
                     is_visible = IsWindowVisible(win_handle);
                     if is_visible.as_bool() {
-                        DestroyWindow(win_handle).expect("window could not be destroyed");
+                        // DestroyWindow(win_handle).expect("window could not be destroyed");
+                        ShowWindow(win_handle, SW_MINIMIZE);
                         println!("DIEmWin detector successfully closed window");
                     }
                 }
@@ -252,7 +258,7 @@ impl CommunicationHandler {
 
         match out {
             Ok(out) => self._pipe = out,
-            Err(err) => panic!("CreateNamedPipeA Err: {err}")
+            Err(err) =>println!("Error creating named pipe: {err}")
         };
         // let print = self._pipe.0;
         // println!("NamedPipe handle: {print}");
@@ -286,7 +292,11 @@ impl CommunicationHandler {
         self._connected = true;
         _connected = true;
 
-        handler.join().expect("could not join thread");
+        let res = handler.join();
+        match res {
+            Ok(res) => res,
+            Err(err) => println!("Error joining DIEmWin handler")
+        };
 
     }
 
@@ -312,7 +322,7 @@ pub fn bytes_to_f32(bytes: &[u8], bytes_read: &u32) -> Vec<f32> {
 
     for i in (0..*bytes_read as usize).step_by(4) {
         let slice = bytes[i..i+4].try_into().unwrap();
-        let val = f32::from_le_bytes(slice) as f32;
+        let val = f32::from_le_bytes(slice);
         float_vec.push(val);
     }
 
@@ -324,7 +334,7 @@ pub fn f32vec_as_u8_slice(v: &[f32]) -> Vec<u8> {
     let mut u8_vec = Vec::<u8>::with_capacity(v.len()*4);
 
     for val in v {
-        u8_vec.extend_from_slice(&mut val.to_ne_bytes())
+        u8_vec.extend(val.to_ne_bytes())
     }
 
     return u8_vec

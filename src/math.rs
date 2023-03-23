@@ -174,7 +174,7 @@ pub fn quat_to_euler(quat: &Vec<f64>) -> Vec<f64> {
 
     let sinr_cosp: f64 = 2. * (w * x + y * z);
     let cosr_cosp: f64 = 1. - 2. * (x * x + y * y);
-    let sinp: f64 = 2. * (w * y + x * y);
+    let sinp: f64 = 2. * (w * y - z * x);
     let siny_cosp: f64 = 2. * (w * z + x * y);
     let cosy_cosp: f64 = 1. - 2. * (y * y + z * z);
     let roll: f64 = sinr_cosp.atan2(cosr_cosp);
@@ -210,9 +210,11 @@ pub fn quat_to_rot_mtx(nums: &Vec<f64>) -> Array2<f64> {
     let y = -&nums[2];
     let z = -&nums[3];
 
-    let s: f64 = 1.0 / norm;
+    // let s: f64 = 1.0 / norm;
 
     if norm != 0. {
+        let s: f64 = 1.0 / norm;
+
         theta[[0, 0]] = 1. - 2. * s * (y * y + z * z);
         theta[[1, 0]] = 2. * s * (x * y + z * w);
         theta[[2, 0]] = 2. * s * (x * z - y * w);

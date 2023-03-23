@@ -2,6 +2,7 @@ use crate::gamestates::game_state::GameState;
 
 use super::{common_conditions::{TimeoutCondition, GoalScoredCondition, NoTouchTimeoutCondition}, terminal_condition::TerminalCondition};
 
+// use this as an example for terminal condition stuff (it's similar to rewards now where there must be one)
 
 /// Terminal conditions for Matrix
 pub struct CombinedTerminalConditions {
@@ -17,7 +18,7 @@ impl CombinedTerminalConditions {
             timeout_condition: TimeoutCondition::new(400 * 120 / tick_skip as i64),
             no_touch_timeout_condition: NoTouchTimeoutCondition::new(100*120/tick_skip as i64),
             goal_scored_condition: GoalScoredCondition::new(),
-            no_touch_kickoff_condition: NoTouchKickoffTimeoutCondition::new(20*120/tick_skip as i64)
+            no_touch_kickoff_condition: NoTouchKickoffTimeoutCondition::new(12*120/tick_skip as i64)
         }
     }
 }

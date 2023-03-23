@@ -255,20 +255,30 @@ impl Quaternion {
         return running_val.sqrt()
     }
 
+    pub fn dot(&self, quat: Quaternion) -> f64 {
+        self.w * quat.w + 
+        self.x * quat.x +
+        self.y * quat.y +
+        self.z * quat.z 
+    }
+
     /// quat Vec to rotation matrix Array2
     pub fn quat_to_rot_mtx(&self) -> RotationMatrix {
         let mut theta = RotationMatrix::zeros();
 
-        let norm = self.norm();
+        let norm = self.dot(*self);
 
         let w = -&self.w;
         let x = -&self.x;
         let y = -&self.y;
         let z = -&self.z;
 
-        let s: f64 = 1.0 / norm;
+        // let s: f64 = 1.0 / norm;
 
         if norm != 0. {
+            let s: f64 = 1.0 / norm;
+
+            // front direction
             theta.array[0][0] = 1. - 2. * s * (y * y + z * z);
             theta.array[1][0] = 2. * s * (x * y + z * w);
             theta.array[2][0] = 2. * s * (x * z - y * w);
@@ -287,7 +297,7 @@ impl Quaternion {
         return theta;
     }
 
-    pub fn quat_to_euler(&self) -> EulerAngle{
+    pub fn quat_to_euler(&self) -> EulerAngle {
         let w: f64 = self.w;
         let x: f64 = self.x;
         let y: f64 = self.y;
@@ -295,7 +305,7 @@ impl Quaternion {
     
         let sinr_cosp: f64 = 2. * (w * x + y * z);
         let cosr_cosp: f64 = 1. - 2. * (x * x + y * y);
-        let sinp: f64 = 2. * (w * y + x * y);
+        let sinp: f64 = 2. * (w * y - z * x);
         let siny_cosp: f64 = 2. * (w * z + x * y);
         let cosy_cosp: f64 = 1. - 2. * (y * y + z * z);
         let roll: f64 = sinr_cosp.atan2(cosr_cosp);
@@ -383,9 +393,15 @@ impl RotationMatrix {
     pub fn into_flat_array(&self) -> [f64; 9] {
         let mut row_vec = [0.; 9];
         let mut i = 0;
-        for col in self.array {
-            for row_val in col {
-                row_vec[i] = row_val;
+        // for col in self.array {
+        //     for row_val in col {
+        //         row_vec[i] = row_val;
+        //         i += 1;
+        //     }
+        // }
+        for idx in 0..3 {
+            for col in self.array {
+                row_vec[i] = col[idx];
                 i += 1;
             }
         }
