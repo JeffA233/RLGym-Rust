@@ -2,7 +2,7 @@
 
 This is still somewhat WIP and undocumented. <br />
 
-TL;DR this is a Rust remake of RLGym. The primary intended purpose for my own project is to use it as a python module with PyO3/Maturin to have less compute cost vs dealing with Python. If there is more interest in this then I may clean this up more and try to write some real documentation but I expect there to be very little interest. I do not have very rigorous error handling with Rocket League crashing yet, consider that a warning if Rocket League tends to crash for you with regular RLGym. <br />
+TL;DR this is a Rust remake of RLGym. The primary intended purpose for my own project is to use it as a Python module with PyO3/Maturin to have less compute cost vs dealing with Python. If there is more interest in this then I may clean this up more and try to write some real documentation but I expect there to be very little interest. I do not have very rigorous error handling with Rocket League crashing yet, consider that a warning if Rocket League tends to crash for you with regular RLGym. <br />
 
 There are a couple changes done relative to regular RLGym. The first one is observation functions are put into a Vec for the possibility to have agents of multiple types of agents if desired. The second one is that terminal conditions should only return a single boolean for the sake of allowing complete explicit control of the boolean although in the end it really likely does not matter in terms of functionality. <br />
 
